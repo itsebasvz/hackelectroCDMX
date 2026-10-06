@@ -1,0 +1,37 @@
+{
+  "fecha_recuperacion": "2026-10-06",
+  "alcance": "Textos de las licencias del trabajo propio; no modifica los derechos de fuentes de terceros.",
+  "recursos": [
+    {
+      "spdx_id": "MIT",
+      "archivo_local": "LICENSE",
+      "institucion_fuente": "GitHub / API oficial de licencias",
+      "url": "https://api.github.com/licenses/mit",
+      "url_licencia": "https://choosealicense.com/licenses/mit/",
+      "referencia_normativa": "https://opensource.org/license/mit",
+      "metodo": "gh api licenses/mit; extraer el campo body y sustituir únicamente year y fullname",
+      "sha256_respuesta_api": "15b2a5994e7c6e3db7437919f9374593dfc8c0e79eae0f4645e1286d2487deb4",
+      "sha256_plantilla_original_utf8": "002c2696d92b5c8cf956c11072baa58eaf9f6ade995c031ea635c6a1ee342ad1",
+      "transformaciones": {
+        "[year]": "2026",
+        "[fullname]": "Colaboradores de hackelectroCDMX"
+      },
+      "sha256_archivo_local": "82dcde9cce563624244a4a9cd6c7e0685a1697ec8db09cb56b7a17868a4672e8",
+      "tamanio_bytes": 1089,
+      "texto_juridico_modificado": false
+    },
+    {
+      "spdx_id": "CC-BY-4.0",
+      "archivo_local": "docs/CC-BY-4.0.txt",
+      "institucion_fuente": "Creative Commons",
+      "url": "https://creativecommons.org/licenses/by/4.0/legalcode.txt",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0/",
+      "metodo": "Descarga HTTPS directa; copia íntegra sin traducción ni reformulación",
+      "transformaciones": [],
+      "sha256_original": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+      "sha256_archivo_local": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+      "tamanio_bytes": 18657,
+      "texto_juridico_modificado": false
+    }
+  ]
+}

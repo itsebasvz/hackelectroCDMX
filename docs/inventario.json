@@ -1,0 +1,77 @@
+{
+  "fecha_extraccion": "2026-10-06",
+  "alcance": "4 PDF originales, 221 páginas; presentación completa como fuente activa; sin verificación externa",
+  "fuentes": [
+    {
+      "archivo": "docs/originales/problemática electro hackatón.pdf",
+      "tipo": "pdf",
+      "paginas": 10,
+      "sha256": "8302506ceb793d62dfd3a38d49e3d931eb732955692e8882ca2036dc6cba6923",
+      "markdown": "docs/fuentes/problematica-electro-hackaton.md",
+      "paginas_con_transcripcion_visual": [],
+      "paginas_sin_texto_extraible": []
+    },
+    {
+      "archivo": "docs/originales/PIM-2019-2024_.pdf",
+      "tipo": "pdf",
+      "paginas": 118,
+      "sha256": "8661e675f684e1b1af25651ef37cbdead8ac9aab8264739198c81e0b94e29983",
+      "markdown": "docs/fuentes/pim-2019-2024.md",
+      "paginas_con_transcripcion_visual": [
+        98,
+        99,
+        118
+      ],
+      "paginas_sin_texto_extraible": [
+        118
+      ]
+    },
+    {
+      "archivo": "docs/originales/transporte.pdf",
+      "tipo": "pdf",
+      "paginas": 33,
+      "sha256": "47523f4c90157dca6d3faf28d1869e6c7ec79e3f63db4db759dabc5a5b60879f",
+      "markdown": "docs/fuentes/reglamento-transporte-2003.md",
+      "paginas_con_transcripcion_visual": [],
+      "paginas_sin_texto_extraible": []
+    },
+    {
+      "archivo": "docs/originales/Introducción Electromovilidad.pdf",
+      "tipo": "pdf",
+      "paginas": 60,
+      "sha256": "b50c2056b42bebf527d29502efaffce0bd2f13b8acd7c39358602a84b79301b6",
+      "markdown": "docs/fuentes/introduccion-electromovilidad.md",
+      "paginas_con_transcripcion_visual": [
+        1,
+        2,
+        5,
+        6,
+        9,
+        10,
+        11,
+        14,
+        15,
+        16,
+        17,
+        19,
+        23,
+        24,
+        25,
+        28,
+        30,
+        35,
+        37,
+        52,
+        53,
+        55,
+        57,
+        60
+      ],
+      "paginas_sin_texto_extraible": [
+        1,
+        2,
+        60
+      ]
+    }
+  ]
+}

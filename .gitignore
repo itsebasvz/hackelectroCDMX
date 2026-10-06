@@ -1,0 +1,25 @@
+# Configuración local y credenciales
+.aws/
+.codex/
+.agents/
+.env
+.env.*
+!.env.example
+
+# Archivos temporales de trabajo
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.swo
+
+# Capturas originales retiradas de la base documental activa
+/docs/archivo/capturas-whatsapp/
+
+# Fuentes de terceros: conservación local, redistribución pendiente de permiso
+/docs/originales/
+/docs/fuentes/
+/docs/transcripciones-visuales/
+/docs/assets/

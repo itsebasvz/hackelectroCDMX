@@ -1,0 +1,43 @@
+# Contexto del proyecto
+
+El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon CDMX. La selección fue confirmada por el usuario el 6 de octubre de 2026. Aún no se ha definido la flota objetivo, el mecanismo de solución, el prototipo o la tecnología.
+
+## Organización
+
+- `hackelectro/` es la raíz elegida para el repositorio; mantener `AGENTS.md` aquí.
+- El nombre acordado del repositorio en GitHub es **`hackelectroCDMX`**. La carpeta de trabajo local actual sigue siendo `hackelectro/`.
+- No crear `src/` ni un stack de aplicación hasta que se defina la solución con el usuario.
+- Mantener únicamente las carpetas que se usan actualmente: `docs/` para documentación y `scripts/` para su extracción. No crear carpetas vacías, reservadas para trabajo futuro o basadas en una arquitectura supuesta. Añadir estructura cuando exista una necesidad concreta del trabajo autorizado.
+- `docs/README.md` es la entrada documental. Las guías generales están en `docs/contexto/`; los expedientes con índices propios en `docs/investigacion/ruta1/` y `docs/investigacion/latinoamerica/`. Los originales, extracciones, transcripciones visuales y assets conservan sus carpetas; `docs/inventario.json` sigue siendo el inventario de los cuatro PDF. Al mover un documento, actualizar enlaces y rutas de los registros; si un documento propio con hash cambia, actualizar su hash y tamaño sin modificar los hashes de originales.
+- El 6 de octubre de 2026, tras habilitar el usuario acceso completo, se inicializó Git con la rama `main` y se configuró `origin` como `https://github.com/itsebasvz/hackelectroCDMX.git`. La protección de solo lectura de la sesión anterior ya no aplica. Comprobar el estado antes de operaciones Git.
+
+## Commits
+
+- Usar **Conventional Commits con descripciones, cuerpos y notas en español**: `tipo(ámbito opcional): descripción`.
+- Conservar los identificadores convencionales, por ejemplo `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build` y `ci`; redactar la descripción en español, preferiblemente en imperativo. Ejemplos: `docs(investigacion): organiza las fuentes de Ruta 1` y `chore: configura el repositorio hackelectroCDMX`.
+- Cuando exista un cambio incompatible, usar `!` y/o el marcador estándar `BREAKING CHANGE:`; explicar el cambio y la migración en español.
+- Agrupar cambios relacionados y describir su propósito. Aplicar también este formato al título que se utilice para un commit de squash.
+
+## Licencias y publicación
+
+- El usuario eligió **MIT para código propio y CC BY 4.0 para documentación propia** el 6 de octubre de 2026. Los avisos están en `LICENSE` y `docs/LICENSE.md`; la revisión y el alcance están en `docs/contexto/licencia-proyecto.md`. El PDF del hackatón disponible no establece una licencia del proyecto ni cesión de derechos; no asumir que se han revisado bases o términos de inscripción adicionales.
+- `scripts/extraer_documentos.py` es una herramienta documental que regenera las cuatro extracciones y su inventario; sigue siendo relevante para trazabilidad. El usuario pidió eliminar scripts si no fueran relevantes, no eliminar esta herramienta de extracción necesaria.
+- La licencia del trabajo propio no relicencia PDF, extracciones, imágenes, transcripciones o datasets de terceros. Conservar sus metadatos y derechos; las fuentes UNKNOWN se citan y no se redistribuyen automáticamente, conforme al método de investigación.
+- Los textos jurídicos se recuperaron de la API oficial de licencias de GitHub (MIT, completando sólo año y titular) y Creative Commons (`docs/CC-BY-4.0.txt`, copia íntegra). Su procedencia y hashes están en `docs/contexto/procedencia-licencias.json`; `docs/LICENSE.md` define el alcance, no sustituye el texto oficial.
+- `.gitignore` excluye `docs/originales/`, `docs/fuentes/`, `docs/transcripciones-visuales/` y `docs/assets/`. Los archivos se conservan localmente; las referencias publicadas apuntan a `docs/contexto/fuentes-locales.md` y el inventario. No añadirlos con `git add -f` sin permiso de redistribución verificado.
+
+## Fuentes y consulta
+
+- Para retomar el contexto, leer `docs/README.md`, `docs/contexto/sintesis.md` y `docs/contexto/presentacion.md`.
+- La investigación histórica de CDMX y cinco países latinoamericanos está en `docs/investigacion/latinoamerica/analisis-transicion-electrica-latinoamerica.md`, con 26 referencias H00–H25 en `docs/investigacion/latinoamerica/fuentes-transicion-electrica-latinoamerica.json`. Propone comparar compra/crédito y proveedor de activos para un piloto por ramal, con ingreso y servicio protegidos; no hay acuerdos, adhesiones, financiamiento o viabilidad acreditados. Distingue proyectos aprobados de unidades operativas y formación de protección salarial. H21 declara CC BY 3.0 IGO; H06 declara CC BY-NC-ND 3.0 IGO, restringida. Cero nuevos originales conservados; descarga de H21 falló por DNS. No confundir Ruta 14/Trolebús Elevado, L13 Eje 8 y L14 Universidad–Huipulco.
+- La evaluación documental ampliada de Ruta 1 está en `docs/investigacion/ruta1/evaluacion-viabilidad-ruta1.md`, con 58 referencias en `docs/investigacion/ruta1/fuentes-ruta1.json`, fichas en `docs/investigacion/ruta1/recuperacion-ruta1.md`, parámetros, matrices y `docs/investigacion/ruta1/metodologia-ruta1.md`. El usuario confirmó que por ahora sólo dispone de fuentes públicas. No se comprobaron unidad base, demanda propia, patio/carga ni ingreso/crédito aplicables; no se demostró viabilidad del ramal. La nota inicial conserva un ejemplo genérico, no resultados de Ruta 1. La escala se corrigió a A oficial Ruta1/B oficial zona/C CDMX comparable/D México/E externo/F supuesto; naturaleza separada y derivados heredan entradas. Ningún nuevo original externo se descargó: consulta web parcial y acceso de terminal sin resolución DNS; registrar recuperación pendiente y no inventar hashes. El único borrador SEMOVI está ampliado, preparado y no enviado. No hay flota definitiva elegida.
+- La fuente de capacitación es **el PDF completo «Introducción Electromovilidad.pdf»**, en `docs/originales/`. Su nombre real conserva la composición Unicode original.
+- Su texto y recuperación visual están en `docs/fuentes/introduccion-electromovilidad.md`. Consultar ese PDF antes de reutilizar cifras o diagramas; las transcripciones de las capturas anteriores se eliminaron.
+- `docs/archivo/capturas-whatsapp/` conserva imágenes originales únicamente como archivo local, excluido de Git. No usarlo como fuente activa ni volver a incorporar sus extracciones.
+- Las demás fuentes son `docs/fuentes/problematica-electro-hackaton.md`, `docs/fuentes/pim-2019-2024.md` y `docs/fuentes/reglamento-transporte-2003.md`.
+- Citar la página del archivo PDF, contando portada. En el PIM, la página impresa es una menos desde la segunda página.
+- La página 9 de la presentación tiene una tabla visible distinta de su capa textual; la transcripción visual revisada es la referencia de esa página.
+- Preservar el contenido de los PDF originales al actualizar notas. Su ubicación y sus hashes figuran en `docs/inventario.json`.
+- El reglamento es de 2003 y el PIM corresponde a 2019–2024. El transitorio tercero del Reglamento de la Ley de Movilidad (fuente S30) documenta la abrogación del reglamento de 2003; conservarlo como antecedente. No tratar metas del PIM como resultados logrados. Regulación posterior y límites están en la evaluación ampliada.
+- Distinguir datos de fuente, cálculos derivados, hipótesis y verificación externa. Las cifras del PDF de capacitación contienen discrepancias documentadas.
+- Para regenerar las cuatro extracciones y su inventario, ejecutar `python scripts/extraer_documentos.py`. Requiere Poppler. Las guías y transcripciones visuales necesitan revisión manual ante cambios en los PDF.
