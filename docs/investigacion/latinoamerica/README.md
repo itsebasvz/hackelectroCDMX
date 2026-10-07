@@ -9,6 +9,8 @@ Investigación pública consultada el **2026-10-06** para el Reto 2. Compara exp
 
 Los mecanismos propuestos son recomendaciones propias. No hay acuerdos, adhesiones ni financiamiento comprometido y no se acredita viabilidad del ramal. Los antecedentes S reutilizados se identifican en el [registro de Ruta 1](../ruta1/fuentes-ruta1.json); las cantidades de referencias de ambos registros no deben sumarse sin deduplicación.
 
+El [documento maestro de Ruta 1](../../documento-maestro-ruta1.md) integra estos mecanismos con la evaluación del ramal, el valor humano y comprobaciones adicionales de CDMX. Es la orientación para discutir el producto futuro; mantiene como pendientes legalidad del arreglo, línea base, demanda, carga y protección financiada del ingreso.
+
 No se conservaron nuevos originales externos. H21 tiene licencia CC BY 3.0 IGO; H06 tiene restricciones CC BY-NC-ND 3.0 IGO. Las licencias y consultas parciales se documentan en el registro.
 
 Consultar el [expediente de Ruta 1](../ruta1/README.md) para datos operativos y condiciones pendientes. Volver al [índice documental](../../README.md).

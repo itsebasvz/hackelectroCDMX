@@ -2,7 +2,9 @@
 
 Actualizado el **6 de octubre de 2026**. Originales locales: **4 PDF, 221 páginas**; investigación de Ruta 1 con **58 referencias registradas**, incluidas esas cuatro fuentes. La presentación completa de EMA sustituyó las extracciones y referencias de las capturas anteriores. El equipo ya confirmó la elección del reto 2.
 
-**Versión publicada:** análisis propios, referencias, matrices, parámetros, inventario y licencias. Los PDF, extracciones completas, transcripciones e imágenes permanecen sólo en la copia local y están excluidos de Git. Los enlaces de sus citas identifican la [fuente local y sus páginas](contexto/fuentes-locales.md); no ofrecen descargas de materiales sin permiso verificado.
+**Material publicable:** análisis propios, referencias, matrices, parámetros, inventario y licencias; también recursos geográficos con CC BY 4.0 explícita, atribución y procedencia. Los PDF, extracciones completas, transcripciones e imágenes permanecen sólo en la copia local y están excluidos de Git. Los enlaces de sus citas identifican la [fuente local y sus páginas](contexto/fuentes-locales.md); no ofrecen descargas de materiales sin permiso verificado.
+
+**Lectura principal para orientar el siguiente paso:** [Documento maestro de Ruta 1](documento-maestro-ruta1.md). La investigación pública queda suficiente para orientar un prototipo exploratorio con supuestos declarados. Integra evidencia, valor humano y mecanismos de transición; compara compra financiada y proveedor de vehículos con condiciones jurídicas, carga, servicio y protección económica. No acredita viabilidad ni adopta una flota. Sus 28 referencias complementarias y el seguimiento de consultas están en el [registro M](investigacion/ruta1/fuentes-documento-maestro.json). El cierre público para el hackatón añade [55 bases de decisión](investigacion/ruta1/bases-decision-ruta1.csv), condiciones G01–G08, [14 parámetros F de prueba](investigacion/ruta1/parametros-exploratorios-hackaton.csv) y [seis originales geográficos abiertos con una derivación](investigacion/ruta1/recursos-abiertos/README.md), atribución y hashes.
 
 ## Organización
 
@@ -11,6 +13,7 @@ Actualizado el **6 de octubre de 2026**. Originales locales: **4 PDF, 221 págin
 | `contexto/` | Síntesis del reto, guía de capacitación y revisión de licencia | [Síntesis](contexto/sintesis.md) y [licencias](contexto/licencia-proyecto.md) |
 | `investigacion/ruta1/` | Evaluación, notas iniciales, parámetros, matrices, fuentes, fichas, método, búsquedas y transparencia | [Índice de Ruta 1](investigacion/ruta1/README.md) |
 | `investigacion/latinoamerica/` | Análisis histórico y registro de sus referencias | [Índice de casos latinoamericanos](investigacion/latinoamerica/README.md) |
+| `investigacion/ruta1/recursos-abiertos/` | Geografías oficiales, diccionarios, metadatos y derivación con CC BY 4.0 | [Procedencia y método](investigacion/ruta1/recursos-abiertos/README.md) |
 | `originales/` | Cuatro PDF originales, sin modificaciones | [Inventario y hashes](inventario.json) |
 | `fuentes/` | Cuatro extracciones paginadas de los PDF locales | [Tabla de PDF y extracciones](#pdf-locales) |
 | `transcripciones-visuales/` (sólo local) | Revisiones manuales por documento y página | [Referencia local](contexto/fuentes-locales.md#materiales-derivados) |
@@ -19,6 +22,8 @@ Actualizado el **6 de octubre de 2026**. Originales locales: **4 PDF, 221 págin
 Los expedientes de investigación agrupan sus análisis y evidencias. `fuentes/` contiene las extracciones de los PDF, mientras que los registros JSON y las fichas de referencias externas están dentro de cada expediente. `inventario.json` sigue describiendo únicamente los cuatro PDF originales. Los nombres de archivo y los identificadores S/H se conservaron; se actualizaron enlaces y rutas de procedencia al reorganizar.
 
 ## Ruta de lectura
+
+Para discutir el producto futuro, comenzar por el [documento maestro](documento-maestro-ruta1.md) y usar la lista siguiente para auditar sus antecedentes.
 
 1. [Síntesis de estudio](contexto/sintesis.md): requisitos del evento y antecedentes.
 2. [Problemáticas del hackatón](contexto/fuentes-locales.md#problematica-electro-hackaton), especialmente [PDF 4](contexto/fuentes-locales.md#problematica-electro-hackaton) y [PDF 5](contexto/fuentes-locales.md#problematica-electro-hackaton), donde se define el reto 2.
@@ -45,13 +50,13 @@ La [evaluación ampliada de viabilidad](investigacion/ruta1/evaluacion-viabilida
 - [Verificación del expediente](investigacion/ruta1/verificacion-investigacion-ruta1.md): consistencia de registros, integridad de originales y fallo documentado de recuperación del GTFS.
 - [Borrador único de transparencia a SEMOVI](investigacion/ruta1/solicitud-transparencia-ruta1.md): preparado, sin enviar.
 
-El registro externo es independiente del inventario de extracción. Se corrigió la escala provisional para aplicar A–F del plan completo; `nivel_anterior` conserva la clasificación inicial para auditoría. La flota definitiva y la solución siguen pendientes. Se preservaron los cuatro PDF locales; **ningún nuevo original externo fue descargado**, por límites de acceso y/o licencia desconocida. Los recursos abiertos pendientes no se consideran recuperados por tener una ficha.
+El registro externo es independiente del inventario de extracción. Se corrigió la escala provisional para aplicar A–F del plan completo; `nivel_anterior` conserva la clasificación inicial para auditoría. La flota definitiva y la solución siguen pendientes. Se preservaron los cuatro PDF locales; en la primera revisión **ningún nuevo original externo se conservó**, por límites de acceso y/o licencia desconocida. Ese era el estado de la primera entrega S. En la segunda revisión M09/M10 se recuperaron seis originales abiertos y la geometría histórica de este ramal; los demás recursos pendientes no se consideran recuperados por tener una ficha.
 
 ### Transición eléctrica en CDMX y América Latina
 
 El [análisis histórico y propuesta para un ramal](investigacion/latinoamerica/analisis-transicion-electrica-latinoamerica.md) compara CDMX, Santiago, Bogotá, Uruguay, São Paulo y Guayaquil: propiedad, financiamiento, apoyos, carga, participación y barreras. Incluye una vía de piloto con protección del ingreso, dos alternativas de propiedad y condiciones para ampliar o detener. Es una propuesta documental; no demuestra viabilidad de Ruta 1 ni compromete financiamiento.
 
-Su [registro complementario de 26 referencias](investigacion/latinoamerica/fuentes-transicion-electrica-latinoamerica.json) identifica consulta, localizadores, acceso parcial, licencias y antecedentes reutilizados. Se verificaron CC BY 3.0 IGO para el informe BID 2025 y las restricciones NC/ND del estudio chileno 2021. No se conservaron nuevos originales externos; la descarga del informe abierto falló por resolución DNS. Las referencias H y S son registros independientes, con reutilizaciones explícitas, y no deben sumarse como fuentes únicas sin deduplicación.
+Su [registro complementario de 26 referencias](investigacion/latinoamerica/fuentes-transicion-electrica-latinoamerica.json) identifica consulta, localizadores, acceso parcial, licencias y antecedentes reutilizados. Se verificaron CC BY 3.0 IGO para el informe BID 2025 y las restricciones NC/ND del estudio chileno 2021. En el expediente H no se conservaron nuevos originales externos; la descarga inicial del informe abierto falló por resolución DNS. El reintento de la segunda revisión devolvió 403 (incidencia I05 del registro M). Las referencias H y S son registros independientes, con reutilizaciones explícitas, y no deben sumarse como fuentes únicas sin deduplicación.
 
 ### PDF locales
 

@@ -6,10 +6,12 @@ La elección del reto está confirmada. Ruta 1 Universidad–San Fernando–Huip
 
 ## Empezar
 
+- [Documento maestro de Ruta 1](docs/documento-maestro-ruta1.md): síntesis para orientar el producto futuro, con valor humano, evidencia, dos vías de inversión, adaptación jurídica a CDMX y condiciones para proteger servicio e ingreso. La investigación pública es suficiente para un prototipo exploratorio; la decisión de inversión real queda por validar.
+- [Bases de decisión](docs/investigacion/ruta1/bases-decision-ruta1.csv): 55 entradas con fuentes, estados y condiciones de aceptación; [geometría oficial histórica y método reproducible](docs/investigacion/ruta1/recursos-abiertos/README.md).
 - [Índice documental](docs/README.md): organización, guías generales, expedientes de investigación y cuatro fuentes PDF, con 221 páginas en total.
 - [Síntesis de estudio](docs/contexto/sintesis.md): requisitos y antecedentes del reto.
 - [Guía de la presentación completa](docs/contexto/presentacion.md): lectura del PDF original de EMA, con referencias por página.
-- [Evaluación documental de Ruta 1](docs/investigacion/ruta1/evaluacion-viabilidad-ruta1.md): Universidad–San Fernando–Huipulco, evidencia favorable/contraria y criterios de viabilidad. Incluye 58 referencias, parámetros y matrices; la viabilidad del ramal sigue sin demostrarse. Baseline, demanda, carga e ingreso/financiamiento permanecen pendientes. Los originales externos no pudieron descargarse; su recuperación está registrada.
+- [Evaluación documental de Ruta 1](docs/investigacion/ruta1/evaluacion-viabilidad-ruta1.md): Universidad–San Fernando–Huipulco, evidencia favorable/contraria y criterios de viabilidad. Incluye 58 referencias, parámetros y matrices; la viabilidad del ramal sigue sin demostrarse. Baseline, demanda, carga e ingreso/financiamiento permanecen pendientes. La segunda revisión recuperó geometría histórica oficial y seis originales abiertos con hashes; los pendientes operativos y financieros siguen registrados.
 - [Transición eléctrica en CDMX y América Latina](docs/investigacion/latinoamerica/analisis-transicion-electrica-latinoamerica.md): historia de cinco países, mecanismos de inversión y organización y propuesta condicionada de piloto por ramal con protección del ingreso. Registro complementario de fuentes y licencias.
 
 Cada investigación tiene un índice propio: [Ruta 1](docs/investigacion/ruta1/README.md) y [Latinoamérica](docs/investigacion/latinoamerica/README.md).
@@ -37,7 +39,7 @@ hackelectro/
 
 La estructura contiene únicamente documentación y su utilidad de extracción. La solución y la tecnología siguen pendientes; las carpetas de desarrollo se crearán cuando exista trabajo concreto que las necesite.
 
-La publicación incluye análisis propios, referencias, parámetros, inventarios y la herramienta de extracción. Los cuatro PDF y sus reproducciones se conservan localmente y están excluidos de Git por licencia de redistribución no verificada; sus [rutas, páginas y condiciones](docs/contexto/fuentes-locales.md) siguen documentadas. Las capturas retiradas no son fuente activa ni parte de la publicación.
+Los materiales publicables incluyen análisis propios, referencias, parámetros, inventarios, la herramienta de extracción y recursos geográficos con CC BY 4.0 explícita, atribución y hashes. Los recursos nuevos aún no se han enviado al remoto en esta tarea. Los cuatro PDF y sus reproducciones se conservan localmente y están excluidos de Git por licencia de redistribución no verificada; sus [rutas, páginas y condiciones](docs/contexto/fuentes-locales.md) siguen documentadas. Las capturas retiradas no son fuente activa ni parte de la publicación.
 
 ## Regenerar la documentación
 

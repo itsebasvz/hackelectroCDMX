@@ -26,6 +26,8 @@ Solicito también, únicamente en la medida en que existan en sus archivos:
 9. Convenios existentes que establezcan participación de concesionarios y trabajadores, continuidad/sustitución del servicio y condiciones laborales asociadas a Línea 14 o a la modernización de los ramales solicitados, en versión pública. No solicito contratos privados que no obren en sus archivos.
 10. Instrumentos vigentes de tarifa y requisitos técnicos de sustitución aplicables a las clases vehiculares autorizadas para estos ramales, incluida capacidad, accesibilidad y propulsión eléctrica, o referencia exacta a su publicación oficial.
 
+11. Versiones vigentes del registro cartográfico publicado como `RUTA=1`, `RAMAL=METRO CU - SAN FERNANDO HUIPULCO`, `DETALLE=001 METRO CU - SAN FERNANDO HUIPULCO CC OD` (Placemark 514 del recurso SEMOVI con archivo interno de 2022), y documentos existentes que permitan relacionarlo con el derrotero autorizado actual, sus fechas de actualización y modificaciones. No solicito elaborar una nueva geometría.
+
 No solicito nombres, domicilios, teléfonos, CURP, RFC ni ingresos individuales. Cuando un documento contenga información protegida, solicito su versión pública. Si no existe la asignación por ramal, agradeceré el registro existente con su nivel de agregación y la indicación de ese límite. Si parte de la información corresponde a otra unidad administrativa o sujeto obligado, solicito la canalización u orientación correspondiente conforme al procedimiento aplicable.
 
 **Medio de respuesta:** entrega electrónica mediante la plataforma por la que se presente la solicitud. Completar los campos obligatorios de esa plataforma al enviarla; este borrador no incorpora identidad ni contacto del solicitante.

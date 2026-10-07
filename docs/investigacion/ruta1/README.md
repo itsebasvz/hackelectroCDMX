@@ -6,6 +6,8 @@ La viabilidad del ramal **no está demostrada**. La documentación permite ident
 
 ## Orden de consulta
 
+El [documento maestro](../../documento-maestro-ruta1.md) conecta este expediente con los antecedentes latinoamericanos y propone un acuerdo por ramal con protecciones costeadas. Las [comprobaciones complementarias M01–M28](fuentes-documento-maestro.json) incluyen normativa, tiempos históricos de viaje y el informe FIFINTRA 2024: su sustitución en Avenida Aztecas involucró Ruta 1 y Ruta 13, sin asignar unidades al ramal San Fernando. La segunda revisión recuperó geometría oficial histórica del ramal (dos trazos que suman aproximadamente 20.340 km), el aviso eléctrico y referencias comerciales/laborales. Se conservaron seis originales abiertos con CC BY 4.0 y hashes; la viabilidad actual sigue pendiente. Consultar las [55 bases de decisión](bases-decision-ruta1.csv), los criterios G01–G08 del maestro y los [recursos abiertos y método](recursos-abiertos/README.md). Las 32 entradas faltantes documentales no tienen valores inventados. El cierre público para el hackatón permite avanzar con [14 parámetros exploratorios F](parametros-exploratorios-hackaton.csv), sin esperar datos privados; la inversión real sí requiere comprobaciones posteriores.
+
 1. [Evaluación ampliada de viabilidad](evaluacion-viabilidad-ruta1.md): conclusión actual y evidencia favorable, contraria y faltante, categorías A–N.
 2. [Metodología y Definition of Done](metodologia-ruta1.md): calidad de evidencia, licencias, procedencia y requisitos para avanzar.
 3. [Parámetros](parametros-ruta1.csv): 106 filas con ámbitos, unidades, estados, supuestos y límites.
