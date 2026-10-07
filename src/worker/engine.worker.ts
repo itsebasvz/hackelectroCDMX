@@ -1,7 +1,9 @@
 import { evaluateScenario } from '../domain/evaluate';
 import { findConditions, SearchCancelled } from '../domain/optimize';
 import type { Request, Response } from './protocol';
+import { sensitivity } from '../domain/explore';
 let searchId = 0;
+let sensitivityId = 0;
 const send = (response: Response) => self.postMessage(response);
 self.onmessage = async (event: MessageEvent<Request>) => {
   const request = event.data;
@@ -9,10 +11,19 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     searchId = request.id;
     return;
   }
+  if (request.type === 'cancel-sensitivity') {
+    sensitivityId = request.id;
+    return;
+  }
   try {
     if (request.type === 'evaluate')
       send({ type: 'evaluated', id: request.id, result: evaluateScenario(request.scenario) });
-    else {
+    else if (request.type === 'sensitivity') {
+      sensitivityId = request.id;
+      const points = await sensitivity(request.scenario, () => sensitivityId !== request.id);
+      if (points && sensitivityId === request.id)
+        send({ type: 'sensitivity', id: request.id, points });
+    } else {
       searchId = request.id;
       const result = await findConditions(request.scenario, {
         cancelled: () => searchId !== request.id,

@@ -1,0 +1,89 @@
+import { describe, it, expect } from 'vitest';
+import { defaultScenario } from '../data/defaults';
+import { evaluateScenario } from './evaluate';
+import { sensitivity, monthlyBudget, energyBudget } from './explore';
+import { consumptionAt, positionOnTrace, traceSegments, nearestFraction } from './geometry';
+import type { FeatureCollection, LineString } from 'geojson';
+describe('exploración explicable', () => {
+  it('reconcilia presupuesto mensual, incluida reposición y cierre de crédito', () => {
+    const s = defaultScenario();
+    s.economy.batteryReplacementMonth = 36;
+    s.economy.batteryReplacementCost = 200000;
+    s.finance = s.catalog.finances.find((f) => f.kind === 'credit' && f.months === 36)!;
+    const r = evaluateScenario(s);
+    for (const f of [r.ice, r.ev])
+      for (const m of f.months) {
+        const b = monthlyBudget(m);
+        expect(b.operating + b.workers + b.owner + b.payment + b.reserve + b.margin).toBeCloseTo(
+          b.revenue,
+          2,
+        );
+        expect(b.reserve).toBeGreaterThanOrEqual(0);
+      }
+  });
+  it('separa energía de servicio, adicionales, reserva y déficit', () => {
+    const r = evaluateScenario(defaultScenario());
+    const b = energyBudget(r);
+    expect(b.service + b.additional).toBeCloseTo(r.dailyBatteryKwh);
+    expect(b.margin + r.dailyBatteryKwh).toBeCloseTo(r.usableKwh);
+    expect(consumptionAt(r, r.scenario.operation.cycles, 1).kwh).toBeCloseTo(r.dailyBatteryKwh);
+  });
+  it('sensibilidad usa el evaluador, conserva recaudo y alcanza umbrales', async () => {
+    const s = defaultScenario();
+    const points = (await sensitivity(s))!;
+    expect(points).toHaveLength(16);
+    const base = points.find((p) => p.cycles === s.operation.cycles)!;
+    const r = evaluateScenario(s);
+    expect(base.evMargin).toBe(r.ev.minMonthlyCash);
+    expect(base.batteryKwh).toBe(r.dailyBatteryKwh);
+    expect(points.at(-1)!.failures).toContain('battery');
+    expect(await sensitivity(s, () => true)).toBeNull();
+  });
+  it('no cuenta ni dibuja saltos entre trazos; posición y selección son reversibles', () => {
+    const fc: FeatureCollection<LineString> = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [0, 0],
+              [0, 1],
+            ],
+          },
+        },
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [10, 10],
+              [10, 11],
+            ],
+          },
+        },
+      ],
+    };
+    expect(traceSegments(fc)).toHaveLength(2);
+    expect(positionOnTrace(fc, 0.75)!.trace).toBe(2);
+    const p = positionOnTrace(fc, 0.75)!;
+    expect(nearestFraction(fc, p.coordinates)).toBeCloseTo(0.75, 5);
+  });
+  it('ubica el umbral de reserva y escala el ciclo editado sin energía gratuita', () => {
+    const s = defaultScenario();
+    s.route.cycleKm = 25;
+    s.operation.cycles = 16;
+    const r = evaluateScenario(s);
+    const boundary =
+      r.usableKwh / s.ev.consumption / (s.route.cycleKm * (1 + s.operation.emptyRatio));
+    const cycle = Math.ceil(boundary);
+    const p = consumptionAt(r, cycle, boundary - (cycle - 1));
+    expect(p.soc).toBeCloseTo(s.energy.socMin, 9);
+    expect(p.kwh).toBeCloseTo(r.usableKwh, 9);
+    expect(consumptionAt(r, 16, 1).km).toBe(r.dailyKm);
+    expect(consumptionAt(r, 16, 1).soc).toBeLessThan(s.energy.socMin);
+  });
+});
