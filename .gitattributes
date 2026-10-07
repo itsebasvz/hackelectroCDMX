@@ -1,3 +1,16 @@
+* text=auto
+*.md text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
+*.pdf binary
+*.jpeg binary
+*.jpg binary
+*.png binary
+
+# Conservar los bytes y el salto final del texto oficial descargado
+docs/CC-BY-4.0.txt -text whitespace=-blank-at-eof
+
 # Textos jurídicos copiados íntegramente: conservar bytes y checksums.
 docs/desarrollo/licencias-dependencias/** -text
 *.rar -text
