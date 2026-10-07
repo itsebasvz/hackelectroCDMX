@@ -181,7 +181,7 @@ test('explora consumo, hospitales y sensibilidad sin alterar el recaudo', async 
     page.getByRole('button', { name: 'Batería en el recorrido', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
   await page.getByLabel('Vuelta del día').selectOption('8');
-  await page.getByLabel('Explora el recorrido · trazo', { exact: false }).fill('1000');
+  await page.getByRole('button', { name: 'Fin del día', exact: true }).click();
   await expect(
     page.locator('.map-point-card').getByText('42.71 kWh', { exact: true }),
   ).toBeVisible();
@@ -217,17 +217,15 @@ test('mapa contextual navega al límite y conserva accesibilidad y parámetros',
   await expect(page.locator('.map-vehicle-details')).toContainText('16 plazas');
   await page.getByRole('button', { name: 'Fin del día', exact: true }).click();
   await expect(page.getByLabel('Vuelta del día')).toHaveValue('8');
-  await expect(page.getByLabel('Explora el recorrido · trazo', { exact: false })).toHaveValue(
-    '1000',
-  );
+  await expect(page.locator('#map-distance')).toHaveValue('8000');
   await expect(page.locator('.map-point-card')).toContainText('42.71 kWh');
   await page.getByRole('button', { name: 'Inicio del día', exact: true }).click();
   await expect(page.getByLabel('Vuelta del día')).toHaveValue('1');
-  await expect(page.getByLabel('Explora el recorrido · trazo', { exact: false })).toHaveValue('0');
+  await expect(page.locator('#map-distance')).toHaveValue('0');
   const map = page.locator('.map-canvas');
   const box = await map.boundingBox();
   await map.click({ position: { x: box!.width - 80, y: 210 } });
-  await expect(page.getByLabel('Explora el recorrido · trazo', { exact: false })).toHaveValue('0');
+  await expect(page.locator('#map-distance')).toHaveValue('0');
   await page.getByLabel('Consumo neto en batería').fill('1');
   await ready(page);
   await expect(page.locator('.map-day-card')).toContainText('Faltan');

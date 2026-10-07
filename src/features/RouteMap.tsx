@@ -820,27 +820,30 @@ export default function RouteMap({
         </div>
       </div>
       <div className="map-journey">
-        <div className="map-navigation" aria-label="Navegación del día simulado">
-          <button
-            className="secondary"
-            disabled={!result || stale || !geometry?.features.length}
-            onClick={() => jump(1, 0)}
-          >
-            <SkipBack size={14} aria-hidden="true" />
-            Inicio del día
-          </button>
-          <button
-            className="secondary"
-            disabled={!result || stale || !geometry?.features.length}
-            onClick={() => jump(cycleCount, 1)}
-          >
-            Fin del día
-            <SkipForward size={14} aria-hidden="true" />
-          </button>
-        </div>
-        <div className="map-options">
-          <div className="field map-day-cycles">
-            <label htmlFor="map-cycle-count">Vueltas / unidad / día</label>
+        <div className="journey-toolbar">
+          <div className="journey-control journey-navigation-control">
+            <span className="journey-control-label">Navegación del día</span>
+            <div className="map-navigation" role="group" aria-label="Navegación del día simulado">
+              <button
+                className="secondary"
+                disabled={!result || stale || !geometry?.features.length}
+                onClick={() => jump(1, 0)}
+              >
+                <SkipBack size={14} aria-hidden="true" />
+                Inicio del día
+              </button>
+              <button
+                className="secondary"
+                disabled={!result || stale || !geometry?.features.length}
+                onClick={() => jump(cycleCount, 1)}
+              >
+                Fin del día
+                <SkipForward size={14} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <div className="field journey-control journey-cycle-control">
+            <label htmlFor="map-cycle-count">Vueltas por unidad / día</label>
             <input
               id="map-cycle-count"
               type="number"
@@ -855,78 +858,82 @@ export default function RouteMap({
               aria-label="Vueltas por unidad al día, de 1 a 100"
             />
           </div>
-          <div className="map-scope-switch" role="group" aria-label="Escala de la barra">
-            <button type="button" aria-pressed={scope === 'day'} onClick={() => setScope('day')}>
-              Todo el día
-            </button>
-            <button
-              type="button"
-              aria-pressed={scope === 'cycle'}
-              onClick={() => setScope('cycle')}
+          <div className="journey-control journey-scale-control">
+            <span className="journey-control-label">Escala de exploración</span>
+            <div className="map-scope-switch" role="group" aria-label="Escala de la barra">
+              <button type="button" aria-pressed={scope === 'day'} onClick={() => setScope('day')}>
+                Todo el día
+              </button>
+              <button
+                type="button"
+                aria-pressed={scope === 'cycle'}
+                onClick={() => setScope('cycle')}
+              >
+                Una vuelta
+              </button>
+            </div>
+          </div>
+          <div className="field journey-control journey-lap-control">
+            <label htmlFor="map-cycle">Vuelta del día</label>
+            <select
+              id="map-cycle"
+              value={activeCycle}
+              disabled={!result || stale}
+              onChange={(e) => setCycle(Number(e.target.value))}
             >
-              Una vuelta
-            </button>
+              {Array.from({ length: cycleCount }, (_, i) => (
+                <option key={i} value={i + 1}>
+                  {i + 1} de {cycleCount}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-        <div className={`map-scrub ${scope === 'day' ? 'is-day' : 'is-cycle'}`}>
-          {scope === 'cycle' && (
-            <div className="field map-cycle-field">
-              <label htmlFor="map-cycle">Vuelta del día</label>
-              <select
-                id="map-cycle"
-                value={activeCycle}
-                disabled={!result || stale}
-                onChange={(e) => setCycle(Number(e.target.value))}
-              >
-                {Array.from({ length: cycleCount }, (_, i) => (
-                  <option key={i} value={i + 1}>
-                    {i + 1} de {cycleCount}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <div className="distance-slider">
+        <div className="map-scrub">
+          <div className="journey-progress-heading">
             <label htmlFor="map-distance">{rangeLabel}</label>
-            <div className="journey-range">
-              <div className="journey-slider">
-                <span className="journey-rail" aria-hidden="true">
-                  <span
-                    style={{ width: `${progressMax ? (progressValue / progressMax) * 100 : 0}%` }}
-                  />
-                </span>
-                <span className="journey-ticks" aria-hidden="true">
-                  {rangeTicks.map((tick, i) => (
-                    <i
-                      key={`${tick.kind}-${i}`}
-                      className={`is-${tick.kind}`}
-                      style={{ left: `${tick.position}%` }}
-                    />
-                  ))}
-                </span>
-                <input
-                  type="range"
-                  id="map-distance"
-                  min="0"
-                  max={progressMax}
-                  step="1"
-                  value={progressValue}
-                  disabled={!geometry?.features.length || !result || stale}
-                  onChange={(e) => updateProgress(Number(e.target.value))}
-                  aria-valuetext={rangeValueText}
+            {result && !stale && (
+              <span>{num(currentPosition?.km ?? 0, 1)} km acumulados en el día</span>
+            )}
+          </div>
+          <div className="journey-range">
+            <div className="journey-slider">
+              <span className="journey-rail" aria-hidden="true">
+                <span
+                  style={{ width: `${progressMax ? (progressValue / progressMax) * 100 : 0}%` }}
                 />
-              </div>
-              <div className={`journey-segments is-${scope}`} aria-hidden="true">
-                {rangeSegments.map((segment, i) => (
-                  <span
-                    key={i}
-                    className={segment.active ? 'is-active' : ''}
-                    style={{ flexBasis: `${segment.size * 100}%` }}
-                  >
-                    {segment.label}
-                  </span>
+              </span>
+              <span className="journey-ticks" aria-hidden="true">
+                {rangeTicks.map((tick, i) => (
+                  <i
+                    key={`${tick.kind}-${i}`}
+                    className={`is-${tick.kind}`}
+                    style={{ left: `${tick.position}%` }}
+                  />
                 ))}
-              </div>
+              </span>
+              <input
+                type="range"
+                id="map-distance"
+                min="0"
+                max={progressMax}
+                step="1"
+                value={progressValue}
+                disabled={!geometry?.features.length || !result || stale}
+                onChange={(e) => updateProgress(Number(e.target.value))}
+                aria-valuetext={rangeValueText}
+              />
+            </div>
+            <div className={`journey-segments is-${scope}`} aria-hidden="true">
+              {rangeSegments.map((segment, i) => (
+                <span
+                  key={i}
+                  className={segment.active ? 'is-active' : ''}
+                  style={{ flexBasis: `${segment.size * 100}%` }}
+                >
+                  {segment.label}
+                </span>
+              ))}
             </div>
           </div>
         </div>

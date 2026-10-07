@@ -2569,64 +2569,78 @@ footer > small {
 
 .map-journey {
   display: grid;
-  grid-template-columns: 1fr;
-  align-items: start;
-  gap: 16px;
-  padding: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  padding: 22px 24px 18px;
   border-top: 1px solid var(--border);
   background: #fcfafb;
 }
-.map-journey .map-scrub {
-  padding: 0;
+.journey-toolbar {
+  display: grid;
+  grid-template-columns: minmax(230px, 1.25fr) minmax(148px, 0.75fr) max-content minmax(
+      138px,
+      0.7fr
+    );
+  align-items: end;
+  gap: 18px 22px;
   min-width: 0;
-  align-items: start;
-  grid-template-columns: 88px minmax(0, 1fr);
 }
-.map-journey .map-scrub.is-day {
-  grid-template-columns: minmax(0, 1fr);
+.journey-control {
+  display: grid;
+  grid-template-rows: 18px 46px;
+  gap: 8px;
+  min-width: 0;
+}
+.journey-control-label,
+.journey-control > label {
+  display: flex;
+  align-items: center;
+  min-height: 18px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 .map-journey .field {
   margin-bottom: 0;
 }
-.map-options {
-  display: flex;
-  align-items: end;
-  gap: 14px;
-  min-width: 0;
-}
-.map-options .map-day-cycles {
-  flex: 0 0 120px;
-}
-.map-options .map-day-cycles label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 10px;
-  white-space: nowrap;
-}
-.map-options .map-day-cycles input {
+.journey-cycle-control input,
+.journey-lap-control select {
   width: 100%;
-  padding: 9px 8px;
   height: 46px;
   min-height: 46px;
+  margin: 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
   font-variant-numeric: tabular-nums;
 }
-.map-navigation button {
+.journey-navigation-control {
+  min-width: 230px;
+}
+.journey-navigation-control .map-navigation {
+  gap: 8px;
+  margin: 0;
+}
+.journey-navigation-control .map-navigation button {
   height: 46px;
   min-height: 46px;
-  padding-right: 13px;
-  padding-left: 13px;
+  justify-content: center;
+  flex: 1 1 auto;
+  gap: 7px;
+  padding-right: 12px;
+  padding-left: 12px;
   white-space: nowrap;
 }
-.map-navigation {
-  margin-top: 26px;
-}
-.map-options .map-scope-switch {
-  margin-top: 26px;
+.journey-scale-control {
+  min-width: max-content;
 }
 .map-scope-switch {
   display: flex;
   align-items: center;
   gap: 2px;
+  width: max-content;
+  max-width: 100%;
   height: 46px;
   padding: 4px;
   border: 1px solid var(--border);
@@ -2658,21 +2672,48 @@ footer > small {
   outline: 2px solid var(--primary);
   outline-offset: 1px;
 }
-.map-scrub .distance-slider {
+.journey-lap-control {
+  min-width: 138px;
+}
+.map-journey .map-scrub {
+  display: block;
+  width: 100%;
   min-width: 0;
+  padding: 0;
+}
+.journey-progress-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.journey-progress-heading label {
+  min-width: 0;
+  margin: 0;
+  color: #3d3c40;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.journey-progress-heading > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
 }
 .journey-range {
   min-width: 0;
-  margin-top: 6px;
+  width: 100%;
 }
 .journey-slider {
   position: relative;
-  height: 34px;
+  height: 40px;
   min-width: 0;
 }
 .journey-rail {
   position: absolute;
-  top: 14px;
+  top: 17px;
   right: 9px;
   left: 9px;
   height: 6px;
@@ -2695,7 +2736,7 @@ footer > small {
 }
 .journey-ticks i {
   position: absolute;
-  top: 10px;
+  top: 13px;
   width: 2px;
   height: 14px;
   transform: translateX(-1px);
@@ -2703,7 +2744,7 @@ footer > small {
   box-shadow: 0 0 0 1px #55585a;
 }
 .journey-ticks i.is-cycle {
-  top: 8px;
+  top: 11px;
   height: 18px;
   background: #55585a;
   box-shadow: 0 0 0 1px white;
@@ -2713,8 +2754,8 @@ footer > small {
   inset: 0;
   z-index: 2;
   width: 100%;
-  height: 34px;
-  min-height: 34px;
+  height: 40px;
+  min-height: 40px;
   margin: 0;
   padding: 0;
   appearance: none;
@@ -2788,57 +2829,79 @@ footer > small {
   color: var(--primary);
   font-weight: 700;
 }
-@container route-map (min-width: 840px) {
+@container route-map (min-width: 560px) and (max-width: 899px) {
   .map-journey {
-    grid-template-columns: auto auto minmax(200px, 1fr);
-    gap: 16px;
+    gap: 18px;
+    padding: 20px;
   }
-}
-@container route-map (min-width: 550px) and (max-width: 839px) {
-  .map-journey {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 12px;
-    padding: 18px;
+  .journey-toolbar {
+    grid-template-columns: minmax(220px, 1.2fr) minmax(138px, 0.7fr);
+    gap: 16px 24px;
   }
-  .map-options {
-    gap: 10px;
+  .journey-scale-control,
+  .journey-lap-control {
+    grid-row: 2;
   }
-  .map-options .map-day-cycles {
-    flex-basis: 112px;
-  }
-  .map-journey .map-navigation button {
-    padding-right: 7px;
-    padding-left: 7px;
-  }
-  .map-journey .map-navigation {
-    grid-column: 1;
-  }
-  .map-options {
-    grid-column: 2;
-    justify-self: end;
-  }
-  .map-journey .map-scrub {
-    grid-column: 1 / -1;
+  .journey-lap-control {
+    justify-self: start;
   }
 }
 @container route-map (max-width: 559px) {
   .map-journey {
-    gap: 14px;
-    padding: 16px;
+    gap: 16px;
+    padding: 18px 16px 16px;
   }
-  .map-journey .map-navigation,
-  .map-options {
-    justify-self: start;
+  .journey-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(132px, 0.72fr);
+    gap: 14px 16px;
   }
-  .map-journey .map-navigation {
-    margin-top: 0;
+  .journey-navigation-control {
+    grid-column: 1 / -1;
+    min-width: 0;
   }
-  .map-journey .map-scrub.is-cycle {
-    grid-template-columns: 88px minmax(0, 1fr);
+  .journey-navigation-control .map-navigation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .journey-navigation-control .map-navigation button {
+    padding-right: 8px;
+    padding-left: 8px;
+    font-size: 10px;
+  }
+  .journey-lap-control {
+    grid-column: 1 / -1;
+  }
+  .journey-scale-control {
+    min-width: 0;
+  }
+  .journey-scale-control .map-scope-switch {
+    width: 100%;
+  }
+  .journey-scale-control .map-scope-switch button {
+    flex: 1 1 0;
+    padding-right: 7px;
+    padding-left: 7px;
   }
 }
-@container route-map (max-width: 319px) {
-  .map-options {
-    flex-wrap: wrap;
+@container route-map (max-width: 359px) {
+  .journey-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .journey-navigation-control,
+  .journey-cycle-control,
+  .journey-scale-control,
+  .journey-lap-control {
+    grid-column: 1;
+  }
+  .journey-cycle-control {
+    max-width: 180px;
+  }
+  .journey-scale-control .map-scope-switch {
+    width: max-content;
+  }
+  .journey-progress-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
   }
 }
