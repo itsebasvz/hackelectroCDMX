@@ -17,6 +17,7 @@ El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon
 - El usuario aprobó una aplicación React/TypeScript/Vite con motor puro en Web Worker, mapa MapLibre y dashboard, sin backend ni cuentas; ahora puede crearse `src/`. Seguir `DESIGN.md` y conservar la trazabilidad de supuestos y fuentes.
 
 - Usar **Conventional Commits con descripciones, cuerpos y notas en español**: `tipo(ámbito opcional): descripción`.
+- Crear **commits modulares por cada cambio lógico completado**. Cada commit debe tener un propósito único y ser revisable de forma independiente; incluir los archivos, pruebas y documentación necesarios para ese cambio, sin mezclar tareas distintas. Registrar los cambios conforme se completan, evitando acumular toda una sesión en un solo commit.
 - Conservar los identificadores convencionales, por ejemplo `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build` y `ci`; redactar la descripción en español, preferiblemente en imperativo. Ejemplos: `docs(investigacion): organiza las fuentes de Ruta 1` y `chore: configura el repositorio hackelectroCDMX`.
 - Cuando exista un cambio incompatible, usar `!` y/o el marcador estándar `BREAKING CHANGE:`; explicar el cambio y la migración en español.
 - Agrupar cambios relacionados y describir su propósito. Aplicar también este formato al título que se utilice para un commit de squash.
