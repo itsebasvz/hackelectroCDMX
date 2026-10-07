@@ -14,7 +14,7 @@ El diagnóstico distingue condiciones calculadas de autorización, patio/conexi�
 
 ## Explorar el mapa
 
-«Recorrido» diferencia los trazos originales; no les atribuye automáticamente sentido, terminal o parada. «Consumo estimado» representa el saldo energético según la vuelta seleccionada. El punto azul es una posición de exploración, nunca un vehículo real. Puede elegirse con el control de distancia o clic en el mapa.
+«Recorrido» diferencia los trazos originales; no les atribuye automáticamente sentido, terminal o parada. «Batería en el recorrido» representa el saldo energético según la vuelta seleccionada. El icono de van, minibús o autobús identifica la clase del vehículo del escenario y una posición de exploración, nunca seguimiento real. Puede elegirse con el control de distancia o clic a menos de 20 px del recorrido; un clic en espacio vacío no lo mueve. No se rota el icono ni se atribuye sentido de circulación.
 
 Para una fracción `f` del ciclo y una vuelta `v`:
 
@@ -30,7 +30,13 @@ La posición cartográfica usa distancia Haversine acumulada únicamente dentro 
 
 Si el SOC matemático resulta negativo, el indicador visual marca energía agotada y el requerimiento acumulado sigue visible. Eso describe un escenario que falla; no conducción física con batería negativa. El esquema SVG conserva el control de posición cuando falta WebGL. El cálculo permanece disponible si faltan teselas o cartografía.
 
-El contexto hospitalario está activado inicialmente sólo para Ruta 1. Cinco referencias aproximadas de inmuebles se sirven localmente bajo ODbL. Los nombres/domicilios institucionales y límites aparecen en sus referencias. No acreditan caminata, accesos, cobertura, paradas o demanda. No entran en las ecuaciones ni en el escenario JSON. [Procedencia](recursos-hospitales/README.md).
+Las tarjetas «En este punto» y «Batería para el día» muestran kilómetros, consumo de batería, SOC/reserva y margen o déficit energético de la unidad. La energía del día no certifica recuperación nocturna ni inversión: carga y financiamiento permanecen en el diagnóstico. Seleccionar el vehículo abre modelo, plazas, consumo neto, batería nominal y salud del escenario. Cuando las entradas son inválidas se conserva el resultado anterior, identificado, y se bloquea la navegación energética.
+
+«Inicio del día» y «Fin del día» seleccionan vuelta/fracción, sin modificar operación ni economía. «Ver límite de batería» selecciona exactamente el umbral de energía utilizable y activa la vista energética; el marcador de bandera y la navegación comparten `batteryLimit` con la tarjeta. Un límite en una frontera pertenece al final de la vuelta anterior; si excede el día no se ofrece como destino. El encuadre y los clics de navegación usan movimientos instantáneos; el salto sólo centra la posición cuando está fuera de la vista. «Encuadrar ruta» considera la geometría, el contexto activado y el espacio de las tarjetas.
+
+Con al menos 720 px de ancho del mapa, las tarjetas aparecen sobre él; entre 520 y 719 px forman una banda inferior de dos columnas; en vistas más estrechas se apilan. La ficha hospitalaria ocupa la esquina inferior derecha en la vista amplia. La tarjeta del punto y la ficha tienen desplazamiento cuando hace falta; atribuciones y zoom quedan accesibles. Se conserva la alineación de paneles de escritorio. El esquema sin WebGL conserva símbolos, colores energéticos, inspección y navegación; no ofrece centrado geográfico.
+
+El contexto hospitalario está activado inicialmente sólo para Ruta 1. Cinco referencias aproximadas de inmuebles se sirven localmente bajo ODbL. Los nombres/domicilios institucionales y límites aparecen en sus referencias y en la ficha seleccionada. Iconos cercanos se agrupan por proximidad en pantalla (52 px); su número cuenta inmuebles del archivo, no pasajeros ni hospitales atendidos. Seleccionar el grupo acerca el mapa; los nombres cortos aparecen a partir del zoom 14 sólo cuando no se superponen entre sí. «Centrar hospital» es una acción explícita y abre una vista de zoom 17; abrir la ficha desde la lista no mueve la cámara. No acreditan caminata, accesos, cobertura, paradas o demanda. No entran en las ecuaciones ni en el escenario JSON. [Procedencia](recursos-hospitales/README.md).
 
 ## Leer energía, presupuesto y límites
 

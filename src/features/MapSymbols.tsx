@@ -38,3 +38,12 @@ export function MapSymbol({
   }, [marker, coordinates[0], coordinates[1]]);
   return createPortal(children, element);
 }
+
+export interface Hospital {
+  name: string;
+  shortName: string;
+  address: string;
+  officialUrl: string;
+  osmUrl: string;
+  limitation: string;
+}

@@ -1,24 +1,77 @@
 import { useEffect, useRef, useState } from 'react';
-import { Hospital as HospitalIcon } from 'lucide-react';
-import { MapSymbol, VehicleIcon } from './MapSymbols';
+import { Hospital as HospitalIcon, Flag, Maximize, SkipBack, SkipForward } from 'lucide-react';
+import { PointCard, DayCard, HospitalCard } from './MapCards';
+import { MapSymbol, VehicleIcon, type Hospital } from './MapSymbols';
 import * as maplibregl from 'maplibre-gl';
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { FeatureCollection, LineString, Point } from 'geojson';
 import type { Result } from '../domain/schema';
-import { traceSegments, positionOnTrace, consumptionAt, nearestFraction } from '../domain/geometry';
+import {
+  traceSegments,
+  positionOnTrace,
+  consumptionAt,
+  nearestFraction,
+  batteryLimit,
+} from '../domain/geometry';
 import { num } from '../ui/format';
 import 'maplibre-gl/dist/maplibre-gl.css';
 maplibregl.setWorkerUrl(mapWorkerUrl);
-interface Hospital {
-  name: string;
-  shortName: string;
-  address: string;
-  officialUrl: string;
-  osmUrl: string;
-  limitation: string;
-}
 type Hospitals = FeatureCollection<Point, Hospital>;
 const empty = { type: 'FeatureCollection' as const, features: [] };
+function energyColor(soc: number, reserve: number) {
+  return soc < reserve ? '#B51C42' : soc < reserve + 0.1 ? '#AC6D14' : '#027A35';
+}
+function fitRoute(
+  m: maplibregl.Map,
+  geometry: FeatureCollection<LineString>,
+  hospitals: Hospitals | null,
+  wide: boolean,
+) {
+  const coords = [
+    ...geometry.features.flatMap((f) => f.geometry.coordinates),
+    ...(hospitals?.features.map((f) => f.geometry.coordinates) ?? []),
+  ];
+  if (!coords.length) return;
+  const bounds = new maplibregl.LngLatBounds();
+  coords.forEach((p) => bounds.extend([p[0]!, p[1]!]));
+  m.fitBounds(bounds, {
+    padding: wide ? { top: 45, left: 270, right: 70, bottom: 170 } : 55,
+    duration: 0,
+    maxZoom: 14,
+  });
+}
+function hospitalGroups(
+  m: maplibregl.Map | null,
+  data: Hospitals | null,
+): { features: Hospitals['features']; coordinates: number[]; showLabel: boolean }[] {
+  const groups: { features: Hospitals['features']; coordinates: number[] }[] = [];
+  if (!m || !data) return [];
+  for (const f of data.features) {
+    const p = m.project([f.geometry.coordinates[0]!, f.geometry.coordinates[1]!]);
+    const group = groups.find(
+      (g) => m.project([g.coordinates[0]!, g.coordinates[1]!]).dist(p) < 52,
+    );
+    if (group) group.features.push(f);
+    else groups.push({ features: [f], coordinates: f.geometry.coordinates });
+  }
+  const labels: { x: number; y: number; width: number }[] = [];
+  return groups.map((g) => {
+    const p = m.project([g.coordinates[0]!, g.coordinates[1]!]);
+    const width = g.features[0]!.properties.shortName.length * 7 + 12;
+    const label = { x: p.x - width / 2, y: p.y + 24, width };
+    const showLabel =
+      g.features.length === 1 &&
+      m.getZoom() >= 14 &&
+      !labels.some(
+        (other) =>
+          Math.abs(label.y - other.y) < 24 &&
+          label.x < other.x + other.width &&
+          other.x < label.x + label.width,
+      );
+    if (showLabel) labels.push(label);
+    return { ...g, showLabel };
+  });
+}
 function Outline({
   features,
   fraction,
@@ -27,7 +80,13 @@ function Outline({
   onHospital,
   onVehicle,
   stale,
+  cycle,
+  mode,
+  onLimit,
 }: {
+  cycle: number;
+  mode: 'route' | 'energy';
+  onLimit: () => void;
   result: Result | null;
   hospitals: Hospitals | null;
   onHospital: (hospital: Hospital) => void;
@@ -59,6 +118,12 @@ function Outline({
   ];
   const position = features ? positionOnTrace(features, fraction) : null;
   const marker = position ? project(position.coordinates) : null;
+  const limit = result ? batteryLimit(result) : null;
+  const reserve =
+    features && limit?.withinDay && limit.cycle === cycle
+      ? positionOnTrace(features, limit.fraction)
+      : null;
+  const reservePoint = reserve ? project(reserve.coordinates) : null;
   return (
     <svg
       viewBox="0 0 600 380"
@@ -66,16 +131,51 @@ function Outline({
       aria-label="Trazos históricos del ramal, sin mapa base"
       className="map-outline"
     >
-      {lines.map((line, i) => (
-        <polyline
-          key={i}
-          points={line.map((p) => project(p).join(',')).join(' ')}
-          fill="none"
-          stroke={i === 0 ? '#9D2148' : '#B28E5C'}
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-      ))}
+      {mode === 'route' &&
+        lines.map((line, i) => (
+          <polyline
+            key={i}
+            points={line.map((p) => project(p).join(',')).join(' ')}
+            fill="none"
+            stroke={i === 0 ? '#9D2148' : '#B28E5C'}
+            strokeWidth="5"
+            strokeLinecap="round"
+          />
+        ))}
+      {mode === 'energy' &&
+        result &&
+        features &&
+        traceSegments(features).map((segment, i, all) => {
+          const point = consumptionAt(
+            result,
+            cycle,
+            (segment.from + segment.to) / 2 / (all.at(-1)?.to || 1),
+          );
+          return (
+            <polyline
+              key={i}
+              points={[project(segment.start), project(segment.end)]
+                .map((p) => p.join(','))
+                .join(' ')}
+              fill="none"
+              stroke={energyColor(point.soc, result.scenario.energy.socMin)}
+              strokeWidth="5"
+              strokeLinecap="round"
+            />
+          );
+        })}
+      {mode === 'energy' && reservePoint && (
+        <foreignObject x={reservePoint[0]! - 22} y={reservePoint[1]! - 65} width="44" height="44">
+          <button
+            className="map-symbol reserve-outline-symbol"
+            aria-label="Límite de batería antes de la reserva"
+            disabled={stale}
+            onClick={onLimit}
+          >
+            <Flag size={21} aria-hidden="true" />
+          </button>
+        </foreignObject>
+      )}
       {hospitals?.features.map((f) => {
         const [x, y] = project(f.geometry.coordinates);
         return (
@@ -131,6 +231,7 @@ export default function RouteMap({
   const [hospitals, setHospitals] = useState<Hospitals | null>(null);
   const [hospitalError, setHospitalError] = useState('');
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+  const hospitalTrigger = useRef<HTMLElement | null>(null);
   const [mode, setMode] = useState<'route' | 'energy'>('route');
   const [context, setContext] = useState(routeId === 'M09-514');
   const [cycle, setCycle] = useState(1);
@@ -142,8 +243,17 @@ export default function RouteMap({
   const [zoom, setZoom] = useState(12);
   const [note, setNote] = useState('Cargando cartografía histórica…');
   const activeCycle = Math.min(cycle, result?.scenario.operation.cycles ?? 1);
-  const view = useRef({ routeId, result, mode, context, cycle: activeCycle, fraction, hospitals });
-  view.current = { routeId, result, mode, context, cycle: activeCycle, fraction, hospitals };
+  const view = useRef({
+    routeId,
+    result,
+    mode,
+    context,
+    cycle: activeCycle,
+    fraction,
+    hospitals,
+    stale,
+  });
+  view.current = { routeId, result, mode, context, cycle: activeCycle, fraction, hospitals, stale };
   const fitted = useRef('');
   const update = () => {
     const v = view.current;
@@ -167,12 +277,7 @@ export default function RouteMap({
               v.cycle,
               (segment.from + segment.to) / 2 / (total || 1),
             );
-            const color =
-              point.soc < v.result!.scenario.energy.socMin
-                ? '#B51C42'
-                : point.soc < v.result!.scenario.energy.socMin + 0.1
-                  ? '#AC6D14'
-                  : '#027A35';
+            const color = energyColor(point.soc, v.result!.scenario.energy.socMin);
             return {
               type: 'Feature',
               properties: { recordId: v.routeId, color },
@@ -201,44 +306,12 @@ export default function RouteMap({
       })),
     };
     (m.getSource('selected') as maplibregl.GeoJSONSource).setData(traced);
-    const position = positionOnTrace(selected, v.fraction);
-    (m.getSource('preview') as maplibregl.GeoJSONSource).setData(
-      position
-        ? {
-            type: 'Feature',
-            properties: {},
-            geometry: { type: 'Point', coordinates: position.coordinates },
-          }
-        : empty,
-    );
-    const reserveFraction = v.result
-      ? v.result.usableKwh /
-          v.result.scenario.ev.consumption /
-          (v.result.scenario.route.cycleKm * (1 + v.result.scenario.operation.emptyRatio)) -
-        (v.cycle - 1)
-      : -1;
-    const reserve =
-      reserveFraction >= 0 && reserveFraction <= 1
-        ? positionOnTrace(selected, reserveFraction)
-        : null;
-    (m.getSource('reserve') as maplibregl.GeoJSONSource).setData(
-      reserve
-        ? {
-            type: 'Feature',
-            properties: {},
-            geometry: { type: 'Point', coordinates: reserve.coordinates },
-          }
-        : empty,
-    );
-    m.setLayoutProperty('reserve-point', 'visibility', v.mode === 'energy' ? 'visible' : 'none');
-    (m.getSource('hospitals') as maplibregl.GeoJSONSource).setData(v.hospitals ?? empty);
-
-    const coords = selected.features.flatMap((f) => f.geometry.coordinates);
-    if (coords.length && fitted.current !== v.routeId) {
-      const bounds = new maplibregl.LngLatBounds();
-      coords.forEach((p) => bounds.extend([p[0]!, p[1]!]));
-      m.fitBounds(bounds, { padding: 65, duration: 0, maxZoom: 14 });
-      fitted.current = v.routeId;
+    const wide = (container.current?.clientWidth ?? 0) >= 720;
+    const hospitalContext = v.context && v.routeId === 'M09-514' ? v.hospitals : null;
+    const fitKey = `${v.routeId}:${wide}:${hospitalContext?.features.length ?? 0}`;
+    if (selected.features.length && fitted.current !== fitKey) {
+      fitRoute(m, selected, hospitalContext, wide);
+      fitted.current = fitKey;
     }
   };
   useEffect(() => {
@@ -259,7 +332,10 @@ export default function RouteMap({
         if (e.name !== 'AbortError')
           setNote('No se pudo cargar la geometría; los cálculos siguen disponibles.');
       });
-    const observer = new ResizeObserver(() => map.current?.resize());
+    const observer = new ResizeObserver(() => {
+      map.current?.resize();
+      update();
+    });
     try {
       if (!container.current) throw Error('Sin contenedor');
       const m = new maplibregl.Map({
@@ -311,8 +387,7 @@ export default function RouteMap({
           source: 'routes',
           paint: { 'line-color': '#777477', 'line-width': 1, 'line-opacity': 0.13 },
         });
-        for (const id of ['selected', 'energy', 'preview', 'reserve', 'hospitals'])
-          m.addSource(id, { type: 'geojson', data: empty });
+        for (const id of ['selected', 'energy']) m.addSource(id, { type: 'geojson', data: empty });
         m.addLayer({
           id: 'selected-casing',
           type: 'line',
@@ -331,25 +406,18 @@ export default function RouteMap({
           source: 'energy',
           paint: { 'line-color': ['get', 'color'], 'line-width': 5 },
         });
-        m.addLayer({
-          id: 'reserve-point',
-          type: 'circle',
-          source: 'reserve',
-          paint: {
-            'circle-radius': 10,
-            'circle-color': '#B51C42',
-            'circle-stroke-color': '#fff',
-            'circle-stroke-width': 3,
-          },
-        });
         setMapReady(true);
         setZoom(m.getZoom());
         setNote('SEMOVI · geometría histórica 2022 · consumo uniforme supuesto');
         update();
       });
       m.on('click', (e) => {
-        if (geometryRef.current.features.length)
-          setFraction(nearestFraction(geometryRef.current, [e.lngLat.lng, e.lngLat.lat]));
+        if (!view.current.stale && view.current.result && geometryRef.current.features.length) {
+          const f = nearestFraction(geometryRef.current, [e.lngLat.lng, e.lngLat.lat]);
+          const p = positionOnTrace(geometryRef.current, f);
+          if (p && m.project([p.coordinates[0]!, p.coordinates[1]!]).dist(e.point) <= 20)
+            setFraction(f);
+        }
       });
       m.on('zoomend', () => setZoom(m.getZoom()));
       m.on('error', () =>
@@ -384,6 +452,7 @@ export default function RouteMap({
     setCycle(1);
     setContext(routeId === 'M09-514');
     setSelectedHospital(null);
+    setShowVehicle(false);
     update();
   }, [routeId]);
   useEffect(() => {
@@ -407,9 +476,76 @@ export default function RouteMap({
       });
     return () => controller.abort();
   }, [routeId, hospitals]);
-  const p = result ? consumptionAt(result, activeCycle, fraction) : null;
+  const limit = result ? batteryLimit(result) : null;
   const position = geometry ? positionOnTrace(geometry, fraction) : null;
   const cartographic = geometry ? (traceSegments(geometry).at(-1)?.to ?? 0) : 0;
+  const frameRoute = () => {
+    const m = map.current;
+    if (!m || !geometry?.features.length) return;
+    fitRoute(
+      m,
+      geometry!,
+      context && routeId === 'M09-514' ? hospitals : null,
+      (container.current?.clientWidth ?? 0) >= 720,
+    );
+  };
+  const jump = (nextCycle: number, nextFraction: number) => {
+    if (!result || stale || !geometry?.features.length) return;
+    setCycle(nextCycle);
+    setFraction(nextFraction);
+    const target = positionOnTrace(geometry, nextFraction);
+    const m = map.current;
+    if (target && m && !m.getBounds().contains([target.coordinates[0]!, target.coordinates[1]!]))
+      m.panTo([target.coordinates[0]!, target.coordinates[1]!], { duration: 0 });
+  };
+  const jumpLimit = () => {
+    if (!limit?.withinDay) return;
+    setMode('energy');
+    jump(limit.cycle, limit.fraction);
+  };
+  const centerHospital = () => {
+    const f = hospitals?.features.find(
+      (f) => f.properties.shortName === selectedHospital?.shortName,
+    );
+    if (f)
+      map.current?.jumpTo({
+        center: [f.geometry.coordinates[0]!, f.geometry.coordinates[1]!],
+        zoom: 17,
+      });
+  };
+  const reservePosition =
+    limit?.withinDay && limit.cycle === activeCycle && geometry
+      ? positionOnTrace(geometry, limit.fraction)
+      : null;
+  const openHospital = (hospital: Hospital) => {
+    hospitalTrigger.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setSelectedHospital(hospital);
+  };
+  const closeHospital = () => {
+    setSelectedHospital(null);
+    if (hospitalTrigger.current?.isConnected) hospitalTrigger.current.focus();
+  };
+  const groups =
+    mapReady && context && routeId === 'M09-514' ? hospitalGroups(map.current, hospitals) : [];
+  const openGroup = (group: ReturnType<typeof hospitalGroups>[number]) => {
+    if (group.features.length === 1) {
+      openHospital(group.features[0]!.properties);
+      return;
+    }
+    const bounds = new maplibregl.LngLatBounds();
+    group.features.forEach((f) =>
+      bounds.extend([f.geometry.coordinates[0]!, f.geometry.coordinates[1]!]),
+    );
+    map.current?.fitBounds(bounds, {
+      padding:
+        (container.current?.clientWidth ?? 0) >= 720
+          ? { top: 45, left: 270, right: 70, bottom: 170 }
+          : 45,
+      maxZoom: 17,
+      duration: 0,
+    });
+  };
   return (
     <div className="map-explorer">
       <div className="map-tools">
@@ -419,10 +555,10 @@ export default function RouteMap({
           </button>
           <button
             aria-pressed={mode === 'energy'}
-            disabled={!result}
+            disabled={!result || stale}
             onClick={() => setMode('energy')}
           >
-            Consumo estimado
+            Batería en el recorrido
           </button>
         </div>
         {routeId === 'M09-514' && (
@@ -436,135 +572,193 @@ export default function RouteMap({
           </label>
         )}
       </div>
-      <div className="map-shell">
-        <div
-          className="map-canvas"
-          data-route-rendered={painted}
-          ref={container}
-          aria-label="Mapa de ramales históricos"
-          hidden={fallback}
-        />
-        {fallback && (
-          <Outline
-            features={geometry}
-            fraction={fraction}
-            result={result}
-            stale={stale}
-            hospitals={context && routeId === 'M09-514' ? hospitals : null}
-            onHospital={setSelectedHospital}
-            onVehicle={() => setShowVehicle((v) => !v)}
+      <div className="map-stage">
+        <div className="map-shell">
+          <div
+            className="map-canvas"
+            data-route-rendered={painted}
+            ref={container}
+            aria-label="Mapa de ramales históricos"
+            hidden={fallback}
           />
-        )}
-        {mapReady && !fallback && map.current && position && result && (
-          <MapSymbol map={map.current} coordinates={position.coordinates}>
-            <button
-              className="map-symbol vehicle-symbol"
-              aria-label="Vehículo del escenario"
-              aria-expanded={showVehicle}
-              disabled={stale}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowVehicle((v) => !v);
-              }}
-            >
-              <VehicleIcon category={result.scenario.ev.category} />
-            </button>
-          </MapSymbol>
-        )}
-        {mapReady &&
-          !fallback &&
-          map.current &&
-          context &&
-          routeId === 'M09-514' &&
-          hospitals?.features.map((f) => (
-            <MapSymbol
-              key={f.properties.shortName}
-              map={map.current!}
-              coordinates={f.geometry.coordinates}
-            >
+          {fallback && (
+            <Outline
+              features={geometry}
+              fraction={fraction}
+              cycle={activeCycle}
+              mode={mode}
+              onLimit={jumpLimit}
+              result={result}
+              stale={stale}
+              hospitals={context && routeId === 'M09-514' ? hospitals : null}
+              onHospital={openHospital}
+              onVehicle={() => setShowVehicle((v) => !v)}
+            />
+          )}
+          {mapReady && !fallback && map.current && position && result && (
+            <MapSymbol map={map.current} coordinates={position.coordinates}>
               <button
-                className="map-symbol hospital-symbol"
-                aria-label={`Hospital: ${f.properties.shortName}`}
+                className="map-symbol vehicle-symbol"
+                aria-label="Vehículo del escenario"
+                aria-expanded={showVehicle}
+                disabled={stale}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedHospital(f.properties);
+                  setShowVehicle((v) => !v);
                 }}
               >
-                <HospitalIcon size={22} aria-hidden="true" />
+                <VehicleIcon category={result.scenario.ev.category} />
               </button>
-              {zoom >= 14 && <span className="hospital-map-label">{f.properties.shortName}</span>}
             </MapSymbol>
-          ))}
-        {showVehicle && result && (
-          <div className="vehicle-callout">
-            <b>{result.scenario.ev.name}</b>
-            <p>
-              {result.scenario.ev.capacity} plazas · {num(result.scenario.ev.consumption, 2)} kWh/km
-              netos
-            </p>
+          )}
+          {!fallback &&
+            map.current &&
+            groups.map((group) => (
+              <MapSymbol
+                key={group.features.map((f) => f.properties.shortName).join('-')}
+                map={map.current!}
+                coordinates={group.coordinates}
+              >
+                <button
+                  className="map-symbol hospital-symbol"
+                  title={
+                    group.features.length > 1
+                      ? `Ver ${group.features.length} hospitales cercanos`
+                      : group.features[0]!.properties.name
+                  }
+                  aria-label={
+                    group.features.length > 1
+                      ? `Ver ${group.features.length} hospitales cercanos`
+                      : `Hospital: ${group.features[0]!.properties.shortName}`
+                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openGroup(group);
+                  }}
+                >
+                  <HospitalIcon size={22} aria-hidden="true" />
+                  {group.features.length > 1 && (
+                    <span className="hospital-cluster-count" aria-hidden="true">
+                      {group.features.length}
+                    </span>
+                  )}
+                </button>
+                {group.showLabel && zoom >= 14 && (
+                  <span className="hospital-map-label">
+                    {group.features[0]!.properties.shortName}
+                  </span>
+                )}
+              </MapSymbol>
+            ))}
+          {mapReady && !fallback && map.current && mode === 'energy' && reservePosition && (
+            <MapSymbol map={map.current} coordinates={reservePosition.coordinates}>
+              <button
+                className="map-symbol reserve-symbol"
+                aria-label="Límite de batería antes de la reserva"
+                disabled={stale}
+                onClick={jumpLimit}
+              >
+                <Flag size={21} aria-hidden="true" />
+              </button>
+            </MapSymbol>
+          )}
+          <div className="map-caption">
+            <span className="map-dot" />
+            {note}
           </div>
-        )}
-        <div className="map-caption">
-          <span className="map-dot" />
-          {note}
+          <button
+            className="map-reframe"
+            aria-label="Encuadrar ruta"
+            title="Encuadrar ruta"
+            disabled={!geometry?.features.length || fallback}
+            onClick={frameRoute}
+          >
+            <Maximize size={19} aria-hidden="true" />
+          </button>
         </div>
-        {selectedHospital && context && routeId === 'M09-514' && (
-          <div className="hospital-callout">
-            <button
-              aria-label="Cerrar referencia hospitalaria"
-              onClick={() => setSelectedHospital(null)}
-            >
-              ×
-            </button>
-            <b>{selectedHospital.shortName}</b>
-            <p>{selectedHospital.address}</p>
-            <small>{selectedHospital.limitation}</small>
-            <a href={selectedHospital.officialUrl} target="_blank" rel="noreferrer">
-              Referencia institucional ↗
-            </a>
-          </div>
-        )}
-      </div>
-      <div className="map-legend">
-        {mode === 'route' ? (
-          <>
+        <div className={`map-hud ${stale ? 'is-stale' : ''}`}>
+          <PointCard
+            result={result}
+            cycle={activeCycle}
+            fraction={fraction}
+            stale={stale}
+            expanded={showVehicle}
+            onToggle={() => setShowVehicle((v) => !v)}
+          />
+          <div className="map-legend">
+            {mode === 'route' ? (
+              <>
+                <span>
+                  <i style={{ background: '#9D2148' }} />
+                  Trazo 1
+                </span>
+                {(geometry?.features.length ?? 0) > 1 && (
+                  <span>
+                    <i style={{ background: '#B28E5C' }} />
+                    Trazo 2 y siguientes
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <span>
+                  <i style={{ background: '#027A35' }} />
+                  Sobre la reserva + 10 puntos
+                </span>
+                <span>
+                  <i style={{ background: '#AC6D14' }} />
+                  Cerca de la reserva
+                </span>
+                <span>
+                  <i style={{ background: '#B51C42' }} />
+                  Reserva alcanzada
+                </span>
+              </>
+            )}
             <span>
-              <i style={{ background: '#9D2148' }} />
-              Trazo 1
+              <i style={{ background: '#266CB4' }} />
+              Vehículo del escenario
             </span>
-            {(geometry?.features.length ?? 0) > 1 && (
+            {context && routeId === 'M09-514' && (
               <span>
-                <i style={{ background: '#B28E5C' }} />
-                Trazo 2 y siguientes
+                <i style={{ background: '#8F4889' }} />
+                Hospital
               </span>
             )}
-          </>
-        ) : (
-          <>
-            <span>
-              <i style={{ background: '#027A35' }} />
-              Sobre la reserva + 10 puntos
-            </span>
-            <span>
-              <i style={{ background: '#AC6D14' }} />
-              Cerca de la reserva
-            </span>
-            <span>
-              <i style={{ background: '#B51C42' }} />
-              Reserva alcanzada
-            </span>
-          </>
-        )}
-        <span>
-          <i style={{ background: '#266CB4' }} />
-          Punto explorado
-        </span>
-        {context && routeId === 'M09-514' && (
-          <span>
-            <i style={{ background: '#8F4889' }} />
-            Hospital
-          </span>
-        )}
+          </div>
+          <DayCard
+            result={result}
+            stale={stale}
+            onLimit={jumpLimit}
+            canNavigate={!!geometry?.features.length}
+          />
+          {selectedHospital && context && routeId === 'M09-514' && (
+            <HospitalCard
+              hospital={selectedHospital}
+              onClose={closeHospital}
+              onCenter={centerHospital}
+              canCenter={mapReady && !fallback}
+            />
+          )}
+        </div>
+      </div>
+      <div className="map-navigation" aria-label="Navegación del día simulado">
+        <button
+          className="secondary"
+          disabled={!result || stale || !geometry?.features.length}
+          onClick={() => jump(1, 0)}
+        >
+          <SkipBack size={14} aria-hidden="true" />
+          Inicio del día
+        </button>
+        <button
+          className="secondary"
+          disabled={!result || stale || !geometry?.features.length}
+          onClick={() => jump(result!.scenario.operation.cycles, 1)}
+        >
+          Fin del día
+          <SkipForward size={14} aria-hidden="true" />
+        </button>
       </div>
       <div className="map-scrub">
         <div className="field">
@@ -599,27 +793,13 @@ export default function RouteMap({
           />
         </div>
       </div>
-      <div className="map-readout">
-        <span>
-          <b>{p ? num(p.km, 1) : '—'} km</b>acumulados del día
-        </span>
-        <span>
-          <b>{p ? num(p.kwh, 2) : '—'} kWh</b>consumo estimado
-        </span>
-        <span>
-          <b className={p && result && p.soc < result.scenario.energy.socMin ? 'negative' : ''}>
-            {p ? `${num(Math.max(0, p.soc) * 100, 1)}%` : '—'}
-          </b>
-          {p && p.soc < 0 ? 'Energía agotada en el modelo' : 'batería restante estimada'}
-        </span>
-      </div>
       <p className="map-method">
         Distribución uniforme por distancia; incluye adicionales proporcionalmente, sin tráfico ni
         pendientes. {stale && 'Resultado anterior; espera el cálculo o corrige las entradas. '}
         {result &&
           Math.abs(cartographic - result.scenario.route.cycleKm) > 0.02 &&
           `Cartografía: ${num(cartographic, 2)} km; ciclo editado: ${num(result.scenario.route.cycleKm, 2)} km. `}
-        El punto explorado no representa un vehículo real.
+        El vehículo representa una posición explorada, no seguimiento real.
       </p>
       {routeId === 'M09-514' && context && (
         <details className="hospital-references">
@@ -640,7 +820,7 @@ export default function RouteMap({
           <ul>
             {hospitals?.features.map((f) => (
               <li key={f.properties.shortName}>
-                <button className="text-button" onClick={() => setSelectedHospital(f.properties)}>
+                <button className="text-button" onClick={() => openHospital(f.properties)}>
                   {f.properties.shortName}
                 </button>
                 <span>{f.properties.address}</span>

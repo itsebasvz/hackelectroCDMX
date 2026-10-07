@@ -127,8 +127,18 @@ test('copia local funciona sin teselas ni WebGL, con salida imprimible', async (
   await page.goto('/');
   await ready(page);
   await expect(
-    page.getByRole('img', { name: 'Trazos históricos del ramal, sin mapa base' }),
+    page.getByRole('group', { name: 'Trazos históricos del ramal, sin mapa base' }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'Fin del día', exact: true }).click();
+  await expect(page.locator('.map-point-card')).toContainText('42.71 kWh');
+  await page.getByText('Zona de Hospitales: referencias y límites', { exact: true }).click();
+  await page
+    .locator('.hospital-references')
+    .getByRole('button', { name: 'INCan', exact: true })
+    .click();
+  await expect(page.locator('.hospital-callout')).toContainText('San Fernando 22');
+  await expect(page.getByRole('button', { name: 'Centrar hospital', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Cerrar referencia hospitalaria' }).click();
   await page.context().setOffline(true);
   await page.getByRole('button', { name: 'Minibús · diésel', exact: true }).click();
   await ready(page);
@@ -166,14 +176,15 @@ test('explora consumo, hospitales y sensibilidad sin alterar el recaudo', async 
   await ready(page);
   await expect(page).toHaveTitle('Electromovilidad CDMX 2026 · Evaluador de rutas');
   await expect(page.getByRole('link', { name: /Equipo Aragonenes/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Consumo estimado', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Consumo estimado', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await page.getByRole('button', { name: 'Batería en el recorrido', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Batería en el recorrido', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
   await page.getByLabel('Vuelta del día').selectOption('8');
   await page.getByLabel('Explora el recorrido · trazo', { exact: false }).fill('1000');
-  await expect(page.locator('.map-readout').getByText('42.71 kWh')).toBeVisible();
+  await expect(
+    page.locator('.map-point-card').getByText('42.71 kWh', { exact: true }),
+  ).toBeVisible();
   await page.getByText('Zona de Hospitales: referencias y límites', { exact: true }).click();
   await page
     .locator('.hospital-references')
@@ -195,4 +206,63 @@ test('explora consumo, hospitales y sensibilidad sin alterar el recaudo', async 
   await ready(page);
   await expect(page.getByLabel('Contexto hospitalario', { exact: true })).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('mapa contextual navega al límite y conserva accesibilidad y parámetros', async ({ page }) => {
+  await page.goto('/');
+  await ready(page);
+  await expect(page.locator('.map-canvas')).toHaveAttribute('data-route-rendered', 'true');
+  await expect(page.locator('.vehicle-symbol .lucide-van')).toBeVisible();
+  await page.locator('.vehicle-symbol').click();
+  await expect(page.locator('.map-vehicle-details')).toContainText('16 plazas');
+  await page.getByRole('button', { name: 'Fin del día', exact: true }).click();
+  await expect(page.getByLabel('Vuelta del día')).toHaveValue('8');
+  await expect(page.getByLabel('Explora el recorrido · trazo', { exact: false })).toHaveValue(
+    '1000',
+  );
+  await expect(page.locator('.map-point-card')).toContainText('42.71 kWh');
+  await page.getByRole('button', { name: 'Inicio del día', exact: true }).click();
+  await expect(page.getByLabel('Vuelta del día')).toHaveValue('1');
+  await expect(page.getByLabel('Explora el recorrido · trazo', { exact: false })).toHaveValue('0');
+  const map = page.locator('.map-canvas');
+  const box = await map.boundingBox();
+  await map.click({ position: { x: box!.width - 80, y: 210 } });
+  await expect(page.getByLabel('Explora el recorrido · trazo', { exact: false })).toHaveValue('0');
+  await page.getByLabel('Consumo neto en batería').fill('1');
+  await ready(page);
+  await expect(page.locator('.map-day-card')).toContainText('Faltan');
+  await page.getByRole('button', { name: 'Ver límite de batería', exact: true }).click();
+  await expect(page.locator('.map-point-card')).toContainText('15%');
+  await expect(page.getByRole('meter', { name: 'Batería restante estimada' })).toHaveAttribute(
+    'aria-valuenow',
+    /15/,
+  );
+  await expect(
+    page.getByRole('button', { name: 'Límite de batería antes de la reserva' }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Consumo neto en batería')).toHaveValue('1');
+  await expect(page.getByLabel('Ascensos diarios por unidad')).toHaveValue('320');
+  await expect(page.getByLabel('Ciclos diarios por unidad')).toHaveValue('8');
+  await page.getByRole('button', { name: 'Encuadrar ruta', exact: true }).click();
+  await page.getByText('Zona de Hospitales: referencias y límites', { exact: true }).click();
+  await page
+    .locator('.hospital-references')
+    .getByRole('button', { name: 'INCan', exact: true })
+    .click();
+  await expect(page.locator('.hospital-callout')).toContainText(
+    'Instituto Nacional de Cancerología',
+  );
+  await page.getByRole('button', { name: 'Centrar hospital', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Hospital: INCan', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Cerrar referencia hospitalaria' }).click();
+  await page.getByLabel('Contexto hospitalario', { exact: true }).uncheck();
+  await expect(page.locator('.hospital-symbol')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Minibús · diésel', exact: true }).click();
+  await ready(page);
+  await expect(page.locator('.vehicle-symbol .lucide-bus-front')).toBeVisible();
+  await page.getByLabel('Longitud del ciclo de prueba').fill('');
+  await expect(page.locator('.map-point-card')).toContainText('Resultado anterior');
+  await expect(page.getByRole('button', { name: 'Fin del día', exact: true })).toBeDisabled();
+  const axe = await new AxeBuilder({ page }).analyze();
+  expect(axe.violations).toEqual([]);
 });

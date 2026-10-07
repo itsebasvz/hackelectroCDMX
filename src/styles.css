@@ -1789,24 +1789,7 @@ footer > small {
   accent-color: var(--primary);
   min-height: 44px;
 }
-.map-readout {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0 16px;
-  padding: 14px;
-  background: #fbf7f9;
-  border-radius: 8px;
-  font-size: 9px;
-  color: var(--muted);
-}
-.map-readout b {
-  display: block;
-  color: #3d3c40;
-  font-size: 17px;
-  margin-bottom: 5px;
-  font-variant-numeric: tabular-nums;
-}
+
 .map-method {
   font-size: 10px;
   color: var(--muted);
@@ -1825,36 +1808,7 @@ footer > small {
 .map-bottomline b {
   font-size: 12px;
 }
-.hospital-callout {
-  position: absolute;
-  top: 18px;
-  left: 16px;
-  background: white;
-  border-radius: 10px;
-  padding: 15px 28px 15px 15px;
-  max-width: min(320px, calc(100% - 90px));
-  box-shadow: 0 3px 16px #0002;
-  font-size: 11px;
-  z-index: 3;
-}
-.hospital-callout p {
-  margin: 7px 0;
-}
-.hospital-callout small {
-  display: block;
-  font-size: 10px;
-}
-.hospital-callout > button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: none;
-  color: var(--primary);
-  width: 44px;
-  height: 44px;
-  font-size: 22px;
-}
-.hospital-callout a,
+.map-hospital-actions a,
 .hospital-references a {
   color: var(--primary);
   text-decoration: underline;
@@ -2182,9 +2136,7 @@ footer > small {
   .map-shell {
     height: 440px;
   }
-  .map-readout b {
-    font-size: 15px;
-  }
+
   .diagnostic-checks {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2294,13 +2246,321 @@ footer > small {
   pointer-events: none;
   white-space: nowrap;
 }
-.vehicle-callout {
-  position: absolute;
-  top: 16px;
-  left: 16px;
+
+/* Información del mapa: sobre la cartografía cuando hay espacio, debajo en vistas estrechas. */
+.map-explorer {
+  container: route-map / inline-size;
+}
+.map-stage {
+  position: relative;
+}
+.map-hud {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+.map-card {
   background: white;
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px;
-  max-width: 240px;
   font-size: 11px;
+  color: #55585a;
+  min-width: 0;
+}
+.map-card p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.map-card small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.map-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.map-card-heading > span {
+  font-size: 9px;
+  color: var(--muted);
+}
+.map-card-heading .map-simulation {
+  color: #266cb4;
+  font-size: 8px;
+  background: #edf4fa;
+  padding: 3px 5px;
+  border-radius: 4px;
+}
+.is-stale .map-card-heading .map-simulation {
+  color: #80500f;
+  background: #fff3d8;
+}
+.map-point-energy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #266cb4;
+}
+.map-point-energy strong {
+  font-size: 24px;
+}
+.map-point-energy span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.map-battery-meter {
+  position: relative;
+  height: 9px;
+  background: #edeaed;
+  border-radius: 4px;
+  margin-top: 9px;
+}
+.map-battery-meter > span {
+  display: block;
+  height: 100%;
+  background: #266cb4;
+  border-radius: 4px;
+}
+.map-battery-meter > i {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #9d2148;
+}
+.map-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.map-vehicle-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--primary);
+  font-size: 10px;
+}
+.map-vehicle-details {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.map-day-verdict {
+  display: block;
+  font-size: 16px;
+  color: #027a35;
+  margin-top: 9px;
+}
+.energy-deficit .map-day-verdict {
+  color: #9d2148;
+}
+.map-day-card .text-button {
+  min-height: 44px;
+  padding: 8px 0;
+  font-size: 11px;
+  gap: 7px;
+}
+.map-hud .hospital-callout {
+  position: relative;
+  top: auto;
+  left: auto;
+  max-width: none;
+  box-shadow: none;
+  padding: 14px;
+  z-index: auto;
+}
+.map-hud .hospital-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.map-hospital-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 30px;
+  color: #8f4889;
+}
+.map-hospital-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.map-hospital-actions button {
+  min-height: 44px;
+  padding: 5px 0;
+  font-size: 10px;
+}
+.map-hospital-actions a {
+  margin: 0;
+  font-size: 10px;
+}
+.map-hud .map-legend {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
+  font-size: 9px;
+  grid-row: 3;
+}
+.map-hud .hospital-callout {
+  grid-row: 4;
+}
+.map-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 0;
+}
+.map-navigation button {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+.map-reframe {
+  position: absolute;
+  top: 108px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #55585a;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  z-index: 2;
+}
+.reserve-symbol {
+  background: #9d2148;
+}
+.maplibregl-marker:has(.vehicle-symbol) {
+  z-index: 3;
+}
+.maplibregl-marker:has(.reserve-symbol) {
+  z-index: 2;
+}
+.maplibregl-marker:has(.hospital-symbol) {
+  z-index: 1;
+}
+@container route-map (min-width: 720px) {
+  .map-hud {
+    position: absolute;
+    inset: 16px 16px 46px;
+    padding: 0;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr) 12px auto;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .map-hud > * {
+    pointer-events: auto;
+    width: min(100%, 260px);
+    align-self: start;
+  }
+  .map-point-card {
+    grid-column: 1;
+    grid-row: 1;
+    max-height: 100%;
+    overflow: auto;
+  }
+  .map-day-card {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+  .map-hud .map-legend {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    margin-right: 54px;
+    width: 185px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  .map-hud .hospital-callout {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: end;
+    align-self: end;
+    width: min(100%, 300px);
+    max-height: 200px;
+    overflow: auto;
+  }
+}
+.hospital-cluster-count {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  background: white;
+  color: #8f4889;
+  border: 1px solid #8f4889;
+  border-radius: 50%;
+  width: 19px;
+  height: 19px;
+  font-size: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.reserve-symbol {
+  transform: translateY(-40px);
+  position: relative;
+}
+.reserve-symbol::after {
+  content: '';
+  position: absolute;
+  top: 40px;
+  left: 18px;
+  height: 16px;
+  width: 2px;
+  background: #9d2148;
+}
+.reserve-outline-symbol {
+  background: #9d2148;
+}
+@container route-map (min-width: 520px) and (max-width: 719px) {
+  .map-hud {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .map-point-card {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .map-day-card {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .map-hud .map-legend {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .map-hud .hospital-callout {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
 }

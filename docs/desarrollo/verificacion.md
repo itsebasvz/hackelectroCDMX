@@ -35,3 +35,12 @@ La consulta OSM original y las cinco referencias derivadas conservan hashes y OD
 
 
 El rediseño quedó publicado en https://hackelectro-cdmx.vercel.app con HEAD de aplicación `ff3631a`. La revisión pública comprobó título nuevo, trazo renderizado, consumo por vuelta, búsqueda de 180 combinaciones, cero errores JavaScript y cero infracciones Axe. La geometría hospitalaria y MIT de Octicons devuelven HTTP 200; los archivos locales/credenciales continúan en 404. CI pasó: [ejecución 37568430236](https://github.com/itsebasvz/hackelectroCDMX/actions/runs/37568430236). Las cifras de tiempo corresponden sólo a esta sesión, sin garantizar rendimiento universal.
+
+## Mapa contextual — 2026-10-07
+
+- `npm run check`: tipos, 31 pruebas unitarias y compilación correctos. El límite energético se comprueba dentro del día, fuera del día y en fronteras exactas de vueltas, con el mismo consumo del evaluador.
+- `npm run test:e2e`: ocho recorridos Chromium correctos. El nuevo recorrido verifica iconos por clase, inicio/final/límite, clic en espacio vacío, inspección y centrado hospitalario, ocultación de contexto, parámetros conservados e invalidez. Axe no encontró infracciones en los estados revisados, incluido el resultado anterior; se corrigió el contraste de ese aviso.
+- `npm run format:check`: correcto. La compilación sigue informando el tamaño de módulos cartográficos y gráficas; no se ocultó el aviso.
+- Revisión local en 1920×768, 1920×1080, 1440×900, 1366×768, 1100×800 y 390×844: sin desbordamiento horizontal, sin intersección de las tarjetas del punto y del día, cero errores JavaScript y paneles de la misma fila alineados. Se inspeccionó también el estado con hospital seleccionado y déficit energético.
+- El recorrido sin WebGL incluye icono del vehículo, navegación al final del día e inspección hospitalaria antes de desconectar la red. La copia imprimible sigue disponible.
+- Escenario JSON v1, evaluador económico y recursos geográficos/licencias permanecen compatibles. La vista describe un escenario energético y ubicaciones aproximadas, sin acreditar operación, acceso hospitalario, carga o inversión.
