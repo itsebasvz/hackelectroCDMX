@@ -109,3 +109,7 @@ JSON exportado: escenario normalizado, catálogo, fuentes, versiones, fecha y ch
 CSV e informe conservan entradas, unidades, evidencia, resultados, restricciones y referencias. Se protegen cadenas CSV contra fórmulas. Una edición inválida no reemplaza el último resultado válido ni se guarda como escenario válido.
 
 Las pruebas cubren casos analíticos, energía y carga, saldo financiero, asignación comparada con enumeración exhaustiva independiente, apoyo mínimo al centavo, déficit recurrente, exportación, respuestas obsoletas, accesibilidad, móvil y fallos de mapa. Los resultados con fuentes incompletas permanecen condicionados.
+
+## Exploración explicativa de la interfaz
+
+El rediseño no modifica las ecuaciones del modelo 1.0.0. [Interfaz de evaluación](interfaz-evaluacion.md) documenta las transformaciones para presupuesto mensual, energía, consumo acumulado por distancia y sensibilidad a vueltas. La sensibilidad invoca el evaluador completo y conserva recaudo y condiciones financieras; el mapa distribuye consumo de manera uniforme y no conecta artificialmente trazos. Las referencias hospitalarias son contexto ajeno al cálculo. La brecha de capital inicial no sustituye la aportación mínima encontrada por el optimizador.

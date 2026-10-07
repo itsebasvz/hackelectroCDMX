@@ -31,6 +31,8 @@ El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon
 
 ## Aplicación y verificación
 
+- Rediseño aprobado el 6 de octubre de 2026: ancho completo, controles esenciales + cuatro grupos avanzados, mapa con consumo por distancia y contexto hospitalario, presupuesto por componentes y sensibilidad a vueltas usando el mismo evaluador. Consultar `docs/desarrollo/interfaz-evaluacion.md`. Mantener compatibilidad del JSON v1; no convertir contexto hospitalario en demanda ni variación de vueltas en más recaudo. Los puntos OSM son referencias aproximadas de inmuebles bajo ODbL, no paradas.
+
 - Consultar `docs/desarrollo/README.md` y `docs/desarrollo/metodologia-motor.md`. Ejecutar `npm run check`, `npm run test:e2e` y `npm run format:check` antes de publicar.
 - Reservar inversión, principal, ingreso objetivo y liquidez por separado. El enganche es mínimo; asignar capital/apoyo sin inflar artificialmente el apoyo. No rescatar déficit recurrente mediante aportación inicial.
 - MapLibre 6 requiere su worker empaquetado localmente. No depender de CDN ni descargar masivamente teselas OSM. Conservar fuentes tipográficas locales y avisos jurídicos originales en la distribución.

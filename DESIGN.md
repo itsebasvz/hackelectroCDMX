@@ -1,4 +1,6 @@
 # Gobierno de la Ciudad de México — Style Reference
+
+**Aplicación al evaluador, decisión del usuario del 6 de octubre de 2026:** la mesa de evaluación y sus resultados aprovechan el ancho de escritorio con márgenes de 24 px; esta decisión sustituye el máximo de 1200 px de la referencia para este producto. Encabezado compacto, controles visibles, mapa central y diagnóstico lateral. Se conservan la paleta, tipografía, contraste y requisitos de accesibilidad de esta guía. En móvil se apilan los paneles y las tablas tienen desplazamiento propio.
 > Plataforma pública, clara y amable: identidad institucional en guinda y dorado, grandes puntos de entrada orientados a tareas, superficies blancas y rosadas muy suaves, tarjetas redondeadas y subproductos digitales —como Llave CDMX— con acentos morado/magenta controlados.
 
 **Theme:** light
@@ -923,4 +925,3 @@ Create an institutional dependency page with a compact Government header, depend
 - Manual de Identidad Gráfica Institucional 2024–2030, Jefatura de Gobierno: https://jefaturadegobierno.cdmx.gob.mx/storage/app/uploads/public/69e/a52/e82/69ea52e8270f9839787048.pdf
 - Manual de Identidad Gráfica / Atención Ciudadana, ADIP: https://adip.cdmx.gob.mx/centros/atencion-ciudadana/manual-de-identidad-grafica
 - Llave CDMX: https://llave.cdmx.gob.mx/
-
