@@ -29,7 +29,7 @@ npm run test:e2e
 npm run format:check
 ```
 
-CI ejecuta tipos, pruebas, compilación y Playwright en Chromium. La revisión visual y la prueba automática de accesibilidad complementan el objetivo WCAG AA; no equivalen a certificación de accesibilidad universal.
+CI ejecuta tipos, pruebas, compilación y Playwright en Chromium sobre Ubuntu 24.04, con acciones oficiales actualizadas y Node 22 para la aplicación. La revisión visual y la prueba automática de accesibilidad complementan el objetivo WCAG AA; no equivalen a certificación de accesibilidad universal.
 
 ## Recorrido de demostración
 
