@@ -23,3 +23,14 @@ Thumbs.db
 /docs/fuentes/
 /docs/transcripciones-visuales/
 /docs/assets/
+
+# Seguimiento local del plan aprobado
+/PLAN_LOCAL.md
+/PROGRESO_LOCAL.md
+/node_modules/
+/dist/
+/test-results/
+/playwright-report/
+/coverage/
+/.vercel/
+/.cache/
