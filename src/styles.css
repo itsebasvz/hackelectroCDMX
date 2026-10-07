@@ -1780,6 +1780,8 @@ footer > small {
   font-size: 10px;
   margin-bottom: 8px;
   font-weight: 600;
+  min-height: 18px;
+  line-height: 18px;
 }
 .map-scrub select {
   font-size: 11px;
@@ -2568,14 +2570,16 @@ footer > small {
 .map-journey {
   display: grid;
   grid-template-columns: 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  align-items: start;
+  gap: 16px;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  background: #fcfafb;
 }
 .map-journey .map-scrub {
   padding: 0;
   min-width: 0;
-  align-items: center;
+  align-items: start;
   grid-template-columns: 88px minmax(0, 1fr);
 }
 .map-journey .map-scrub.is-day {
@@ -2587,11 +2591,11 @@ footer > small {
 .map-options {
   display: flex;
   align-items: end;
-  gap: 10px;
+  gap: 14px;
   min-width: 0;
 }
 .map-options .map-day-cycles {
-  flex: 0 0 112px;
+  flex: 0 0 120px;
 }
 .map-options .map-day-cycles label {
   display: block;
@@ -2602,30 +2606,47 @@ footer > small {
 .map-options .map-day-cycles input {
   width: 100%;
   padding: 9px 8px;
-  min-height: 44px;
+  height: 46px;
+  min-height: 46px;
   font-variant-numeric: tabular-nums;
 }
 .map-navigation button {
+  height: 46px;
+  min-height: 46px;
+  padding-right: 13px;
+  padding-left: 13px;
   white-space: nowrap;
+}
+.map-navigation {
+  margin-top: 26px;
+}
+.map-options .map-scope-switch {
+  margin-top: 26px;
 }
 .map-scope-switch {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 3px;
+  height: 46px;
+  padding: 4px;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: #f8f5f6;
 }
 .map-scope-switch button {
+  height: 36px;
   min-height: 36px;
-  padding: 0 10px;
+  padding: 0 12px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
   font-size: 10px;
   white-space: nowrap;
+}
+.map-journey .map-cycle-field select {
+  height: 46px;
+  min-height: 46px;
 }
 .map-scope-switch button[aria-pressed='true'] {
   background: white;
@@ -2642,6 +2663,7 @@ footer > small {
 }
 .journey-range {
   min-width: 0;
+  margin-top: 6px;
 }
 .journey-slider {
   position: relative;
@@ -2753,10 +2775,10 @@ footer > small {
   min-width: 0;
   overflow: hidden;
   border-top: 2px solid #e8e2e5;
-  padding: 4px 2px 0;
+  padding: 5px 2px 0;
   color: var(--muted);
-  font-size: 8px;
-  line-height: 1.1;
+  font-size: 9px;
+  line-height: 1.2;
   text-align: center;
   text-overflow: clip;
   white-space: nowrap;
@@ -2766,26 +2788,30 @@ footer > small {
   color: var(--primary);
   font-weight: 700;
 }
-@container route-map (min-width: 820px) {
+@container route-map (min-width: 840px) {
   .map-journey {
-    grid-template-columns: auto auto minmax(220px, 1fr);
-    gap: 12px;
-  }
-  .map-journey .map-navigation button {
-    padding-right: 9px;
-    padding-left: 9px;
+    grid-template-columns: auto auto minmax(200px, 1fr);
+    gap: 16px;
   }
 }
-@container route-map (min-width: 560px) and (max-width: 819px) {
+@container route-map (min-width: 550px) and (max-width: 839px) {
   .map-journey {
     grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    padding: 18px;
   }
-  .map-journey .map-navigation {
-    grid-column: 1;
+  .map-options {
+    gap: 10px;
+  }
+  .map-options .map-day-cycles {
+    flex-basis: 112px;
   }
   .map-journey .map-navigation button {
     padding-right: 7px;
     padding-left: 7px;
+  }
+  .map-journey .map-navigation {
+    grid-column: 1;
   }
   .map-options {
     grid-column: 2;
@@ -2796,9 +2822,16 @@ footer > small {
   }
 }
 @container route-map (max-width: 559px) {
+  .map-journey {
+    gap: 14px;
+    padding: 16px;
+  }
   .map-journey .map-navigation,
   .map-options {
     justify-self: start;
+  }
+  .map-journey .map-navigation {
+    margin-top: 0;
   }
   .map-journey .map-scrub.is-cycle {
     grid-template-columns: 88px minmax(0, 1fr);
