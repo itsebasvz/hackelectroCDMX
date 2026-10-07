@@ -1,9 +1,22 @@
 import { useEffect, useRef } from 'react';
 import { init, use, type EChartsCoreOption } from 'echarts/core';
 import { LineChart, BarChart } from 'echarts/charts';
-import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components';
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  MarkLineComponent,
+} from 'echarts/components';
 import { SVGRenderer } from 'echarts/renderers';
-use([LineChart, BarChart, GridComponent, TooltipComponent, LegendComponent, SVGRenderer]);
+use([
+  LineChart,
+  BarChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  MarkLineComponent,
+  SVGRenderer,
+]);
 export default function Chart({ option, label }: { option: EChartsCoreOption; label: string }) {
   const container = useRef<HTMLDivElement>(null);
   useEffect(() => {

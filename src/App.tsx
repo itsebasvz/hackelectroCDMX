@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {
-  Zap,
   ArrowUpRight,
   Download,
   Upload,
@@ -16,15 +15,14 @@ import {
   X,
   SlidersHorizontal,
   BusFront,
-  Hospital,
-  GitBranch,
 } from 'lucide-react';
 import type { RouteRecord, Scenario } from './domain/schema';
 import { ScenarioSchema } from './domain/schema';
 import { useScenario } from './features/store';
 import { useEngine } from './features/useEngine';
-import { preset } from './data/defaults';
-import Editor from './features/Editor';
+import Controls, { focusParameter } from './features/Controls';
+import Diagnostic from './features/Diagnostic';
+import { withValue } from './features/values';
 import Dashboard from './features/Dashboard';
 import Optimizer from './features/Optimizer';
 import Report from './features/Report';
@@ -56,7 +54,7 @@ export default function App() {
   const [routes, setRoutes] = useState<RouteRecord[]>([]);
   const [query, setQuery] = useState('');
   const [routesError, setRoutesError] = useState('');
-  const [editing, setEditing] = useState(false);
+  const [routeDialog, setRouteDialog] = useState(false);
   const [notice, setNotice] = useState('');
   const [saved, setSaved] = useState<Scenario[]>(readSaved);
   const [sourceDialog, setSourceDialog] = useState(false);
@@ -149,29 +147,23 @@ export default function App() {
       </a>
       <header className="header">
         <div className="header-inner">
-          <a href="#" className="brand" aria-label="HackElectroCDMX, inicio">
-            <span className="brand-symbol">
-              <Zap size={24} strokeWidth={2} />
-            </span>
-            <span>
-              HackElectro<span className="brand-city">CDMX</span>
-            </span>
+          <a
+            href="#contenido"
+            className="brand"
+            aria-label="Hackatón Electromovilidad CDMX 2026, inicio"
+          >
+            Hackatón Electromovilidad <span>CDMX 2026</span>
           </a>
-          <div className="header-context">
-            <span className="context-divider" />
-            <span>
-              Electrifica tu flota
-              <br />
-              <strong>Transición justa por ramal</strong>
-            </span>
-          </div>
+          <span className="header-mission">
+            Electrificar el transporte sin poner en riesgo el trabajo
+          </span>
           <a
             className="header-link"
             href="https://github.com/itsebasvz/hackelectroCDMX"
             target="_blank"
             rel="noreferrer"
           >
-            Proyecto abierto <ArrowUpRight size={16} />
+            Equipo Aragonenes <span className="github-mark" aria-hidden="true" />
           </a>
         </div>
       </header>
@@ -179,204 +171,123 @@ export default function App() {
         <div className="container nav-inner">
           <a href="#ramal">
             <MapPin size={16} />
-            Ramal
-          </a>
-          <a href="#parametros" onClick={() => setEditing(true)}>
-            <SlidersHorizontal size={16} />
-            Condiciones
+            Simulador
           </a>
           <a href="#resultados">
             <BusFront size={16} />
             Comparación
           </a>
+          <a href="#sensibilidad">
+            <SlidersHorizontal size={16} />
+            Explorar límites
+          </a>
           <a href="#condiciones">
-            <Zap size={16} />
+            <ArrowRight size={16} />
             Buscar alternativas
           </a>
           <button onClick={() => setSourceDialog(true)}>
             <BookOpen size={16} />
-            Evidencia
+            Fuentes y supuestos
           </button>
-          <span className="nav-status">
-            <span /> Motor local · sin cuentas
-          </span>
         </div>
       </nav>
       <main id="contenido" className="container">
-        <section className="hero">
+        <section className="workspace-intro">
           <div>
-            <div className="eyebrow">
-              <span className="eyebrow-line" /> RETO 2 · ELECTRO HACKATHON CDMX
-            </div>
-            <h1>
-              Electrificar una ruta.
-              <br />
-              <span>Proteger a quienes la mueven.</span>
-            </h1>
+            <span className="eyebrow">RETO 2 · EVALUACIÓN POR RAMAL</span>
+            <h1>El futuro de una ruta empieza con una buena decisión.</h1>
             <p>
-              Explora qué hace falta para pasar a vehículos eléctricos sin sacrificar servicio ni
-              ingreso. Una ruta como punto de partida; un método para evaluar muchas más.
+              Compara vehículos, ajusta su operación y descubre condiciones para mantener el
+              servicio y el ingreso.
             </p>
           </div>
-          <div className="hero-note">
-            <Hospital size={27} />
-            <strong>Ruta 1, nuestro caso de estudio</strong>
-            <span>Metro Universidad ↔ San Fernando / Huipulco</span>
-            <p>
-              Conexión con la Zona de Hospitales. Su relevancia social orienta la pregunta; la
-              evidencia define las condiciones.
-            </p>
-          </div>
-        </section>
-        <div className="evidence-banner">
-          <Info size={18} />
-          <p>
-            <strong>Exploración con evidencia pública.</strong> Geometría histórica y parámetros de
-            prueba editables. Los resultados se calculan en tu navegador; no son mediciones reales
-            en vivo.
-          </p>
-          <button onClick={() => setSourceDialog(true)}>
-            Ver fuentes <ArrowRight size={16} />
+          <button className="text-button" onClick={() => setSourceDialog(true)}>
+            <Info size={16} />
+            Exploración con datos públicos
           </button>
-        </div>
-        <section id="ramal" className="route-section">
-          <div className="section-title">
-            <div>
-              <span className="eyebrow">01 / ELIGE EL TERRITORIO</span>
-              <h2>Un ramal. Una evaluación completa.</h2>
-            </div>
-            <span className="pill neutral">
-              <GitBranch size={15} />
-              {routes.length || '…'} registros históricos
-            </span>
-          </div>
-          <div className="route-workspace">
-            <aside className="route-sidebar">
-              <label htmlFor="route-search">Buscar ruta o destino</label>
-              <div className="search-box">
-                <Search size={17} />
-                <input
-                  id="route-search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Universidad, Huipulco…"
-                />
-              </div>
-              <div className="route-list" aria-label="Ramales del catálogo">
-                {routesError && <p role="alert">{routesError}</p>}
-                {filtered.slice(0, 40).map((r) => (
-                  <button
-                    key={r.id}
-                    className={
-                      r.id === scenario.route.id ? 'route-option selected' : 'route-option'
-                    }
-                    onClick={() => selectRoute(r)}
-                    aria-pressed={r.id === scenario.route.id}
-                  >
-                    <span className="route-number">{r.route || '—'}</span>
-                    <span>
-                      <strong>{r.name}</strong>
-                      <small>{num(r.cycleKm, 1)} km cartográficos · tecnología sin verificar</small>
-                    </span>
-                    {r.id === scenario.route.id && <span className="selected-dot" />}
-                  </button>
-                ))}
-                {routes.length > 0 && filtered.length === 0 && (
-                  <p>No hay coincidencias. Prueba otro destino o número.</p>
-                )}
-              </div>
-              <small className="catalog-count">
-                {filtered.length} coincidencias · se muestran hasta 40
-              </small>
-            </aside>
-            <div className="route-map-area">
-              <div className="map-topline">
-                <div>
-                  <span className="small-label">RAMAL SELECCIONADO</span>
-                  <h3>{scenario.route.name}</h3>
-                </div>
-                <span className="pill historical">
-                  Archivo {scenario.route.internalDate.slice(0, 4)}
-                </span>
-              </div>
-              <Suspense
-                fallback={<div className="map-shell map-empty">Cargando vista territorial…</div>}
-              >
-                <RouteMap routeId={scenario.route.id} />
-              </Suspense>
-              <div className="map-bottomline">
-                <span>
-                  <b>{num(scenario.route.cycleKm, 3)} km</b> de ciclo de prueba
-                </span>
-                <span>
-                  <b>{scenario.operation.fleet} unidades</b> representativas
-                </span>
-                <button
-                  className="text-button"
-                  onClick={() => {
-                    setEditing(true);
-                    document.getElementById('parametros')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  Editar condiciones <SlidersHorizontal size={15} />
-                </button>
-              </div>
-            </div>
-          </div>
         </section>
-        <section id="parametros" className="parameters">
-          <div className="parameters-bar">
-            <button
-              className="parameters-toggle"
-              onClick={() => setEditing(!editing)}
-              aria-expanded={editing}
-              aria-controls="parameters-content"
-            >
-              <SlidersHorizontal size={21} />
-              <span>
-                <strong>Condiciones del escenario</strong>
-                <small>Servicio · vehículos · carga · financiamiento</small>
+        <section id="ramal" className="evaluation-workspace" aria-label="Simulador por ramal">
+          <Controls
+            scenario={scenario}
+            onChange={setScenario}
+            onRoutes={() => setRouteDialog(true)}
+          />
+          <div className="route-map-area">
+            <div className="map-topline">
+              <div>
+                <span className="small-label">EXPLORA EL RECORRIDO</span>
+                <h2>{scenario.route.name}</h2>
+              </div>
+              <span className="pill historical">
+                Geometría {scenario.route.internalDate.slice(0, 4)}
               </span>
-              <span className="toggle-sign">{editing ? '−' : '+'}</span>
-            </button>
-            <div className="presets" aria-label="Ejemplos por clase">
-              {(['van', 'minibus', 'urban'] as const).map((category, i) => (
-                <button
-                  key={category}
-                  aria-pressed={scenario.ev.category === category}
-                  onClick={() => setScenario(preset(scenario, category))}
-                >
-                  {['Van · gasolina', 'Minibús · diésel', 'Urbano · diésel'][i]}
-                </button>
-              ))}
+            </div>
+            <Suspense
+              fallback={<div className="map-shell map-empty">Cargando vista territorial…</div>}
+            >
+              <RouteMap
+                routeId={scenario.route.id}
+                result={
+                  engine.result?.scenario.route.id === scenario.route.id ? engine.result : null
+                }
+                stale={!valid}
+              />
+            </Suspense>
+            <div className="map-bottomline">
+              <span>
+                <b>{num(scenario.route.cycleKm, 3)} km</b> por ciclo de prueba
+              </span>
+              <span>
+                <b>{scenario.operation.fleet} unidades</b> del escenario
+              </span>
+              <span>
+                <b>Datos sustituibles</b> no seguimiento real
+              </span>
             </div>
           </div>
-          <div id="parameters-content" hidden={!editing}>
-            <Editor scenario={scenario} onChange={setScenario} />
-          </div>
+          <Diagnostic
+            result={engine.result}
+            stale={!valid}
+            onSearch={() =>
+              document.getElementById('condiciones')?.scrollIntoView({ behavior: 'smooth' })
+            }
+          />
         </section>
         <div className="calculation-state" role="status">
           {engine.status === 'calculating'
-            ? 'Calculando el escenario…'
+            ? 'Calculando los cambios…'
             : engine.status === 'invalid'
               ? 'Corrige las entradas. Se conserva el último resultado válido, ahora desactualizado.'
               : engine.status === 'error'
                 ? 'No se pudo completar el cálculo.'
-                : 'Cálculo completo · puedes consultar el resultado sin esperar una animación.'}
+                : 'Escenario actualizado · los resultados cambian al editar los parámetros.'}
         </div>
         {engine.error && (
           <div className="error-banner" role="alert">
             {engine.error}
           </div>
         )}
+        {notice && (
+          <p className="scenario-notice" role="status">
+            {notice}
+          </p>
+        )}
         <section id="resultados" aria-busy={engine.status === 'calculating'}>
           {engine.result ? (
-            <Dashboard result={engine.result} />
+            <Dashboard
+              result={engine.result}
+              points={engine.points}
+              sensitivityError={engine.sensitivityError}
+              stale={!valid}
+              onCycles={(cycles) => {
+                setScenario(withValue(scenario, 'operation.cycles', cycles));
+                focusParameter('operation.cycles');
+              }}
+            />
           ) : (
             <div className="panel loading-panel">
-              <Zap size={26} />
               <h2>Preparando la comparación</h2>
-              <p>El motor carga los parámetros y calcula los resultados completos.</p>
+              <p>Estamos calculando el consumo y los costos de tu escenario.</p>
             </div>
           )}
         </section>
@@ -502,16 +413,15 @@ export default function App() {
               Restaurar ejemplo
             </button>
           </div>
-          {(notice || storageError) && (
+          {storageError && (
             <p className="notice" role="status">
-              {notice || storageError}
+              {storageError}
             </p>
           )}
         </section>
         <footer>
           <div className="footer-brand">
-            <Zap size={19} />
-            <strong>HackElectroCDMX</strong>
+            <strong>Equipo Aragonenes</strong>
           </div>
           <p>
             Una herramienta exploratoria para una transición justa. Código MIT · documentación
@@ -530,6 +440,57 @@ export default function App() {
           </small>
         </footer>
       </main>
+      <Dialog.Root open={routeDialog} onOpenChange={setRouteDialog}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog route-dialog">
+            <Dialog.Title>Elige un ramal para explorar</Dialog.Title>
+            <Dialog.Description>
+              995 registros históricos. Cambiar la geometría conserva los parámetros de prueba; no
+              los convierte en datos reales de la nueva ruta.
+            </Dialog.Description>
+            <Dialog.Close className="dialog-close" aria-label="Cerrar catálogo">
+              <X size={21} />
+            </Dialog.Close>
+            <label htmlFor="route-search">Buscar ruta o destino</label>
+            <div className="search-box">
+              <Search size={17} />
+              <input
+                id="route-search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Universidad, Huipulco…"
+              />
+            </div>
+            <div className="route-list" aria-label="Ramales del catálogo">
+              {routesError && <p role="alert">{routesError}</p>}
+              {filtered.slice(0, 40).map((r) => (
+                <button
+                  key={r.id}
+                  className={r.id === scenario.route.id ? 'route-option selected' : 'route-option'}
+                  onClick={() => {
+                    selectRoute(r);
+                    setRouteDialog(false);
+                  }}
+                  aria-pressed={r.id === scenario.route.id}
+                >
+                  <span className="route-number">{r.route || '—'}</span>
+                  <span>
+                    <strong>{r.name}</strong>
+                    <small>{num(r.cycleKm, 1)} km cartográficos · tecnología sin verificar</small>
+                  </span>
+                </button>
+              ))}
+              {routes.length > 0 && filtered.length === 0 && (
+                <p>No hay coincidencias. Prueba otro destino o número.</p>
+              )}
+            </div>
+            <small>
+              {filtered.length} coincidencias · se muestran hasta 40 · archivo histórico
+            </small>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
       <Dialog.Root open={sourceDialog} onOpenChange={setSourceDialog}>
         <Dialog.Portal>
           <Dialog.Overlay className="dialog-overlay" />

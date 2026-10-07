@@ -6,7 +6,7 @@ import { num } from '../ui/format';
 export default function Report({ result: r }: { result: Result }) {
   return (
     <article className="print-report">
-      <h1>HackElectroCDMX · evaluación por ramal</h1>
+      <h1>Electromovilidad CDMX 2026 · evaluación por ramal</h1>
       <p>
         {r.scenario.name} · {r.scenario.route.name}
       </p>

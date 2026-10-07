@@ -1,10 +1,16 @@
-import { useState } from 'react';
-import * as Tabs from '@radix-ui/react-tabs';
 import type { Scenario } from '../domain/schema';
 import { getValue, withValue, evidenceOf } from './values';
-import { assumed } from '../data/catalog';
 import { sections, type Field } from './fields';
-function NumberField({
+export const essentialPaths = [
+  'route.cycleKm',
+  'operation.cycles',
+  'operation.fleet',
+  'ice.consumption',
+  'ev.consumption',
+  'chargerCount',
+  'energy.chargeHours',
+];
+export function NumberField({
   field,
   s,
   onChange,
@@ -24,7 +30,7 @@ function NumberField({
           className={`evidence-tag ${evidence.level === 'F' ? 'assumption' : ''}`}
           title={`${evidence.nature} · ${evidence.sourceId} · ${evidence.date} · ${evidence.limitation}`}
         >
-          {evidence.level === 'F' ? 'F · prueba' : `${evidence.level} · ${evidence.nature}`}
+          {evidence.level === 'F' ? 'Supuesto editable' : `${evidence.level} · ${evidence.nature}`}
         </span>
       </label>
       <div className="number-wrap">
@@ -58,29 +64,9 @@ export default function Editor({
   scenario: Scenario;
   onChange: (s: Scenario) => void;
 }) {
-  const [tab, setTab] = useState('service');
-  const choose = (group: 'ice' | 'ev' | 'charger' | 'finance', id: string) => {
+  const chooseFinance = (id: string) => {
     const next = structuredClone(s);
-    if (group === 'ice' || group === 'ev') {
-      const v = next.catalog.vehicles.find((v) => v.id === id);
-      if (v) {
-        next[group] = structuredClone(v);
-        if (group === 'ice') {
-          next.energy.fuelPrice = v.fuel === 'diesel' ? 27 : 23.68;
-          next.evidence['energy.fuelPrice'] = {
-            ...assumed(),
-            nature: 'oficial',
-            level: 'D',
-            sourceId: v.fuel === 'diesel' ? 'M24' : 'M23',
-            scope: 'México · nacional',
-            date: v.fuel === 'diesel' ? '2026-09-25' : '2026-08-27',
-            limitation: 'Promedio nacional; no precio del ramal.',
-          };
-        }
-      }
-    } else if (group === 'charger')
-      next.charger = structuredClone(next.catalog.chargers.find((c) => c.id === id)!);
-    else next.finance = structuredClone(next.catalog.finances.find((f) => f.id === id)!);
+    next.finance = structuredClone(next.catalog.finances.find((f) => f.id === id)!);
     onChange(next);
   };
   const connector = (group: 'ev' | 'charger') => (
@@ -101,122 +87,70 @@ export default function Editor({
     </div>
   );
   return (
-    <Tabs.Root value={tab} onValueChange={setTab} className="editor">
-      <Tabs.List className="editor-tabs" aria-label="Grupos de condiciones">
-        {sections.map((section, i) => (
-          <Tabs.Trigger value={section.id} key={section.id}>
-            <span>{String(i + 1).padStart(2, '0')}</span>
-            {section.title}
-          </Tabs.Trigger>
-        ))}
-      </Tabs.List>
+    <div className="editor advanced-editor">
+      <h3>Parámetros avanzados</h3>
       {sections.map((section) => (
-        <Tabs.Content value={section.id} key={section.id} className="editor-content">
-          <div className="section-heading">
-            <h3>{section.title}</h3>
-            <p>{section.description}</p>
-          </div>
-          <div className="fields-grid">
-            {section.id === 'vehicles' && (
-              <>
-                <div className="field wide">
-                  <label htmlFor="ice-choice">Referencia de combustión</label>
-                  <select
-                    id="ice-choice"
-                    value={s.ice.id}
-                    onChange={(e) => choose('ice', e.target.value)}
-                  >
-                    {s.catalog.vehicles
-                      .filter((v) => v.fuel !== 'electricidad')
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.name}
+        <details id={`advanced-${section.id}`} key={section.id} className="advanced-group">
+          <summary>{section.title}</summary>
+          <div className="editor-content">
+            <div className="section-heading">
+              <h3>{section.title}</h3>
+              <p>{section.description}</p>
+            </div>
+            <div className="fields-grid">
+              {section.id === 'energy' && (
+                <>
+                  {connector('ev')}
+                  {connector('charger')}
+                </>
+              )}
+              {section.id === 'finance' && (
+                <>
+                  <div className="field wide">
+                    <label htmlFor="finance-choice">Mecanismo de adquisición</label>
+                    <select
+                      id="finance-choice"
+                      value={s.finance.id}
+                      onChange={(e) => chooseFinance(e.target.value)}
+                    >
+                      {s.catalog.finances.map((f) => (
+                        <option value={f.id} key={f.id}>
+                          {f.name}
                         </option>
                       ))}
-                  </select>
-                </div>
-                <div className="field wide">
-                  <label htmlFor="ev-choice">Referencia eléctrica</label>
-                  <select
-                    id="ev-choice"
-                    value={s.ev.id}
-                    onChange={(e) => choose('ev', e.target.value)}
-                  >
-                    {s.catalog.vehicles
-                      .filter((v) => v.fuel === 'electricidad')
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                {connector('ev')}
-              </>
-            )}
-            {section.id === 'energy' && (
-              <>
-                <div className="field wide">
-                  <label htmlFor="charger-choice">Cargador de prueba</label>
-                  <select
-                    id="charger-choice"
-                    value={s.charger.id}
-                    onChange={(e) => choose('charger', e.target.value)}
-                  >
-                    {s.catalog.chargers.map((c) => (
-                      <option value={c.id} key={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {connector('charger')}
-              </>
-            )}
-            {section.id === 'finance' && (
-              <>
-                <div className="field wide">
-                  <label htmlFor="finance-choice">Mecanismo de adquisición</label>
-                  <select
-                    id="finance-choice"
-                    value={s.finance.id}
-                    onChange={(e) => choose('finance', e.target.value)}
-                  >
-                    {s.catalog.finances.map((f) => (
-                      <option value={f.id} key={f.id}>
-                        {f.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <label className="check-field">
-                  <input
-                    type="checkbox"
-                    checked={s.finance.financeInfrastructure}
-                    onChange={(e) =>
-                      onChange(withValue(s, 'finance.financeInfrastructure', e.target.checked))
-                    }
-                  />
-                  Crédito incluye infraestructura (hipótesis)
-                </label>
-                <label className="check-field">
-                  <input
-                    type="checkbox"
-                    checked={s.finance.maintenanceIncluded}
-                    onChange={(e) =>
-                      onChange(withValue(s, 'finance.maintenanceIncluded', e.target.checked))
-                    }
-                  />
-                  Renta incluye mantenimiento
-                </label>
-              </>
-            )}
-            {section.fields.map((field) => (
-              <NumberField key={field.path} field={field} s={s} onChange={onChange} />
-            ))}
+                    </select>
+                  </div>
+                  <label className="check-field">
+                    <input
+                      type="checkbox"
+                      checked={s.finance.financeInfrastructure}
+                      onChange={(e) =>
+                        onChange(withValue(s, 'finance.financeInfrastructure', e.target.checked))
+                      }
+                    />
+                    Crédito incluye infraestructura (hipótesis)
+                  </label>
+                  <label className="check-field">
+                    <input
+                      type="checkbox"
+                      checked={s.finance.maintenanceIncluded}
+                      onChange={(e) =>
+                        onChange(withValue(s, 'finance.maintenanceIncluded', e.target.checked))
+                      }
+                    />
+                    Renta incluye mantenimiento
+                  </label>
+                </>
+              )}
+              {section.fields
+                .filter((field) => !essentialPaths.includes(field.path))
+                .map((field) => (
+                  <NumberField key={field.path} field={field} s={s} onChange={onChange} />
+                ))}
+            </div>
           </div>
-        </Tabs.Content>
+        </details>
       ))}
-    </Tabs.Root>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import {
   BatteryCharging,
   Coins,
@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import type { Result, FinancialResult } from '../domain/schema';
 import { mxn, num } from '../ui/format';
+import { energyBudget, monthlyBudget, type SensitivityPoint } from '../domain/explore';
+import Sensitivity from './Sensitivity';
 const Chart = lazy(() => import('../ui/Chart'));
 const StatusIcon = ({ status }: { status: string }) =>
   status === 'pass' ? (
@@ -127,75 +129,126 @@ export function CashTable({ f }: { f: FinancialResult }) {
     </div>
   );
 }
-export default function Dashboard({ result: r }: { result: Result }) {
+export default function Dashboard({
+  result: r,
+  points,
+  sensitivityError,
+  stale,
+  onCycles,
+}: {
+  result: Result;
+  points: SensitivityPoint[] | null;
+  sensitivityError: string;
+  stale: boolean;
+  onCycles: (cycles: number) => void;
+}) {
   const s = r.scenario;
+  const [month, setMonth] = useState(1);
   const failed = r.constraints.filter((c) => c.status === 'fail');
   const savings = r.ice.operatingMonth - r.ev.operatingMonth;
+  const energy = energyBudget(r);
   const socOption = useMemo(
     () => ({
-      color: ['#9D2148'],
-      grid: { left: 42, right: 16, top: 20, bottom: 35 },
-      tooltip: { trigger: 'axis' },
-      xAxis: {
-        type: 'category',
-        data: r.socTimeline.map((p) => `${num(p.hour)} h`),
-        axisLabel: { fontSize: 11 },
-      },
-      yAxis: { type: 'value', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
+      color: ['#9D2148', '#266CB4', '#B28E5C'],
+      grid: { left: 96, right: 35, top: 64, bottom: 32 },
+      tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => `${num(Number(v), 2)} kWh` },
+      legend: { top: 0, data: ['Disponible', 'Servicio', 'Adicionales'] },
+      xAxis: { type: 'value', name: 'kWh', nameLocation: 'end' },
+      yAxis: { type: 'category', data: ['Requerida', 'Disponible'] },
       series: [
         {
-          name: 'SOC',
-          type: 'line',
-          smooth: false,
-          data: r.socTimeline.map((p) => Number((p.soc * 100).toFixed(2))),
-          areaStyle: { color: '#F8E8ED' },
+          name: 'Disponible',
+          type: 'bar',
+          stack: 'budget',
+          data: [0, energy.available],
+          barMaxWidth: 45,
           markLine: {
-            silent: true,
             symbol: 'none',
-            label: { formatter: 'Reserva' },
-            data: [{ yAxis: s.energy.socMin * 100 }],
-            lineStyle: { color: '#AC6D14', type: 'dashed' },
+            label: { formatter: 'Límite con reserva' },
+            data: [{ xAxis: energy.available }],
+            lineStyle: { color: '#9D2148', type: 'dashed' },
           },
         },
-      ],
-    }),
-    [r],
-  );
-  const cashOption = useMemo(
-    () => ({
-      color: ['#55585A', '#9D2148'],
-      grid: { left: 65, right: 18, top: 30, bottom: 35 },
-      tooltip: { trigger: 'axis' },
-      legend: { data: ['Combustión', 'Eléctrico'], top: 0 },
-      xAxis: { type: 'category', data: r.ev.months.map((m) => m.month), name: 'Mes' },
-      yAxis: { type: 'value', axisLabel: { formatter: (v: number) => `${num(v / 1000, 0)} mil` } },
-      series: [
         {
-          name: 'Combustión',
-          type: 'line',
-          showSymbol: false,
-          data: r.ice.months.map((m) => m.freeCash),
+          name: 'Servicio',
+          type: 'bar',
+          stack: 'budget',
+          data: [energy.service, 0],
+          barMaxWidth: 45,
         },
         {
-          name: 'Eléctrico',
-          type: 'line',
-          showSymbol: false,
-          data: r.ev.months.map((m) => m.freeCash),
+          name: 'Adicionales',
+          type: 'bar',
+          stack: 'budget',
+          data: [energy.additional, 0],
+          barMaxWidth: 45,
         },
       ],
     }),
     [r],
   );
+  const cashOption = useMemo(() => {
+    const budgets = [
+      monthlyBudget(r.ice.months[month - 1]!),
+      monthlyBudget(r.ev.months[month - 1]!),
+    ];
+    const parts = [
+      ['operating', 'Operación', '#55585A'],
+      ['workers', 'Trabajo', '#266CB4'],
+      ['owner', 'Concesionario', '#B28E5C'],
+      ['payment', 'Financiamiento', '#9D2148'],
+      ['reserve', 'Reserva y reposición', '#8F4889'],
+      ['margin', 'Margen libre', '#027A35'],
+    ] as const;
+    return {
+      grid: { left: 90, right: 45, top: 92, bottom: 35 },
+      tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => mxn(Number(v)) },
+      legend: { top: 0, data: parts.map((p) => p[1]), textStyle: { fontSize: 11 } },
+      xAxis: {
+        type: 'value',
+        axisLabel: { formatter: (v: number) => `${num(v / 1000, 0)} mil` },
+        name: 'MXN',
+      },
+      yAxis: {
+        type: 'category',
+        data: [s.ice.fuel === 'diesel' ? 'Diésel' : 'Gasolina', 'Eléctrico'],
+        inverse: true,
+      },
+      series: parts.map(([key, name, color], i) => ({
+        name,
+        type: 'bar',
+        stack: 'cash',
+        barMaxWidth: 48,
+        itemStyle: { color },
+        data: budgets.map((b) => ({
+          value: b[key],
+          itemStyle: { color: key === 'margin' && b.margin < 0 ? '#B51C42' : color },
+        })),
+        ...(i === 0
+          ? {
+              markLine: {
+                symbol: 'none',
+                label: { show: false },
+                data: [{ xAxis: budgets[0]!.revenue }],
+                lineStyle: { color: '#3d3c40', type: 'dashed' },
+              },
+            }
+          : {}),
+      })),
+    };
+  }, [r, month]);
   return (
     <div className="dashboard">
       <div className="dashboard-heading">
         <div>
           <span className="eyebrow">RESULTADOS DEL ESCENARIO</span>
-          <h2>La transición, en números.</h2>
+          <h2>¿Qué cambia al electrificar?</h2>
         </div>
         <span className={`pill ${r.passes ? 'positive' : 'warning'}`}>
           <StatusIcon status={r.passes ? 'pass' : 'fail'} />
-          {r.passes ? 'Cumple condiciones simuladas' : `${failed.length} condiciones por resolver`}
+          {r.passes
+            ? 'Cumple cálculos · verificaciones pendientes'
+            : `${failed.length} ${failed.length === 1 ? 'condición' : 'condiciones'} por resolver`}
         </span>
       </div>
       <div className="metrics">
@@ -220,14 +273,12 @@ export default function Dashboard({ result: r }: { result: Result }) {
         </article>
         <article className="metric">
           <span>
-            <Users size={18} /> Ingreso objetivo del operador
+            <Users size={18} /> Brecha de capital inicial
           </span>
-          <strong>
-            {mxn(s.economy.incomeGoal)} <em>/mes</em>
-          </strong>
+          <strong>{mxn(Math.max(0, r.ev.ownRequired - s.economy.ownCapital))}</strong>
           <small>
-            Por operador · {s.operation.operators * s.operation.fleet} personas presupuestadas;
-            condicionado al flujo.
+            Propio requerido: {mxn(r.ev.ownRequired)}. Disponible: {mxn(s.economy.ownCapital)}. No
+            es el apoyo mínimo del optimizador.
           </small>
         </article>
         <article className="metric">
@@ -243,13 +294,13 @@ export default function Dashboard({ result: r }: { result: Result }) {
       <div className="chart-grid">
         <section className="panel">
           <div className="panel-title">
-            <h3>Batería durante el servicio</h3>
+            <h3>¿Alcanza la energía para el día?</h3>
             <BatteryCharging size={19} />
           </div>
           <Suspense fallback={<div className="chart" />}>
             <Chart
               option={socOption}
-              label={`SOC inicial ${num(s.energy.socMax * 100)}%, final ${num(r.socEnd * 100)}%, mínimo ${num(s.energy.socMin * 100)}%.`}
+              label={`Disponible ${num(energy.available, 2)} kWh, requerida ${num(r.dailyBatteryKwh, 2)} kWh; margen ${num(energy.margin, 2)} kWh.`}
             />
           </Suspense>
           <div className="chart-summary">
@@ -257,26 +308,55 @@ export default function Dashboard({ result: r }: { result: Result }) {
               <b>{num(r.dailyKm, 1)} km</b> diarios por unidad
             </span>
             <span>
-              <b>{num(r.socEnd * 100)}%</b> SOC final
+              <b className={energy.margin < 0 ? 'negative' : ''}>{num(energy.margin, 2)} kWh</b>{' '}
+              {energy.margin < 0 ? 'déficit energético' : 'margen sin usar reserva'}
             </span>
             <span>
-              <b>{num(r.charge.hours, 2)} h</b> carga de flota
+              <b>
+                {Number.isFinite(r.charge.hours) ? `${num(r.charge.hours, 2)} h` : 'Sin potencia'}
+              </b>{' '}
+              para recargar la flota
             </span>
           </div>
+          <div className="charge-comparison">
+            <span>Recarga nocturna de la flota</span>
+            <b className={r.charge.hours > s.energy.chargeHours ? 'negative' : ''}>
+              {Number.isFinite(r.charge.hours) ? `${num(r.charge.hours, 2)} h` : 'Sin potencia'} /{' '}
+              {num(s.energy.chargeHours)} h disponibles
+            </b>
+          </div>
           <small>
-            Perfil agregado de prueba; los km adicionales se distribuyen proporcionalmente. Curva de
-            carga hipotética.
+            Por unidad. Reserva apartada: {num(energy.reserve, 2)} kWh. Compras{' '}
+            {num(r.dailyGridKwh, 2)} kWh para recuperar {num(r.dailyBatteryKwh, 2)} kWh en batería;
+            la diferencia son pérdidas.
           </small>
         </section>
-        <section className="panel">
+        <section className="panel finance-chart-panel">
           <div className="panel-title">
-            <h3>Margen después de proteger ingresos</h3>
+            <h3>¿A dónde va el ingreso mensual?</h3>
             <Coins size={19} />
+          </div>
+          <div className="month-choice">
+            <span className="revenue-label">
+              Recaudo de flota: <b>{mxn(r.ev.months[month - 1]!.revenue)}</b>
+            </span>
+            <label htmlFor="budget-month">Mes del presupuesto</label>
+            <select
+              id="budget-month"
+              value={month}
+              onChange={(e) => setMonth(Number(e.target.value))}
+            >
+              {Array.from({ length: 60 }, (_, i) => (
+                <option key={i} value={i + 1}>
+                  Mes {i + 1}
+                </option>
+              ))}
+            </select>
           </div>
           <Suspense fallback={<div className="chart" />}>
             <Chart
               option={cashOption}
-              label={`Margen mensual mínimo: combustión ${mxn(r.ice.minMonthlyCash)}, eléctrico ${mxn(r.ev.minMonthlyCash)}. Consulte la tabla mensual.`}
+              label={`Presupuesto del mes ${month}. Recaudo de flota ${mxn(r.ev.months[month - 1]!.revenue)}. Margen de combustión ${mxn(r.ice.months[month - 1]!.freeCash)}, eléctrico ${mxn(r.ev.months[month - 1]!.freeCash)}. Consulte la tabla mensual para componentes.`}
             />
           </Suspense>
           <div className="chart-summary">
@@ -287,12 +367,29 @@ export default function Dashboard({ result: r }: { result: Result }) {
               <b>{mxn(r.ev.debtRemaining)}</b> deuda restante
             </span>
           </div>
+          <p className="chart-explanation">
+            {savings >= 0 ? 'El eléctrico reduce' : 'El eléctrico aumenta'} el gasto operativo en{' '}
+            <b>{mxn(Math.abs(savings))}/mes</b>. En el mes {month}, después de pagos e ingresos
+            objetivo quedan{' '}
+            <b className={r.ev.months[month - 1]!.freeCash < 0 ? 'negative' : ''}>
+              {mxn(r.ev.months[month - 1]!.freeCash)}
+            </b>
+            .
+          </p>
           <small>
-            Recaudo constante de prueba. Reserva separada del gasto; no equivale a ingreso salarial
-            comprobado.
+            La línea discontinua marca el recaudo de la flota. Reserva y reposición es la aportación
+            del mes más reemplazos no cubiertos; no el saldo acumulado. Un margen negativo es
+            déficit, no ingreso disponible.
           </small>
         </section>
       </div>
+      <Sensitivity
+        result={r}
+        points={points}
+        error={sensitivityError}
+        disabled={stale}
+        onApply={onCycles}
+      />
       <section className="panel comparison">
         <div className="panel-title">
           <h3>El costo completo importa</h3>
