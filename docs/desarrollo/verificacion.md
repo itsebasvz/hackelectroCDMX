@@ -10,7 +10,7 @@ Fecha: 2026-10-06. Entorno local: Node 22.23.2, npm 12.0.2, Chromium de Playwrig
 - Instalación limpia desde lockfile comprobada en directorio temporal ignorado, sin modificar dependencias originales del espacio de trabajo.
 - `npm run data:routes`: 995 registros históricos y 2102 trazos; Ruta 1 20.340012617 km. Hash del RAR coincide con M09; original intacto.
 - Registro de dependencias: 246 entradas SPDX, 175 textos originales conservados. Checksums de los textos comprobados; tipografías mantienen OFL. La compilación incluye avisos originales.
-- Validación pública en https://hackelectro-cdmx.vercel.app: HTTP 200, cálculo completo, worker cartográfico local, trazo visible, búsqueda de 180 combinaciones y cero errores JavaScript en el recorrido realizado. Búsqueda medida en esa sesión: **260 ms**; no garantía para cualquier flota/equipo.
+- Validación pública en https://hackelectro-cdmx.vercel.app: HTTP 200, cálculo completo, worker cartográfico local, trazo visible, búsqueda de 180 combinaciones y cero errores JavaScript en el recorrido realizado. Búsqueda medida en esa sesión: **198 ms**; no garantía para cualquier flota/equipo.
 - Prueba de rendimiento unitaria: evaluación media inferior a 200 ms y búsqueda predeterminada inferior a cinco segundos.
 - `/PLAN_LOCAL.md`, `/PROGRESO_LOCAL.md` y `/.env.local` devuelven HTTP 404 en producción. No se publicaron archivos locales de seguimiento ni credenciales.
 
@@ -32,3 +32,6 @@ Vercel CLI permite despliegues, pero el enlace automático GitHub–Vercel fue r
 Controles esenciales abiertos y avanzados desplegables, mapa central, diagnóstico con enlaces que enfocan parámetros, presupuesto energético y barras de flujo mensual. Sensibilidad calcula puntos del evaluador original y no aumenta demanda/recaudo. Se añadieron cinco pruebas numéricas para estos derivados y un recorrido de navegador de consumo, hospitales y aplicación de vueltas. Las siete pruebas incluyen Axe, sin excluir el mapa. El redimensionamiento desde escritorio a móvil conserva ancho de página; se corrigió el mínimo intrínseco de las celdas de sensibilidad.
 
 La consulta OSM original y las cinco referencias derivadas conservan hashes y ODbL; el icono GitHub conserva SVG y MIT de Octicons recuperados de una revisión fija. Ningún PDF histórico o inventario fue modificado. La apertura directa de cuatro referencias institucionales quedó limitada por red/TLS/403; sus domicilios proceden de resultados institucionales indexados y los límites se registran. No se afirma verificación de accesos ni servicio a cada hospital.
+
+
+El rediseño quedó publicado en https://hackelectro-cdmx.vercel.app con HEAD de aplicación `ff3631a`. La revisión pública comprobó título nuevo, trazo renderizado, consumo por vuelta, búsqueda de 180 combinaciones, cero errores JavaScript y cero infracciones Axe. La geometría hospitalaria y MIT de Octicons devuelven HTTP 200; los archivos locales/credenciales continúan en 404. CI pasó: [ejecución 37568430236](https://github.com/itsebasvz/hackelectroCDMX/actions/runs/37568430236). Las cifras de tiempo corresponden sólo a esta sesión, sin garantizar rendimiento universal.
