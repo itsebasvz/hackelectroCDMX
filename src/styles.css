@@ -2262,3 +2262,45 @@ footer > small {
     width: 100%;
   }
 }
+
+/* Símbolos del escenario: botones accesibles, sin orientación de circulación inferida. */
+.map-symbol {
+  width: 44px;
+  height: 44px;
+  border: 3px solid white;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px #0003;
+  padding: 0;
+  color: white;
+}
+.vehicle-symbol {
+  background: #266cb4;
+}
+.hospital-symbol {
+  background: #8f4889;
+}
+.hospital-map-label {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: #55585a;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 10px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.vehicle-callout {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  max-width: 240px;
+  font-size: 11px;
+}

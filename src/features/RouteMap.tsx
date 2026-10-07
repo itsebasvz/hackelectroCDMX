@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { Hospital as HospitalIcon } from 'lucide-react';
+import { MapSymbol, VehicleIcon } from './MapSymbols';
 import * as maplibregl from 'maplibre-gl';
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { FeatureCollection, LineString, Point } from 'geojson';
@@ -20,12 +22,25 @@ const empty = { type: 'FeatureCollection' as const, features: [] };
 function Outline({
   features,
   fraction,
+  result,
+  hospitals,
+  onHospital,
+  onVehicle,
+  stale,
 }: {
+  result: Result | null;
+  hospitals: Hospitals | null;
+  onHospital: (hospital: Hospital) => void;
+  onVehicle: () => void;
+  stale: boolean;
   features: FeatureCollection<LineString> | null;
   fraction: number;
 }) {
   const lines = features?.features.map((f) => f.geometry.coordinates) ?? [];
-  const points = lines.flat();
+  const points = [
+    ...lines.flat(),
+    ...(hospitals?.features.map((f) => f.geometry.coordinates) ?? []),
+  ];
   if (!points.length)
     return (
       <div className="map-empty">
@@ -47,7 +62,7 @@ function Outline({
   return (
     <svg
       viewBox="0 0 600 380"
-      role="img"
+      role="group"
       aria-label="Trazos históricos del ramal, sin mapa base"
       className="map-outline"
     >
@@ -61,8 +76,37 @@ function Outline({
           strokeLinecap="round"
         />
       ))}
-      {marker && (
-        <circle cx={marker[0]} cy={marker[1]} r="9" fill="#266CB4" stroke="#fff" strokeWidth="3" />
+      {hospitals?.features.map((f) => {
+        const [x, y] = project(f.geometry.coordinates);
+        return (
+          <foreignObject
+            key={f.properties.shortName}
+            x={x! - 22}
+            y={y! - 22}
+            width="44"
+            height="44"
+          >
+            <button
+              className="map-symbol hospital-symbol"
+              aria-label={`Hospital: ${f.properties.shortName}`}
+              onClick={() => onHospital(f.properties)}
+            >
+              <HospitalIcon size={22} aria-hidden="true" />
+            </button>
+          </foreignObject>
+        );
+      })}
+      {marker && result && (
+        <foreignObject x={marker[0]! - 22} y={marker[1]! - 22} width="44" height="44">
+          <button
+            className="map-symbol vehicle-symbol"
+            aria-label="Vehículo del escenario"
+            disabled={stale}
+            onClick={onVehicle}
+          >
+            <VehicleIcon category={result.scenario.ev.category} />
+          </button>
+        </foreignObject>
       )}
       <text x="30" y="370" fontSize="13" fill="#55585A">
         Geometría histórica · referencia sin mapa base
@@ -93,6 +137,9 @@ export default function RouteMap({
   const [fraction, setFraction] = useState(0);
   const [fallback, setFallback] = useState(false);
   const [painted, setPainted] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [showVehicle, setShowVehicle] = useState(false);
+  const [zoom, setZoom] = useState(12);
   const [note, setNote] = useState('Cargando cartografía histórica…');
   const activeCycle = Math.min(cycle, result?.scenario.operation.cycles ?? 1);
   const view = useRef({ routeId, result, mode, context, cycle: activeCycle, fraction, hospitals });
@@ -185,11 +232,7 @@ export default function RouteMap({
     );
     m.setLayoutProperty('reserve-point', 'visibility', v.mode === 'energy' ? 'visible' : 'none');
     (m.getSource('hospitals') as maplibregl.GeoJSONSource).setData(v.hospitals ?? empty);
-    m.setLayoutProperty(
-      'hospital-points',
-      'visibility',
-      v.context && v.routeId === 'M09-514' ? 'visible' : 'none',
-    );
+
     const coords = selected.features.flatMap((f) => f.geometry.coordinates);
     if (coords.length && fitted.current !== v.routeId) {
       const bounds = new maplibregl.LngLatBounds();
@@ -289,17 +332,6 @@ export default function RouteMap({
           paint: { 'line-color': ['get', 'color'], 'line-width': 5 },
         });
         m.addLayer({
-          id: 'hospital-points',
-          type: 'circle',
-          source: 'hospitals',
-          paint: {
-            'circle-radius': 8,
-            'circle-color': '#8F4889',
-            'circle-stroke-color': '#fff',
-            'circle-stroke-width': 3,
-          },
-        });
-        m.addLayer({
           id: 'reserve-point',
           type: 'circle',
           source: 'reserve',
@@ -310,31 +342,16 @@ export default function RouteMap({
             'circle-stroke-width': 3,
           },
         });
-        m.addLayer({
-          id: 'preview-point',
-          type: 'circle',
-          source: 'preview',
-          paint: {
-            'circle-radius': 7,
-            'circle-color': '#266CB4',
-            'circle-stroke-color': '#fff',
-            'circle-stroke-width': 3,
-          },
-        });
+        setMapReady(true);
+        setZoom(m.getZoom());
         setNote('SEMOVI · geometría histórica 2022 · consumo uniforme supuesto');
         update();
       });
       m.on('click', (e) => {
-        if (m.getLayer('hospital-points')) {
-          const hit = m.queryRenderedFeatures(e.point, { layers: ['hospital-points'] })[0];
-          if (hit) {
-            setSelectedHospital(hit.properties as unknown as Hospital);
-            return;
-          }
-        }
         if (geometryRef.current.features.length)
           setFraction(nearestFraction(geometryRef.current, [e.lngLat.lng, e.lngLat.lat]));
       });
+      m.on('zoomend', () => setZoom(m.getZoom()));
       m.on('error', () =>
         setNote(
           'Mapa base parcialmente disponible. Geometría y cálculos locales permanecen disponibles.',
@@ -427,7 +444,66 @@ export default function RouteMap({
           aria-label="Mapa de ramales históricos"
           hidden={fallback}
         />
-        {fallback && <Outline features={geometry} fraction={fraction} />}
+        {fallback && (
+          <Outline
+            features={geometry}
+            fraction={fraction}
+            result={result}
+            stale={stale}
+            hospitals={context && routeId === 'M09-514' ? hospitals : null}
+            onHospital={setSelectedHospital}
+            onVehicle={() => setShowVehicle((v) => !v)}
+          />
+        )}
+        {mapReady && !fallback && map.current && position && result && (
+          <MapSymbol map={map.current} coordinates={position.coordinates}>
+            <button
+              className="map-symbol vehicle-symbol"
+              aria-label="Vehículo del escenario"
+              aria-expanded={showVehicle}
+              disabled={stale}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowVehicle((v) => !v);
+              }}
+            >
+              <VehicleIcon category={result.scenario.ev.category} />
+            </button>
+          </MapSymbol>
+        )}
+        {mapReady &&
+          !fallback &&
+          map.current &&
+          context &&
+          routeId === 'M09-514' &&
+          hospitals?.features.map((f) => (
+            <MapSymbol
+              key={f.properties.shortName}
+              map={map.current!}
+              coordinates={f.geometry.coordinates}
+            >
+              <button
+                className="map-symbol hospital-symbol"
+                aria-label={`Hospital: ${f.properties.shortName}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedHospital(f.properties);
+                }}
+              >
+                <HospitalIcon size={22} aria-hidden="true" />
+              </button>
+              {zoom >= 14 && <span className="hospital-map-label">{f.properties.shortName}</span>}
+            </MapSymbol>
+          ))}
+        {showVehicle && result && (
+          <div className="vehicle-callout">
+            <b>{result.scenario.ev.name}</b>
+            <p>
+              {result.scenario.ev.capacity} plazas · {num(result.scenario.ev.consumption, 2)} kWh/km
+              netos
+            </p>
+          </div>
+        )}
         <div className="map-caption">
           <span className="map-dot" />
           {note}
