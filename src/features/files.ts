@@ -42,7 +42,18 @@ export async function serializeScenario(scenario: Scenario) {
 export async function parseScenario(text: string) {
   if (new TextEncoder().encode(text).byteLength > 5_000_000)
     throw new Error('El archivo supera el límite de 5 MB.');
-  const envelope = Envelope.parse(JSON.parse(text));
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('El archivo no contiene un JSON legible. Exporta de nuevo el escenario.');
+  }
+  const validated = Envelope.safeParse(data);
+  if (!validated.success)
+    throw new Error(
+      'Archivo incompatible: revisa la versión, las entradas y las fuentes. Consulta el formato de exportación de HackElectroCDMX.',
+    );
+  const envelope = validated.data;
   if ((await scenarioHash(envelope.scenario)) !== envelope.checksum)
     throw new Error('El checksum no coincide. El archivo fue modificado o está incompleto.');
   return envelope.scenario;

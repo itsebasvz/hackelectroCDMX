@@ -100,10 +100,14 @@ export default function RouteMap({ routeId }: Props) {
         container: container.current,
         center: [-99.17, 19.3],
         zoom: 12,
+        cooperativeGestures: true,
         locale: {
           'Map.Title': 'Mapa de ramales históricos',
           'NavigationControl.ZoomIn': 'Acercar mapa',
           'NavigationControl.ZoomOut': 'Alejar mapa',
+          'CooperativeGesturesHandler.WindowsHelpText': 'Usa Ctrl y la rueda para acercar el mapa',
+          'CooperativeGesturesHandler.MacHelpText': 'Usa ⌘ y la rueda para acercar el mapa',
+          'CooperativeGesturesHandler.MobileHelpText': 'Usa dos dedos para mover el mapa',
           'AttributionControl.ToggleAttribution': 'Mostrar atribuciones',
         },
         attributionControl: { compact: true },
@@ -115,7 +119,7 @@ export default function RouteMap({ routeId }: Props) {
               tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
               tileSize: 256,
               attribution:
-                '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · SEMOVI CC BY 4.0',
+                '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · SEMOVI <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>',
               maxzoom: 19,
             },
           },
@@ -175,7 +179,9 @@ export default function RouteMap({ routeId }: Props) {
       });
     } catch {
       setFallback(true);
-      setNote('Vista local sin WebGL · SEMOVI CC BY 4.0');
+      setNote(
+        'Vista local sin WebGL · SEMOVI <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>',
+      );
     }
     return () => {
       disposed = true;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ScenarioSchema, type Scenario, type Result, type SearchResult } from '../domain/schema';
+import { sections } from './fields';
 import { RequestGate, type Response, type Request } from '../worker/protocol';
 export function useEngine(scenario: Scenario) {
   const worker = useRef<Worker | null>(null);
@@ -60,7 +61,14 @@ export function useEngine(scenario: Scenario) {
     const parsed = ScenarioSchema.safeParse(scenario);
     if (!parsed.success) {
       setStatus('invalid');
-      setError(parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(' · '));
+      setError(
+        parsed.error.issues
+          .map(
+            (i) =>
+              `${sections.flatMap((section) => section.fields).find((field) => field.path === i.path.join('.'))?.label ?? 'Configuración'}: ${i.code === 'custom' ? i.message : 'introduce un valor válido dentro del rango permitido.'}`,
+          )
+          .join(' · '),
+      );
       return;
     }
     setStatus('calculating');

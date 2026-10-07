@@ -1783,3 +1783,17 @@ footer > small {
     margin: 12mm;
   }
 }
+
+/* Los controles del mapa comparten el mínimo táctil del producto. */
+.map-shell .maplibregl-ctrl-group button {
+  width: 44px;
+  height: 44px;
+}
+.map-shell .maplibregl-ctrl-attrib-button {
+  width: 44px;
+  height: 44px;
+}
+.map-shell .maplibregl-ctrl-attrib-inner a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

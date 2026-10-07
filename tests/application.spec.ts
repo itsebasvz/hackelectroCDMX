@@ -95,7 +95,7 @@ test('otro ramal y autobús urbano mantienen parámetros explícitos', async ({ 
 test('accesibilidad del flujo, diálogo y móvil sin desbordamiento', async ({ page }) => {
   await page.goto('/');
   await ready(page);
-  const base = await new AxeBuilder({ page }).exclude('.map-shell').analyze();
+  const base = await new AxeBuilder({ page }).analyze();
   expect(base.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual(
     [],
   );
@@ -109,7 +109,7 @@ test('accesibilidad del flujo, diálogo y móvil sin desbordamiento', async ({ p
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'Condiciones del escenario' }).click();
-  const edit = await new AxeBuilder({ page }).exclude('.map-shell').analyze();
+  const edit = await new AxeBuilder({ page }).analyze();
   expect(edit.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual(
     [],
   );
