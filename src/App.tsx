@@ -227,6 +227,8 @@ export default function App() {
             >
               <RouteMap
                 routeId={scenario.route.id}
+                cycles={scenario.operation.cycles}
+                onCycles={(cycles) => setScenario(withValue(scenario, 'operation.cycles', cycles))}
                 result={
                   engine.result?.scenario.route.id === scenario.route.id ? engine.result : null
                 }

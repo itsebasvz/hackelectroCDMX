@@ -8,6 +8,7 @@ import type { Hospital } from './MapSymbols';
 export function PointCard({
   result,
   cycle,
+  cycles,
   fraction,
   stale,
   expanded,
@@ -15,6 +16,7 @@ export function PointCard({
 }: {
   result: Result | null;
   cycle: number;
+  cycles: number;
   fraction: number;
   stale: boolean;
   expanded: boolean;
@@ -31,8 +33,7 @@ export function PointCard({
         </span>
       </div>
       <p>
-        Vuelta {cycle} de {result?.scenario.operation.cycles ?? '—'} ·{' '}
-        <strong>{point ? num(point.km, 1) : '—'} km</strong> del día
+        Vuelta {cycle} de {cycles} · <strong>{point ? num(point.km, 1) : '—'} km</strong> del día
       </p>
       <div className="map-point-energy">
         <Battery size={18} aria-hidden="true" />

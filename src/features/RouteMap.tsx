@@ -218,10 +218,14 @@ export default function RouteMap({
   routeId,
   result,
   stale,
+  cycles,
+  onCycles,
 }: {
   routeId: string;
   result: Result | null;
   stale: boolean;
+  cycles: number;
+  onCycles: (cycles: number) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -243,7 +247,11 @@ export default function RouteMap({
   const [showVehicle, setShowVehicle] = useState(false);
   const [zoom, setZoom] = useState(12);
   const [note, setNote] = useState('Cargando cartografía histórica…');
-  const activeCycle = Math.min(cycle, result?.scenario.operation.cycles ?? 1);
+  const cycleCount =
+    Number.isInteger(cycles) && cycles >= 1 && cycles <= 100
+      ? cycles
+      : (result?.scenario.operation.cycles ?? 1);
+  const activeCycle = Math.min(cycle, cycleCount);
   const view = useRef({
     routeId,
     result,
@@ -460,6 +468,9 @@ export default function RouteMap({
     update();
   }, [result, mode, context, activeCycle, fraction, hospitals]);
   useEffect(() => {
+    setCycle((current) => Math.min(current, cycleCount));
+  }, [cycleCount]);
+  useEffect(() => {
     if (routeId !== 'M09-514' || hospitals) return;
     const controller = new AbortController();
     fetch('/data/hospitals.geojson', { signal: controller.signal })
@@ -481,7 +492,6 @@ export default function RouteMap({
   const position = geometry ? positionOnTrace(geometry, fraction) : null;
   const cartographicSegments = geometry ? traceSegments(geometry) : [];
   const cartographic = cartographicSegments.at(-1)?.to ?? 0;
-  const cycleCount = result?.scenario.operation.cycles ?? 1;
   const progressValue =
     scope === 'day' ? Math.round((activeCycle - 1 + fraction) * 1000) : Math.round(fraction * 1000);
   const progressMax = scope === 'day' ? cycleCount * 1000 : 1000;
@@ -746,6 +756,7 @@ export default function RouteMap({
           <PointCard
             result={result}
             cycle={activeCycle}
+            cycles={cycleCount}
             fraction={fraction}
             stale={stale}
             expanded={showVehicle}
@@ -827,13 +838,35 @@ export default function RouteMap({
             <SkipForward size={14} aria-hidden="true" />
           </button>
         </div>
-        <div className="map-scope-switch" role="group" aria-label="Alcance de la barra">
-          <button type="button" aria-pressed={scope === 'day'} onClick={() => setScope('day')}>
-            Todo el día
-          </button>
-          <button type="button" aria-pressed={scope === 'cycle'} onClick={() => setScope('cycle')}>
-            Una vuelta
-          </button>
+        <div className="map-options">
+          <div className="field map-day-cycles">
+            <label htmlFor="map-cycle-count">Vueltas / unidad / día</label>
+            <input
+              id="map-cycle-count"
+              type="number"
+              min="1"
+              max="100"
+              step="1"
+              value={Number.isInteger(cycles) ? cycles : ''}
+              onChange={(e) => {
+                const value = e.target.value === '' ? Number.NaN : Number(e.target.value);
+                onCycles(Number.isInteger(value) ? Math.min(100, Math.max(1, value)) : Number.NaN);
+              }}
+              aria-label="Vueltas por unidad al día, de 1 a 100"
+            />
+          </div>
+          <div className="map-scope-switch" role="group" aria-label="Escala de la barra">
+            <button type="button" aria-pressed={scope === 'day'} onClick={() => setScope('day')}>
+              Todo el día
+            </button>
+            <button
+              type="button"
+              aria-pressed={scope === 'cycle'}
+              onClick={() => setScope('cycle')}
+            >
+              Una vuelta
+            </button>
+          </div>
         </div>
         <div className={`map-scrub ${scope === 'day' ? 'is-day' : 'is-cycle'}`}>
           {scope === 'cycle' && (

@@ -2584,6 +2584,27 @@ footer > small {
 .map-journey .field {
   margin-bottom: 0;
 }
+.map-options {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  min-width: 0;
+}
+.map-options .map-day-cycles {
+  flex: 0 0 112px;
+}
+.map-options .map-day-cycles label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.map-options .map-day-cycles input {
+  width: 100%;
+  padding: 9px 8px;
+  min-height: 44px;
+  font-variant-numeric: tabular-nums;
+}
 .map-navigation button {
   white-space: nowrap;
 }
@@ -2745,9 +2766,9 @@ footer > small {
   color: var(--primary);
   font-weight: 700;
 }
-@container route-map (min-width: 760px) {
+@container route-map (min-width: 820px) {
   .map-journey {
-    grid-template-columns: auto auto minmax(140px, 1fr);
+    grid-template-columns: auto auto minmax(220px, 1fr);
     gap: 12px;
   }
   .map-journey .map-navigation button {
@@ -2755,14 +2776,18 @@ footer > small {
     padding-left: 9px;
   }
 }
-@container route-map (min-width: 481px) and (max-width: 759px) {
+@container route-map (min-width: 560px) and (max-width: 819px) {
   .map-journey {
     grid-template-columns: auto minmax(0, 1fr);
   }
   .map-journey .map-navigation {
     grid-column: 1;
   }
-  .map-scope-switch {
+  .map-journey .map-navigation button {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+  .map-options {
     grid-column: 2;
     justify-self: end;
   }
@@ -2770,12 +2795,17 @@ footer > small {
     grid-column: 1 / -1;
   }
 }
-@container route-map (max-width: 480px) {
+@container route-map (max-width: 559px) {
   .map-journey .map-navigation,
-  .map-scope-switch {
+  .map-options {
     justify-self: start;
   }
   .map-journey .map-scrub.is-cycle {
     grid-template-columns: 88px minmax(0, 1fr);
+  }
+}
+@container route-map (max-width: 319px) {
+  .map-options {
+    flex-wrap: wrap;
   }
 }
