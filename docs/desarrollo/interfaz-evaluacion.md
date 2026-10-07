@@ -6,7 +6,7 @@ Rediseño aprobado el 6 de octubre de 2026. La pregunta guía sigue siendo: **¿
 
 El encabezado identifica el Hackatón Electromovilidad CDMX 2026 y al Equipo Aragonenes, con el repositorio de GitHub. La frase «Electrificar el transporte sin poner en riesgo el trabajo» expresa el propósito. Se retiraron el rayo de marca, el hero de gran altura y el mensaje técnico sobre cuentas.
 
-En escritorio, el espacio tiene tres paneles: configura tu escenario, explora el recorrido y diagnóstico. Usa márgenes de 24 px y todo el ancho disponible, excepción expresa al máximo de la guía de portales. Entre 900 y 1279 px el diagnóstico pasa debajo; por debajo de 900 px se apilan los paneles. Los controles largos tienen desplazamiento propio; las tablas conservan su desplazamiento horizontal.
+En escritorio, el espacio tiene tres paneles: configura tu escenario, explora el recorrido y diagnóstico. Usa márgenes de 24 px y todo el ancho disponible, excepción expresa al máximo de la guía de portales. Entre 900 y 1279 px el diagnóstico pasa debajo; por debajo de 900 px se apilan los paneles. Los paneles que comparten una fila tienen la misma altura. El mapa ocupa entre 480 y 680 px de altura en escritorio; los controles llenan su panel con desplazamiento interno. Las tablas conservan su desplazamiento horizontal.
 
 «Cambiar ruta» abre el catálogo con búsqueda. Es un archivo histórico: cambiar geometría conserva los demás datos del escenario y lo comunica. Vehículos, rendimiento/consumo, longitud, vueltas, flota y recarga están abiertos desde el inicio. Servicio/personas, especificaciones, energía/carga y financiamiento tienen grupos avanzados. Las ediciones reciben «Supuesto editable», conservando referencia y escala A–F en el detalle.
 
