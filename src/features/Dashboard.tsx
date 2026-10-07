@@ -60,15 +60,15 @@ function financeEvents(r: Result) {
   const horizon = Math.min(r.ice.months.length, r.ev.months.length);
   if (r.scenario.finance.kind === 'credit') {
     for (const [name, finance] of [
-      ['Combustión', r.ice],
-      ['Eléctrico', r.ev],
+      ['de combustión', r.ice],
+      ['del vehículo eléctrico', r.ev],
     ] as const) {
       if (finance.principal <= 0) continue;
       const lastPaid = [...finance.months].reverse().find((m) => m.payment > 0);
       if (lastPaid?.balance === 0)
         events.push({
           month: lastPaid.month,
-          label: `Crédito ${name.toLowerCase()} liquidado${lastPaid.month === horizon ? ' al cierre' : ''}`,
+          label: `Crédito ${name} liquidado${lastPaid.month === horizon ? ' al cierre del horizonte' : ''}`,
           kind: 'payoff',
         });
     }
@@ -261,14 +261,14 @@ export default function Dashboard({
     ];
     const parts = [
       ['operating', 'Operación', '#55585A'],
-      ['workers', 'Trabajo', '#266CB4'],
-      ['owner', 'Concesionario', '#B28E5C'],
+      ['workers', 'Personal', '#266CB4'],
+      ['owner', 'Ingreso concesionario', '#B28E5C'],
       ['payment', 'Financiamiento', '#9D2148'],
       ['reserve', 'Reserva y reposición', '#8F4889'],
-      ['margin', 'Margen libre', '#027A35'],
+      ['margin', 'Resultado de caja', '#027A35'],
     ] as const;
     return {
-      grid: { left: 90, right: 45, top: 92, bottom: 46 },
+      grid: { left: 90, right: 45, top: 64, bottom: 46 },
       tooltip: {
         trigger: 'axis',
         appendTo: 'body',
@@ -353,8 +353,17 @@ export default function Dashboard({
                   silent: true,
                   symbol: 'none',
                   label: { show: false },
-                  lineStyle: { color: '#B28E5C', type: 'dashed', opacity: 0.75 },
-                  data: eventMonths.map((eventMonth) => ({ xAxis: `Mes ${eventMonth}` })),
+                  lineStyle: { type: 'dashed', opacity: 0.75 },
+                  data: eventMonths.map((eventMonth) => ({
+                    xAxis: `Mes ${eventMonth}`,
+                    lineStyle: {
+                      color: events.some(
+                        (event) => event.month === eventMonth && event.kind === 'replacement',
+                      )
+                        ? '#8F4889'
+                        : '#B28E5C',
+                    },
+                  })),
                 },
               }
             : {}),
@@ -464,18 +473,21 @@ export default function Dashboard({
           </small>
         </section>
         <section className="panel finance-chart-panel">
-          <div className="panel-title">
-            <h3>¿A dónde va el ingreso mensual?</h3>
+          <div className="panel-title finance-panel-title">
+            <div>
+              <h3>Distribución mensual del recaudo</h3>
+              <p className="finance-panel-subtitle">Montos de la flota · escenario editable</p>
+            </div>
             <Coins size={19} />
           </div>
           <div className="budget-timeline">
             <div className="budget-timeline-heading">
               <div>
-                <span className="eyebrow">ETAPAS DEL FLUJO · {horizon} MESES</span>
-                <p>Los meses con el mismo presupuesto se agrupan en una etapa.</p>
+                <span className="eyebrow">ETAPAS DEL HORIZONTE · {horizon} MESES</span>
+                <p>Selecciona una etapa. Los meses con presupuestos equivalentes se agrupan.</p>
               </div>
               <span className="revenue-label">
-                Recaudo mensual simulado: <b>{mxn(selectedEvMonth.revenue)}</b>
+                Recaudo mensual del escenario <b>{mxn(selectedEvMonth.revenue)}</b>
               </span>
             </div>
             <div className="budget-phases" role="group" aria-label="Etapas del presupuesto mensual">
@@ -486,6 +498,7 @@ export default function Dashboard({
                     ? `Mes ${phase.startMonth}`
                     : `Meses ${phase.startMonth}–${phase.endMonth}`;
                 const description = describeBudgetPhase(phase, r);
+                const iceMargin = r.ice.months[phase.startMonth - 1]!.freeCash;
                 const margin = r.ev.months[phase.startMonth - 1]!.freeCash;
                 return (
                   <button
@@ -493,14 +506,23 @@ export default function Dashboard({
                     className={`budget-phase${active ? ' selected' : ''}`}
                     type="button"
                     aria-pressed={active}
-                    aria-label={`${range}: ${description}. Margen eléctrico ${mxn(margin)} al mes.`}
+                    aria-label={`${range}: ${description}. Resultado de caja, combustión ${mxn(iceMargin)} por mes, eléctrico ${mxn(margin)} por mes.`}
                     onClick={() => setMonth(phase.startMonth)}
                   >
-                    <span className="budget-phase-index">Etapa {index + 1}</span>
+                    <span className="budget-phase-index">
+                      Etapa {index + 1}
+                      {active ? ' · Seleccionada' : ''}
+                    </span>
                     <strong>{range}</strong>
                     <span>{description}</span>
-                    <small>
-                      Margen eléctrico: <b>{mxn(margin)}/mes</b>
+                    <small className="budget-phase-results">
+                      <span>
+                        Combustión{' '}
+                        <b className={iceMargin < 0 ? 'negative' : ''}>{mxn(iceMargin)}/mes</b>
+                      </span>
+                      <span>
+                        Eléctrico <b className={margin < 0 ? 'negative' : ''}>{mxn(margin)}/mes</b>
+                      </span>
                     </small>
                   </button>
                 );
@@ -508,7 +530,7 @@ export default function Dashboard({
             </div>
             <details className="exact-month">
               <summary>
-                <span>Explorar un mes exacto</span>
+                <span>Consultar un mes específico</span>
                 <b>
                   Mes {month} de {horizon}
                 </b>
@@ -539,18 +561,16 @@ export default function Dashboard({
             <div className="debt-evolution-heading">
               <div>
                 <h4 id="debt-evolution-title">
-                  {hasDebt
-                    ? 'La deuda evoluciona aunque la cuota sea estable'
-                    : 'Sin saldo de deuda financiada'}
+                  {hasDebt ? 'Evolución de la deuda' : 'Sin saldo de deuda financiada'}
                 </h4>
                 <p>
                   {hasDebt
-                    ? 'Saldo después de cada pago mensual · MXN'
+                    ? 'Saldo pendiente después de cada pago. El mes 0 muestra el principal inicial.'
                     : 'Saldo financiado en el escenario · MXN'}
                 </p>
               </div>
               <span>
-                Mes {month} / {horizon}
+                Mes seleccionado · {month} de {horizon}
               </span>
             </div>
             {hasDebt ? (
@@ -568,42 +588,60 @@ export default function Dashboard({
                 aparecen en el presupuesto mensual.
               </p>
             )}
-            <div className="debt-balances" aria-live="polite">
-              <span>
-                <i className="debt-dot combustion" /> Combustión{' '}
+            <div
+              className="debt-balances"
+              role="status"
+              aria-label={`Saldos de deuda al mes ${month}`}
+            >
+              <div className="debt-balance">
+                <i className="debt-dot combustion" />
+                <span>Combustión</span>
                 <b>{mxn(selectedIceMonth.balance)}</b>
-              </span>
-              <span>
-                <i className="debt-dot electric" /> Eléctrico <b>{mxn(selectedEvMonth.balance)}</b>
-              </span>
+              </div>
+              <div className="debt-balance">
+                <i className="debt-dot electric" />
+                <span>Eléctrico</span>
+                <b>{mxn(selectedEvMonth.balance)}</b>
+              </div>
             </div>
             {events.length > 0 && (
-              <ul className="finance-events" aria-label="Hitos financieros del escenario">
-                {events.map((event) => (
-                  <li
-                    className={`finance-event ${event.kind}`}
-                    key={`${event.kind}-${event.month}-${event.label}`}
-                  >
-                    <span>{event.label}</span>
-                    <b>Mes {event.month}</b>
-                  </li>
-                ))}
-              </ul>
+              <div className="finance-events-section">
+                <h5>Hitos del escenario</h5>
+                <ul className="finance-events" aria-label="Hitos financieros del escenario">
+                  {events.map((event) => (
+                    <li
+                      className={`finance-event ${event.kind}`}
+                      key={`${event.kind}-${event.month}-${event.label}`}
+                    >
+                      <span>{event.label}</span>
+                      <b>Mes {event.month}</b>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </section>
-          <p className="chart-explanation">
-            {savings >= 0 ? 'El eléctrico reduce' : 'El eléctrico aumenta'} el gasto operativo en{' '}
-            <b>{mxn(Math.abs(savings))}/mes</b>. En el mes {month}, después de pagos e ingresos
-            objetivo quedan{' '}
-            <b className={selectedEvMonth.freeCash < 0 ? 'negative' : ''}>
-              {mxn(selectedEvMonth.freeCash)}
-            </b>
-            .
-          </p>
+          <div className="chart-explanation">
+            <p>
+              En este escenario, operar la flota eléctrica cuesta{' '}
+              <b>
+                {mxn(Math.abs(savings))}/mes {savings >= 0 ? 'menos' : 'más'}
+              </b>{' '}
+              que la flota de combustión. No incluye financiamiento ni costos de personal.
+            </p>
+            <p>
+              En el mes {month}, al descontar operación, personal, ingreso objetivo del
+              concesionario, pagos y reserva del recaudo supuesto, el resultado de caja eléctrico es{' '}
+              <b className={selectedEvMonth.freeCash < 0 ? 'negative' : ''}>
+                {mxn(selectedEvMonth.freeCash)}
+              </b>
+              .
+            </p>
+          </div>
           <small>
-            La línea discontinua marca el recaudo de la flota. Reserva y reposición es la aportación
-            del mes más reemplazos no cubiertos; no el saldo acumulado. Un margen negativo es
-            déficit, no ingreso disponible.
+            La línea discontinua marca el recaudo supuesto del escenario. «Reserva y reposición»
+            reúne la provisión mensual y la reposición no cubierta; no equivale al saldo acumulado
+            de la reserva. Un resultado de caja negativo es déficit, no ingreso disponible.
           </small>
         </section>
       </div>

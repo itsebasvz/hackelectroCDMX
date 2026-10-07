@@ -102,18 +102,24 @@ test('presupuesto agrupa etapas y permite consultar un mes con saldo de deuda', 
   await page.goto('/');
   await ready(page);
   const financePanel = page.locator('.finance-chart-panel');
+  await expect(
+    financePanel.getByRole('heading', { name: 'Distribución mensual del recaudo' }),
+  ).toBeVisible();
+  await expect(financePanel.getByRole('heading', { name: 'Evolución de la deuda' })).toBeVisible();
   await expect(financePanel.getByRole('button', { name: /Meses 1–60/ })).toHaveCount(1);
   await expect(financePanel.getByRole('button', { name: /Meses 1–60/ })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await financePanel.getByText('Explorar un mes exacto').click();
+  await financePanel.getByText('Consultar un mes específico').click();
   const monthSlider = financePanel.getByLabel('Mes del presupuesto');
   await expect(monthSlider).toHaveAttribute('type', 'range');
   await monthSlider.focus();
   await monthSlider.press('End');
   await expect(financePanel.locator('.exact-month summary')).toContainText('Mes 60 de 60');
-  await expect(financePanel.locator('.debt-evolution-heading')).toContainText('Mes 60 / 60');
+  await expect(financePanel.locator('.debt-evolution-heading')).toContainText(
+    'Mes seleccionado · 60 de 60',
+  );
   await expect(financePanel.locator('.debt-balances')).toContainText('Eléctrico');
   await expect(financePanel.locator('.finance-event')).toHaveCount(2);
   await expect(financePanel.locator('.finance-event').first()).toContainText('liquidado al cierre');

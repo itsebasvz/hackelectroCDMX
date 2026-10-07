@@ -14,6 +14,7 @@
   font-synthesis: none;
   --border: #e7e2e5;
   --muted: #646168;
+  --ink: #55585a;
   --primary: #9d2148;
   --gold: #b28e5c;
   --surface: #fff;
@@ -1944,7 +1945,16 @@ footer > small {
   height: 260px;
 }
 .finance-chart-panel .chart {
-  height: 260px;
+  height: 250px;
+}
+.finance-panel-title {
+  align-items: flex-start;
+}
+.finance-panel-title > div p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 .charge-comparison {
   display: flex;
@@ -1959,89 +1969,112 @@ footer > small {
   font-size: 12px;
   margin: 8px 0 10px;
   color: var(--muted);
+  line-height: 1.6;
+}
+.chart-explanation p + p {
+  margin-top: 6px;
+}
+.finance-chart-panel > small {
+  display: block;
+  margin-top: 9px;
+  font-size: 11px;
+  line-height: 1.6;
 }
 .budget-timeline {
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 12px;
-  padding: 13px 14px 9px;
-  background: #fcfafb;
+  padding: 15px 16px 8px;
+  background: #fbf7f9;
   margin-bottom: 4px;
 }
 .budget-timeline-heading {
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
 .budget-timeline-heading .eyebrow {
   color: var(--primary);
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 .budget-timeline-heading p {
   color: var(--muted);
-  font-size: 10px;
-  margin: 4px 0 0;
+  font-size: 12px;
+  margin: 5px 0 0;
 }
 .revenue-label {
   margin: 2px 0 0 auto;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 12px;
   white-space: nowrap;
+}
+.revenue-label b {
+  margin-left: 4px;
+  color: var(--ink);
 }
 .budget-phases {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
-  gap: 8px;
+  gap: 10px;
   margin-top: 12px;
 }
 .budget-phase {
   display: grid;
   justify-items: start;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
-  padding: 10px 11px;
+  padding: 11px 13px;
   color: var(--ink);
   text-align: left;
   background: white;
-  border: 1px solid var(--border);
-  border-radius: 9px;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
   cursor: pointer;
   transition:
-    border-color 140ms ease,
-    background 140ms ease,
-    box-shadow 140ms ease;
+    border-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .budget-phase:hover {
-  border-color: #c78b9e;
+  border-color: #d9cbd1;
+  border-left-color: var(--primary);
 }
 .budget-phase.selected {
-  background: #fff8fa;
-  border-color: var(--primary);
-  box-shadow: inset 0 0 0 1px var(--primary);
+  background: white;
+  border-color: var(--border);
+  border-left-color: var(--primary);
 }
 .budget-phase:focus-visible,
 .exact-month summary:focus-visible {
-  outline: 3px solid #266cb455;
+  outline: 3px solid #9d214855;
   outline-offset: 2px;
 }
 .budget-phase-index {
   color: var(--primary);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .budget-phase strong {
-  font-size: 12px;
+  font-size: 14px;
 }
 .budget-phase > span:not(.budget-phase-index) {
-  color: #55585a;
-  font-size: 10px;
+  color: var(--ink);
+  font-size: 12px;
 }
 .budget-phase small {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 11px;
+}
+.budget-phase-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 18px;
+  line-height: 1.5;
 }
 .budget-phase small b {
   color: var(--ink);
@@ -2049,16 +2082,17 @@ footer > small {
 .exact-month {
   border-top: 1px solid var(--border);
   margin-top: 11px;
-  padding-top: 8px;
+  padding-top: 4px;
 }
 .exact-month summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 26px;
+  min-height: 44px;
+  padding: 0 4px;
   color: var(--primary);
-  font-size: 10px;
+  font-size: 12px;
   cursor: pointer;
   list-style: none;
 }
@@ -2069,7 +2103,7 @@ footer > small {
   content: '+';
   margin-left: auto;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1;
 }
 .exact-month[open] summary::after {
@@ -2085,12 +2119,13 @@ footer > small {
   align-items: center;
   gap: 12px;
   padding: 8px 0 3px;
-  color: var(--muted);
-  font-size: 11px;
+  color: var(--ink);
+  font-size: 12px;
 }
 .exact-month-control input {
   width: 100%;
   accent-color: var(--primary);
+  min-height: 28px;
 }
 .exact-month-control output {
   min-width: 50px;
@@ -2099,8 +2134,8 @@ footer > small {
   font-weight: 600;
 }
 .debt-evolution {
-  margin-top: 7px;
-  padding-top: 13px;
+  margin-top: 9px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 .debt-evolution-heading {
@@ -2111,45 +2146,55 @@ footer > small {
 }
 .debt-evolution-heading h4 {
   margin: 0;
-  font-size: 12px;
+  font-size: 16px;
 }
 .debt-evolution-heading p {
   color: var(--muted);
-  font-size: 10px;
-  margin: 4px 0 0;
+  font-size: 12px;
+  margin: 5px 0 0;
+  line-height: 1.5;
 }
 .debt-evolution-heading > span {
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: #f7f2f4;
-  color: #55585a;
-  font-size: 9px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #fbf7f9;
+  color: var(--ink);
+  font-size: 11px;
   white-space: nowrap;
 }
 .debt-curve .chart,
 .debt-chart-placeholder {
-  height: 135px;
+  height: 155px;
 }
 .debt-balances {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  padding: 0 4px 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fbf7f9;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
 }
-.debt-balances > span {
-  display: inline-flex;
+.debt-balance {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
 }
-.debt-balances b {
-  margin-left: 3px;
+.debt-balance + .debt-balance {
+  border-left: 1px solid var(--border);
+}
+.debt-balance b {
   color: var(--ink);
+  font-size: 14px;
 }
 .debt-dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
 }
 .debt-dot.combustion {
@@ -2162,39 +2207,58 @@ footer > small {
   padding: 12px;
   border-radius: 8px;
   color: var(--muted);
-  background: #fcfafb;
-  font-size: 10px;
+  background: #fbf7f9;
+  font-size: 12px;
+}
+.finance-events-section h5 {
+  margin: 2px 0 7px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
 }
 .finance-events {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr));
+  gap: 8px;
   list-style: none;
   margin: 0;
   padding: 0 0 10px;
 }
 .finance-event {
   display: inline-flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 7px;
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: #55585a;
-  font-size: 9px;
+  gap: 12px;
+  min-height: 40px;
+  padding: 7px 10px;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  background: #fbf7f9;
+  color: var(--ink);
+  font-size: 11px;
 }
 .finance-event::before {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
   border-radius: 50%;
   background: #b28e5c;
   content: '';
+}
+.finance-event span {
+  flex: 1;
+  line-height: 1.45;
 }
 .finance-event.replacement::before {
   background: #8f4889;
 }
 .finance-event b {
   color: var(--ink);
+  white-space: nowrap;
+}
+.finance-event.replacement {
+  border-left-color: #8f4889;
 }
 .sensitivity-panel {
   margin-bottom: 22px;
@@ -2443,7 +2507,7 @@ footer > small {
   }
   .debt-curve .chart,
   .debt-chart-placeholder {
-    height: 125px;
+    height: 140px;
   }
 }
 @media (max-width: 520px) {
@@ -2454,8 +2518,13 @@ footer > small {
     grid-column: 1 / -1;
   }
   .debt-balances {
-    flex-direction: column;
-    gap: 6px;
+    grid-template-columns: 1fr;
+  }
+  .debt-balance + .debt-balance {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    border-left: 0;
   }
 }
 
