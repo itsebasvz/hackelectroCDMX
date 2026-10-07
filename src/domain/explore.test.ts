@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { defaultScenario } from '../data/defaults';
 import { evaluateScenario } from './evaluate';
-import { sensitivity, monthlyBudget, energyBudget } from './explore';
+import { sensitivity, monthlyBudget, energyBudget, groupBudgetPhases } from './explore';
 import {
   batteryLimit,
   consumptionAt,
@@ -10,6 +10,24 @@ import {
   nearestFraction,
 } from './geometry';
 import type { FeatureCollection, LineString } from 'geojson';
+import type { Month } from './schema';
+
+const sampleMonth = (month: number, changes: Partial<Month> = {}): Month => ({
+  month,
+  revenue: 1000,
+  operating: 200,
+  workerCost: 100,
+  ownerIncome: 100,
+  payment: 200,
+  interest: 20,
+  principal: 180,
+  balance: 2000 - month * 180,
+  reserve: 100,
+  freeCash: 300,
+  replacement: 0,
+  ...changes,
+});
+
 describe('exploración explicable', () => {
   it('reconcilia presupuesto mensual, incluida reposición y cierre de crédito', () => {
     const s = defaultScenario();
@@ -33,6 +51,27 @@ describe('exploración explicable', () => {
     expect(b.service + b.additional).toBeCloseTo(r.dailyBatteryKwh);
     expect(b.margin + r.dailyBatteryKwh).toBeCloseTo(r.usableKwh);
     expect(consumptionAt(r, r.scenario.operation.cycles, 1).kwh).toBeCloseTo(r.dailyBatteryKwh);
+  });
+  it('agrupa flujos iguales pese a la amortización y separa reposición y fin de cuota', () => {
+    const ice = Array.from({ length: 5 }, (_, index) =>
+      sampleMonth(index + 1, {
+        interest: 30 - index * 3,
+        principal: 170 + index * 3,
+        balance: 2000 - index * 170,
+        ...(index === 1 ? { payment: 200.4, freeCash: 299.6 } : {}),
+      }),
+    );
+    const ev = ice.map((m) => ({ ...m }));
+    ev[2] = sampleMonth(3, { replacement: 120 });
+    ice[4] = sampleMonth(5, { payment: 0, freeCash: 500 });
+    ev[4] = sampleMonth(5, { payment: 0, freeCash: 500 });
+
+    expect(groupBudgetPhases(ice, ev)).toEqual([
+      { startMonth: 1, endMonth: 2 },
+      { startMonth: 3, endMonth: 3 },
+      { startMonth: 4, endMonth: 4 },
+      { startMonth: 5, endMonth: 5 },
+    ]);
   });
   it('sensibilidad usa el evaluador, conserva recaudo y alcanza umbrales', async () => {
     const s = defaultScenario();

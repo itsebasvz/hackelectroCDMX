@@ -46,7 +46,9 @@ El contexto hospitalario está activado inicialmente sólo para Ruta 1. Cinco re
 
 **Energía diaria:** las barras comparan energía disponible sin invadir reserva y requerida para servicio/adicionales, en kWh por unidad. Margen o déficit, reserva apartada, energía comprada/pérdidas y horas de carga de la flota se muestran por separado. No se comparan litros con kWh en una misma escala energética.
 
-**Presupuesto mensual:** dos barras de escala común desglosan operación, presupuesto laboral, ingreso objetivo del concesionario, pagos, reserva/reposición y margen libre. El recaudo se marca como referencia. El mes es seleccionable del 1 al 60. Un margen negativo aparece como déficit y los egresos pueden superar el recaudo: no se recorta para aparentar equilibrio.
+**Presupuesto mensual:** dos barras de escala común desglosan operación, presupuesto laboral, ingreso objetivo del concesionario, pagos, reserva/reposición y margen libre. El recaudo se marca como referencia. Una línea de tiempo agrupa meses consecutivos con la misma distribución visible a pesos enteros y separa meses con reposición programada; seleccionar una etapa abre el primer mes del tramo. «Explorar un mes exacto» permite recorrer el horizonte con un deslizador, sin una lista de 60 opciones. Un margen negativo aparece como déficit y los egresos pueden superar el recaudo: no se recorta para aparentar equilibrio.
+
+La curva financiera muestra el principal inicial en el mes cero y el saldo de deuda después de cada pago, para combustión y eléctrico. Los hitos marcan créditos liquidados y reposición de batería cuando están programados en el escenario. Al seleccionar un mes, los saldos exactos de ambas alternativas se actualizan bajo la curva. La curva no proyecta degradación, cambios de tasa, inflación ni eventos no incluidos en las entradas; si no hay principal financiado, explica que los pagos de renta se ven en el presupuesto, sin registrarlos como deuda.
 
 La categoría de reserva/reposición del mes es el residuo contable:
 

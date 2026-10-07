@@ -11,7 +11,13 @@ import {
 } from 'lucide-react';
 import type { Result, FinancialResult } from '../domain/schema';
 import { mxn, num } from '../ui/format';
-import { energyBudget, monthlyBudget, type SensitivityPoint } from '../domain/explore';
+import {
+  energyBudget,
+  groupBudgetPhases,
+  monthlyBudget,
+  type BudgetPhase,
+  type SensitivityPoint,
+} from '../domain/explore';
 import Sensitivity from './Sensitivity';
 const Chart = lazy(() => import('../ui/Chart'));
 const StatusIcon = ({ status }: { status: string }) =>
@@ -22,6 +28,61 @@ const StatusIcon = ({ status }: { status: string }) =>
   ) : (
     <HelpCircle size={17} />
   );
+
+function describeBudgetPhase(phase: BudgetPhase, r: Result) {
+  const replacement = r.ev.months.find(
+    (m) => m.month >= phase.startMonth && m.month <= phase.endMonth && m.replacement > 0,
+  );
+  if (replacement) return 'Reposición programada';
+
+  const currentIce = r.ice.months[phase.startMonth - 1]!;
+  const currentEv = r.ev.months[phase.startMonth - 1]!;
+  const previousIce = r.ice.months[phase.startMonth - 2];
+  const previousEv = r.ev.months[phase.startMonth - 2];
+  if (
+    (previousIce?.payment && currentIce.payment === 0) ||
+    (previousEv?.payment && currentEv.payment === 0)
+  )
+    return 'Después de la última cuota';
+  if (currentIce.payment > 0 || currentEv.payment > 0)
+    return r.scenario.finance.kind === 'lease' ? 'Renta mensual activa' : 'Cuota mensual activa';
+  return 'Sin pagos mensuales';
+}
+
+function debtAxisLabel(value: number) {
+  if (Math.abs(value) >= 1_000_000) return `$${num(value / 1_000_000, 1)} M`;
+  if (Math.abs(value) >= 1_000) return `$${num(value / 1_000, 0)} mil`;
+  return mxn(value);
+}
+
+function financeEvents(r: Result) {
+  const events: { month: number; label: string; kind: 'payoff' | 'replacement' }[] = [];
+  const horizon = Math.min(r.ice.months.length, r.ev.months.length);
+  if (r.scenario.finance.kind === 'credit') {
+    for (const [name, finance] of [
+      ['Combustión', r.ice],
+      ['Eléctrico', r.ev],
+    ] as const) {
+      if (finance.principal <= 0) continue;
+      const lastPaid = [...finance.months].reverse().find((m) => m.payment > 0);
+      if (lastPaid?.balance === 0)
+        events.push({
+          month: lastPaid.month,
+          label: `Crédito ${name.toLowerCase()} liquidado${lastPaid.month === horizon ? ' al cierre' : ''}`,
+          kind: 'payoff',
+        });
+    }
+  }
+  const replacement = r.ev.months.find((m) => m.replacement > 0);
+  if (replacement && replacement.month <= horizon)
+    events.push({
+      month: replacement.month,
+      label: 'Reposición de batería',
+      kind: 'replacement',
+    });
+  return events;
+}
+
 export function ComparisonTable({ r }: { r: Result }) {
   const rows: [string, string, string][] = [
     ['Costo económico · 5 años', mxn(r.ice.economicCost), mxn(r.ev.economicCost)],
@@ -144,6 +205,12 @@ export default function Dashboard({
 }) {
   const s = r.scenario;
   const [month, setMonth] = useState(1);
+  const horizon = Math.min(r.ice.months.length, r.ev.months.length);
+  const selectedIceMonth = r.ice.months[month - 1]!;
+  const selectedEvMonth = r.ev.months[month - 1]!;
+  const budgetPhases = useMemo(() => groupBudgetPhases(r.ice.months, r.ev.months), [r]);
+  const events = useMemo(() => financeEvents(r), [r]);
+  const hasDebt = r.ice.principal > 0 || r.ev.principal > 0;
   const failed = r.constraints.filter((c) => c.status === 'fail');
   const savings = r.ice.operatingMonth - r.ev.operatingMonth;
   const energy = energyBudget(r);
@@ -201,7 +268,7 @@ export default function Dashboard({
       ['margin', 'Margen libre', '#027A35'],
     ] as const;
     return {
-      grid: { left: 90, right: 45, top: 92, bottom: 35 },
+      grid: { left: 90, right: 45, top: 92, bottom: 46 },
       tooltip: {
         trigger: 'axis',
         appendTo: 'body',
@@ -211,8 +278,10 @@ export default function Dashboard({
       legend: { top: 0, data: parts.map((p) => p[1]), textStyle: { fontSize: 11 } },
       xAxis: {
         type: 'value',
-        axisLabel: { formatter: (v: number) => `${num(v / 1000, 0)} mil` },
-        name: 'MXN',
+        axisLabel: { formatter: (v: number) => num(v / 1000, 0) },
+        name: 'Miles de MXN',
+        nameLocation: 'middle',
+        nameGap: 30,
       },
       yAxis: {
         type: 'category',
@@ -242,6 +311,64 @@ export default function Dashboard({
       })),
     };
   }, [r, month]);
+  const debtOption = useMemo(() => {
+    const labels = ['Inicio', ...Array.from({ length: horizon }, (_, index) => `Mes ${index + 1}`)];
+    const eventMonths = [...new Set(events.map((event) => event.month))];
+    return {
+      color: ['#55585A', '#9D2148'],
+      grid: { left: 60, right: 16, top: 28, bottom: 25 },
+      tooltip: {
+        trigger: 'axis',
+        appendTo: 'body',
+        confine: true,
+        valueFormatter: (value: unknown) => mxn(Number(value)),
+      },
+      legend: { top: 0, data: ['Combustión', 'Eléctrico'], textStyle: { fontSize: 10 } },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: labels,
+        axisLabel: {
+          interval: 11,
+          formatter: (value: string) => (value === 'Inicio' ? value : `M${value.slice(4)}`),
+          fontSize: 9,
+        },
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        axisLabel: { formatter: (value: number) => debtAxisLabel(value), fontSize: 9 },
+        splitNumber: 3,
+      },
+      series: [
+        {
+          name: 'Combustión',
+          type: 'line',
+          showSymbol: false,
+          lineStyle: { width: 2 },
+          data: [r.ice.principal, ...r.ice.months.slice(0, horizon).map((m) => m.balance)],
+          ...(eventMonths.length
+            ? {
+                markLine: {
+                  silent: true,
+                  symbol: 'none',
+                  label: { show: false },
+                  lineStyle: { color: '#B28E5C', type: 'dashed', opacity: 0.75 },
+                  data: eventMonths.map((eventMonth) => ({ xAxis: `Mes ${eventMonth}` })),
+                },
+              }
+            : {}),
+        },
+        {
+          name: 'Eléctrico',
+          type: 'line',
+          showSymbol: false,
+          lineStyle: { width: 2 },
+          data: [r.ev.principal, ...r.ev.months.slice(0, horizon).map((m) => m.balance)],
+        },
+      ],
+    };
+  }, [r, horizon, events]);
   return (
     <div className="dashboard">
       <div className="dashboard-heading">
@@ -341,43 +468,135 @@ export default function Dashboard({
             <h3>¿A dónde va el ingreso mensual?</h3>
             <Coins size={19} />
           </div>
-          <div className="month-choice">
-            <span className="revenue-label">
-              Recaudo de flota: <b>{mxn(r.ev.months[month - 1]!.revenue)}</b>
-            </span>
-            <label htmlFor="budget-month">Mes del presupuesto</label>
-            <select
-              id="budget-month"
-              value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
-            >
-              {Array.from({ length: 60 }, (_, i) => (
-                <option key={i} value={i + 1}>
-                  Mes {i + 1}
-                </option>
-              ))}
-            </select>
+          <div className="budget-timeline">
+            <div className="budget-timeline-heading">
+              <div>
+                <span className="eyebrow">ETAPAS DEL FLUJO · {horizon} MESES</span>
+                <p>Los meses con el mismo presupuesto se agrupan en una etapa.</p>
+              </div>
+              <span className="revenue-label">
+                Recaudo mensual simulado: <b>{mxn(selectedEvMonth.revenue)}</b>
+              </span>
+            </div>
+            <div className="budget-phases" role="group" aria-label="Etapas del presupuesto mensual">
+              {budgetPhases.map((phase, index) => {
+                const active = month >= phase.startMonth && month <= phase.endMonth;
+                const range =
+                  phase.startMonth === phase.endMonth
+                    ? `Mes ${phase.startMonth}`
+                    : `Meses ${phase.startMonth}–${phase.endMonth}`;
+                const description = describeBudgetPhase(phase, r);
+                const margin = r.ev.months[phase.startMonth - 1]!.freeCash;
+                return (
+                  <button
+                    key={`${phase.startMonth}-${phase.endMonth}`}
+                    className={`budget-phase${active ? ' selected' : ''}`}
+                    type="button"
+                    aria-pressed={active}
+                    aria-label={`${range}: ${description}. Margen eléctrico ${mxn(margin)} al mes.`}
+                    onClick={() => setMonth(phase.startMonth)}
+                  >
+                    <span className="budget-phase-index">Etapa {index + 1}</span>
+                    <strong>{range}</strong>
+                    <span>{description}</span>
+                    <small>
+                      Margen eléctrico: <b>{mxn(margin)}/mes</b>
+                    </small>
+                  </button>
+                );
+              })}
+            </div>
+            <details className="exact-month">
+              <summary>
+                <span>Explorar un mes exacto</span>
+                <b>
+                  Mes {month} de {horizon}
+                </b>
+              </summary>
+              <div className="exact-month-control">
+                <label htmlFor="budget-month">Mes del presupuesto</label>
+                <input
+                  id="budget-month"
+                  type="range"
+                  min="1"
+                  max={horizon}
+                  step="1"
+                  value={month}
+                  onChange={(event) => setMonth(Number(event.target.value))}
+                  aria-valuetext={`Mes ${month} de ${horizon}`}
+                />
+                <output htmlFor="budget-month">Mes {month}</output>
+              </div>
+            </details>
           </div>
           <Suspense fallback={<div className="chart" />}>
             <Chart
               option={cashOption}
-              label={`Presupuesto del mes ${month}. Recaudo de flota ${mxn(r.ev.months[month - 1]!.revenue)}. Margen de combustión ${mxn(r.ice.months[month - 1]!.freeCash)}, eléctrico ${mxn(r.ev.months[month - 1]!.freeCash)}. Consulte la tabla mensual para componentes.`}
+              label={`Presupuesto del mes ${month}. Recaudo de flota ${mxn(selectedEvMonth.revenue)}. Margen de combustión ${mxn(selectedIceMonth.freeCash)}, eléctrico ${mxn(selectedEvMonth.freeCash)}. Consulte la tabla mensual para componentes.`}
             />
           </Suspense>
-          <div className="chart-summary">
-            <span>
-              <b>60 meses</b> de horizonte
-            </span>
-            <span>
-              <b>{mxn(r.ev.debtRemaining)}</b> deuda restante
-            </span>
-          </div>
+          <section className="debt-evolution" aria-labelledby="debt-evolution-title">
+            <div className="debt-evolution-heading">
+              <div>
+                <h4 id="debt-evolution-title">
+                  {hasDebt
+                    ? 'La deuda evoluciona aunque la cuota sea estable'
+                    : 'Sin saldo de deuda financiada'}
+                </h4>
+                <p>
+                  {hasDebt
+                    ? 'Saldo después de cada pago mensual · MXN'
+                    : 'Saldo financiado en el escenario · MXN'}
+                </p>
+              </div>
+              <span>
+                Mes {month} / {horizon}
+              </span>
+            </div>
+            {hasDebt ? (
+              <Suspense fallback={<div className="debt-chart-placeholder" />}>
+                <div className="debt-curve">
+                  <Chart
+                    option={debtOption}
+                    label={`Curva de deuda durante ${horizon} meses. Mes ${month}: saldo de combustión ${mxn(selectedIceMonth.balance)} y saldo eléctrico ${mxn(selectedEvMonth.balance)}.`}
+                  />
+                </div>
+              </Suspense>
+            ) : (
+              <p className="debt-empty">
+                No se genera saldo financiado en este escenario. Los pagos de renta, si existen,
+                aparecen en el presupuesto mensual.
+              </p>
+            )}
+            <div className="debt-balances" aria-live="polite">
+              <span>
+                <i className="debt-dot combustion" /> Combustión{' '}
+                <b>{mxn(selectedIceMonth.balance)}</b>
+              </span>
+              <span>
+                <i className="debt-dot electric" /> Eléctrico <b>{mxn(selectedEvMonth.balance)}</b>
+              </span>
+            </div>
+            {events.length > 0 && (
+              <ul className="finance-events" aria-label="Hitos financieros del escenario">
+                {events.map((event) => (
+                  <li
+                    className={`finance-event ${event.kind}`}
+                    key={`${event.kind}-${event.month}-${event.label}`}
+                  >
+                    <span>{event.label}</span>
+                    <b>Mes {event.month}</b>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
           <p className="chart-explanation">
             {savings >= 0 ? 'El eléctrico reduce' : 'El eléctrico aumenta'} el gasto operativo en{' '}
             <b>{mxn(Math.abs(savings))}/mes</b>. En el mes {month}, después de pagos e ingresos
             objetivo quedan{' '}
-            <b className={r.ev.months[month - 1]!.freeCash < 0 ? 'negative' : ''}>
-              {mxn(r.ev.months[month - 1]!.freeCash)}
+            <b className={selectedEvMonth.freeCash < 0 ? 'negative' : ''}>
+              {mxn(selectedEvMonth.freeCash)}
             </b>
             .
           </p>

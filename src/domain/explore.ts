@@ -54,3 +54,45 @@ export function monthlyBudget(m: Month) {
     revenue: m.revenue,
   };
 }
+
+export interface BudgetPhase {
+  startMonth: number;
+  endMonth: number;
+}
+
+/** Agrupa meses consecutivos con el mismo flujo visible a pesos enteros y separa reposiciones. */
+export function groupBudgetPhases(iceMonths: Month[], evMonths: Month[]): BudgetPhase[] {
+  const count = Math.min(iceMonths.length, evMonths.length);
+  if (count === 0) return [];
+
+  const signature = (month: Month) => {
+    const budget = monthlyBudget(month);
+    const amounts = [
+      budget.revenue,
+      budget.operating,
+      budget.workers,
+      budget.owner,
+      budget.payment,
+      budget.reserve,
+      budget.margin,
+    ].map((amount) => Math.round(amount));
+    return [...amounts, Number(month.replacement > 0)];
+  };
+  const iceSignatures = iceMonths.slice(0, count).map(signature);
+  const evSignatures = evMonths.slice(0, count).map(signature);
+  const sameFlow = (indexA: number, indexB: number) =>
+    iceSignatures[indexA]!.every((value, index) => value === iceSignatures[indexB]![index]) &&
+    evSignatures[indexA]!.every((value, index) => value === evSignatures[indexB]![index]);
+
+  const phases: BudgetPhase[] = [];
+  let start = 0;
+  for (let index = 1; index <= count; index++) {
+    if (index < count && sameFlow(index - 1, index)) continue;
+    phases.push({
+      startMonth: iceMonths[start]!.month,
+      endMonth: iceMonths[index - 1]!.month,
+    });
+    start = index;
+  }
+  return phases;
+}

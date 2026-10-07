@@ -96,6 +96,28 @@ test('otro ramal y autobús urbano mantienen parámetros explícitos', async ({ 
   await expect(page.getByLabel('Referencia eléctrica')).toHaveValue('yutong-e12');
   await expect(page.getByLabel('Referencia de combustión')).toHaveValue('diesel-urban');
 });
+test('presupuesto agrupa etapas y permite consultar un mes con saldo de deuda', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await ready(page);
+  const financePanel = page.locator('.finance-chart-panel');
+  await expect(financePanel.getByRole('button', { name: /Meses 1–60/ })).toHaveCount(1);
+  await expect(financePanel.getByRole('button', { name: /Meses 1–60/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await financePanel.getByText('Explorar un mes exacto').click();
+  const monthSlider = financePanel.getByLabel('Mes del presupuesto');
+  await expect(monthSlider).toHaveAttribute('type', 'range');
+  await monthSlider.focus();
+  await monthSlider.press('End');
+  await expect(financePanel.locator('.exact-month summary')).toContainText('Mes 60 de 60');
+  await expect(financePanel.locator('.debt-evolution-heading')).toContainText('Mes 60 / 60');
+  await expect(financePanel.locator('.debt-balances')).toContainText('Eléctrico');
+  await expect(financePanel.locator('.finance-event')).toHaveCount(2);
+  await expect(financePanel.locator('.finance-event').first()).toContainText('liquidado al cierre');
+});
 test('accesibilidad del flujo, diálogo y móvil sin desbordamiento', async ({ page }) => {
   await page.goto('/');
   await ready(page);
