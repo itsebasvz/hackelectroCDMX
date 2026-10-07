@@ -1,0 +1,14 @@
+{
+  "sourceId": "M09",
+  "sourceUrl": "https://datos.cdmx.gob.mx/dataset/ubicacion-de-rutas-del-transporte-publico-concesionado-de-ruta",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "SEMOVI, Gobierno de la Ciudad de México",
+  "consulted": "2026-10-06",
+  "internalDate": "2022-09-02",
+  "sourceSha256": "c3ea85322837b8514e769586a65c5c22afb1bb5857865056d2a8dc63da0effbb",
+  "records": 995,
+  "features": 2102,
+  "method": "KML LineStrings independientes → XY sin Z → Haversine R=6371008.8 m; sin unir extremos ni simplificar.",
+  "limitations": "Archivo histórico. No acredita operación, tecnología, demanda, topografía ni ciclo vigente."
+}
