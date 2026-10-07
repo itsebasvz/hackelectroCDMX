@@ -1,13 +1,13 @@
 # Contexto del proyecto
 
-El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon CDMX. La selección fue confirmada por el usuario el 6 de octubre de 2026. Aún no se ha definido la flota objetivo, el mecanismo de solución, el prototipo o la tecnología.
+El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon CDMX. La selección fue confirmada por el usuario el 6 de octubre de 2026. La solución aprobada es un evaluador por ramal con motor TypeScript en Web Worker y aplicación React/Vite. Ruta 1 es el ejemplo exploratorio; la flota real, acuerdos y viabilidad de inversión no están acreditados.
 
 ## Organización
 
 - `hackelectro/` es la raíz elegida para el repositorio; mantener `AGENTS.md` aquí.
 - El nombre acordado del repositorio en GitHub es **`hackelectroCDMX`**. La carpeta de trabajo local actual sigue siendo `hackelectro/`.
-- No crear `src/` ni un stack de aplicación hasta que se defina la solución con el usuario.
-- Mantener únicamente las carpetas que se usan actualmente: `docs/` para documentación y `scripts/` para su extracción. No crear carpetas vacías, reservadas para trabajo futuro o basadas en una arquitectura supuesta. Añadir estructura cuando exista una necesidad concreta del trabajo autorizado.
+- La solución y el stack ya fueron aprobados. `src/` contiene dominio, datos, worker, features e interfaz; no introducir backend, cuentas o base de datos sin nueva necesidad autorizada.
+- Mantener carpetas usadas: `docs/`, `scripts/`, `src/`, `public/data/`, `tests/` y CI. No crear carpetas vacías o arquitecturas supuestas.
 - `docs/README.md` es la entrada documental. Las guías generales están en `docs/contexto/`; los expedientes con índices propios en `docs/investigacion/ruta1/` y `docs/investigacion/latinoamerica/`. Los originales, extracciones, transcripciones visuales y assets conservan sus carpetas; `docs/inventario.json` sigue siendo el inventario de los cuatro PDF. Al mover un documento, actualizar enlaces y rutas de los registros; si un documento propio con hash cambia, actualizar su hash y tamaño sin modificar los hashes de originales.
 - El 6 de octubre de 2026, tras habilitar el usuario acceso completo, se inicializó Git con la rama `main` y se configuró `origin` como `https://github.com/itsebasvz/hackelectroCDMX.git`. La protección de solo lectura de la sesión anterior ya no aplica. Comprobar el estado antes de operaciones Git.
 
@@ -28,6 +28,13 @@ El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon
 - La licencia del trabajo propio no relicencia PDF, extracciones, imágenes, transcripciones o datasets de terceros. Conservar sus metadatos y derechos; las fuentes UNKNOWN se citan y no se redistribuyen automáticamente, conforme al método de investigación.
 - Los textos jurídicos se recuperaron de la API oficial de licencias de GitHub (MIT, completando sólo año y titular) y Creative Commons (`docs/CC-BY-4.0.txt`, copia íntegra). Su procedencia y hashes están en `docs/contexto/procedencia-licencias.json`; `docs/LICENSE.md` define el alcance, no sustituye el texto oficial.
 - `.gitignore` excluye `docs/originales/`, `docs/fuentes/`, `docs/transcripciones-visuales/` y `docs/assets/`. Los archivos se conservan localmente; las referencias publicadas apuntan a `docs/contexto/fuentes-locales.md` y el inventario. No añadirlos con `git add -f` sin permiso de redistribución verificado.
+
+## Aplicación y verificación
+
+- Consultar `docs/desarrollo/README.md` y `docs/desarrollo/metodologia-motor.md`. Ejecutar `npm run check`, `npm run test:e2e` y `npm run format:check` antes de publicar.
+- Reservar inversión, principal, ingreso objetivo y liquidez por separado. El enganche es mínimo; asignar capital/apoyo sin inflar artificialmente el apoyo. No rescatar déficit recurrente mediante aportación inicial.
+- MapLibre 6 requiere su worker empaquetado localmente. No depender de CDN ni descargar masivamente teselas OSM. Conservar fuentes tipográficas locales y avisos jurídicos originales en la distribución.
+- `docs/inventario.json` conserva únicamente los cuatro PDF históricos; los nuevos avisos de dependencias tienen registro separado.
 
 ## Fuentes y consulta
 

@@ -2,7 +2,22 @@
 
 Espacio de trabajo del equipo para el **reto 2**: electrificar flotas de transporte y servicios de CDMX de manera económicamente viable, ambientalmente efectiva y socialmente justa, protegiendo el ingreso y las condiciones de trabajo de sus operadores.
 
-La elección del reto está confirmada. Ruta 1 Universidad–San Fernando–Huipulco es el caso prioritario de investigación; la flota definitiva, solución, tecnología y formato de prototipo siguen pendientes.
+La plataforma permite comparar combustión y electricidad por ramal, explorar carga y financiamiento y buscar la aportación inicial mínima manteniendo servicio e ingresos objetivo. Ruta 1 Universidad–San Fernando–Huipulco es el ejemplo documentado; la flota real y la decisión de inversión siguen por validar.
+
+## Ejecutar la plataforma
+
+Requiere Node 22.12+ compatible y npm.
+
+```bash
+npm ci
+npm run dev
+```
+
+Para la demostración local: `npm run build` y `npm run preview -- --port 4173`. Abrir `http://localhost:4173`. El motor, los catálogos, fuentes tipográficas y geometrías funcionan localmente; el mapa base detallado requiere internet.
+
+[Guía de uso, arquitectura, pruebas y despliegue](docs/desarrollo/README.md) · [Metodología del motor](docs/desarrollo/metodologia-motor.md) · [Diseño visual](DESIGN.md).
+
+Verificar con `npm run check` y `npm run test:e2e` (Chromium: `npx playwright install chromium`).
 
 ## Empezar
 
@@ -34,10 +49,13 @@ hackelectro/
 ├── .gitignore
 ├── .gitattributes
 ├── docs/                     PDF originales, transcripciones y notas de estudio
-└── scripts/                  Extracción documental que se utiliza actualmente
+├── scripts/                  Extracción, derivación geográfica y avisos de licencias
+├── src/                      Motor, worker, interfaz y catálogo del escenario
+├── public/data/              Geometrías y registro de procedencia
+└── tests/                    Verificación de navegador
 ```
 
-La estructura contiene únicamente documentación y su utilidad de extracción. La solución y la tecnología siguen pendientes; las carpetas de desarrollo se crearán cuando exista trabajo concreto que las necesite.
+La aplicación React/TypeScript/Vite vive en `src/`, con motor puro en Web Worker, mapa MapLibre y gráficas ECharts. `public/data/` contiene geometrías abiertas derivadas; `tests/` contiene recorridos de navegador. No hay backend ni cuentas.
 
 Los materiales publicables incluyen análisis propios, referencias, parámetros, inventarios, la herramienta de extracción y recursos geográficos con CC BY 4.0 explícita, atribución y hashes. Los recursos nuevos aún no se han enviado al remoto en esta tarea. Los cuatro PDF y sus reproducciones se conservan localmente y están excluidos de Git por licencia de redistribución no verificada; sus [rutas, páginas y condiciones](docs/contexto/fuentes-locales.md) siguen documentadas. Las capturas retiradas no son fuente activa ni parte de la publicación.
 

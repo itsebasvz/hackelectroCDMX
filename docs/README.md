@@ -6,6 +6,10 @@ Actualizado el **6 de octubre de 2026**. Originales locales: **4 PDF, 221 págin
 
 **Lectura principal para orientar el siguiente paso:** [Documento maestro de Ruta 1](documento-maestro-ruta1.md). La investigación pública queda suficiente para orientar un prototipo exploratorio con supuestos declarados. Integra evidencia, valor humano y mecanismos de transición; compara compra financiada y proveedor de vehículos con condiciones jurídicas, carga, servicio y protección económica. No acredita viabilidad ni adopta una flota. Sus 28 referencias complementarias y el seguimiento de consultas están en el [registro M](investigacion/ruta1/fuentes-documento-maestro.json). El cierre público para el hackatón añade [55 bases de decisión](investigacion/ruta1/bases-decision-ruta1.csv), condiciones G01–G08, [14 parámetros F de prueba](investigacion/ruta1/parametros-exploratorios-hackaton.csv) y [seis originales geográficos abiertos con una derivación](investigacion/ruta1/recursos-abiertos/README.md), atribución y hashes.
 
+## Plataforma implementada
+
+[Guía del evaluador](desarrollo/README.md): ejecución, uso, arquitectura y licencias. [Metodología del motor 1.0.0](desarrollo/metodologia-motor.md): cálculos, asignación de apoyo, límites y reproducibilidad. La documentación histórica conserva sus estados y no acredita acuerdos de inversión.
+
 ## Organización
 
 | Ubicación | Contenido | Punto de entrada |
