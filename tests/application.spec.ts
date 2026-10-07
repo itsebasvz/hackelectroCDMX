@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
 });
 async function ready(page: import('@playwright/test').Page) {
   await expect(
-    page.getByText('Cálculo completo · puedes consultar el resultado sin esperar una animación.'),
+    page.getByText('Escenario actualizado · los resultados cambian al editar los parámetros.'),
   ).toBeVisible();
 }
 test('evalúa, edita, conserva resultado inválido y encuentra condiciones', async ({ page }) => {
@@ -23,19 +23,24 @@ test('evalúa, edita, conserva resultado inválido y encuentra condiciones', asy
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await ready(page);
-  await expect(page.getByRole('heading', { name: 'La transición, en números.' })).toBeVisible();
-  await expect(page.getByText('995 registros históricos')).toBeVisible();
-  await page.getByRole('button', { name: 'Condiciones del escenario' }).click();
+  await expect(page.getByRole('heading', { name: '¿Qué cambia al electrificar?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cambiar ruta' })).toBeVisible();
+  await page
+    .locator('.diagnostic-panel')
+    .getByRole('button', { name: 'Revisar parámetro' })
+    .first()
+    .click();
+  await expect(page.getByLabel('Capital inicial propio disponible')).toBeFocused();
   await page.getByLabel('Longitud del ciclo de prueba').fill('25');
   await ready(page);
-  await expect(page.getByText('210 km')).toBeVisible();
+  await expect(page.getByText('210 km', { exact: true })).toBeVisible();
   await page.getByLabel('Longitud del ciclo de prueba').fill('');
   await expect(
     page.getByText(
       'Corrige las entradas. Se conserva el último resultado válido, ahora desactualizado.',
     ),
   ).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'La transición, en números.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '¿Qué cambia al electrificar?' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Buscar combinación' })).toBeDisabled();
   await page.getByLabel('Longitud del ciclo de prueba').fill('20.340012617');
   await ready(page);
@@ -46,7 +51,7 @@ test('evalúa, edita, conserva resultado inválido y encuentra condiciones', asy
   ).toBeVisible();
   await page.getByRole('button', { name: 'Explorar esta combinación' }).first().click();
   await ready(page);
-  await expect(page.getByText('Cumple condiciones simuladas')).toBeVisible();
+  await expect(page.getByText('Cumple cálculos · verificaciones pendientes')).toBeVisible();
   expect(errors).toEqual([]);
 });
 test('exporta, importa, guarda copias y recalcula', async ({ page }) => {
@@ -79,6 +84,7 @@ test('exporta, importa, guarda copias y recalcula', async ({ page }) => {
 test('otro ramal y autobús urbano mantienen parámetros explícitos', async ({ page }) => {
   await page.goto('/');
   await ready(page);
+  await page.getByRole('button', { name: 'Cambiar ruta' }).click();
   await page.getByLabel('Buscar ruta o destino').fill('Villa Coapa');
   const first = page.locator('.route-option').first();
   await expect(first).toBeVisible();
@@ -87,8 +93,6 @@ test('otro ramal y autobús urbano mantienen parámetros explícitos', async ({ 
   await expect(page.getByText('Cambió la geometría.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Urbano · diésel', exact: true }).click();
   await ready(page);
-  await page.getByRole('button', { name: 'Condiciones del escenario' }).click();
-  await page.getByRole('tab', { name: '02 Vehículos comparables' }).click();
   await expect(page.getByLabel('Referencia eléctrica')).toHaveValue('yutong-e12');
   await expect(page.getByLabel('Referencia de combustión')).toHaveValue('diesel-urban');
 });
@@ -99,7 +103,7 @@ test('accesibilidad del flujo, diálogo y móvil sin desbordamiento', async ({ p
   expect(base.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual(
     [],
   );
-  await page.getByRole('button', { name: 'Ver fuentes', exact: false }).click();
+  await page.getByRole('button', { name: 'Fuentes y supuestos' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   const dialog = await new AxeBuilder({ page }).include('[role=dialog]').analyze();
   expect(dialog.violations).toEqual([]);
@@ -108,7 +112,6 @@ test('accesibilidad del flujo, diálogo y móvil sin desbordamiento', async ({ p
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Condiciones del escenario' }).click();
   const edit = await new AxeBuilder({ page }).analyze();
   expect(edit.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual(
     [],
@@ -149,9 +152,47 @@ test('pinta el ramal incluso si la geometría llega después del estilo', async 
   await page.goto('/');
   await ready(page);
   await expect(page.locator('.map-canvas')).toHaveAttribute('data-route-rendered', 'true');
-  await expect(page.locator('.route-option').first()).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Cambiar ruta' }).click();
   await page.getByLabel('Buscar ruta o destino').fill('Villa Coapa');
   await page.locator('.route-option').first().click();
   await expect(page.locator('.map-canvas')).toHaveAttribute('data-route-rendered', 'true');
+  expect(errors).toEqual([]);
+});
+
+test('explora consumo, hospitales y sensibilidad sin alterar el recaudo', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await ready(page);
+  await expect(page).toHaveTitle('Electromovilidad CDMX 2026 · Evaluador de rutas');
+  await expect(page.getByRole('link', { name: /Equipo Aragonenes/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Consumo estimado', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Consumo estimado', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByLabel('Vuelta del día').selectOption('8');
+  await page.getByLabel('Explora el recorrido · trazo', { exact: false }).fill('1000');
+  await expect(page.locator('.map-readout').getByText('42.71 kWh')).toBeVisible();
+  await page.getByText('Zona de Hospitales: referencias y límites', { exact: true }).click();
+  await page
+    .locator('.hospital-references')
+    .getByRole('button', { name: 'INCan', exact: true })
+    .click();
+  await expect(page.locator('.hospital-callout')).toContainText('San Fernando 22');
+  await page.getByRole('button', { name: 'Cerrar referencia hospitalaria' }).click();
+  await page.getByLabel('Explorar vueltas diarias').selectOption('4');
+  await page.getByRole('button', { name: 'Aplicar estas vueltas' }).click();
+  await ready(page);
+  await expect(page.getByLabel('Ciclos diarios por unidad')).toHaveValue('4');
+  await expect(page.getByLabel('Ascensos diarios por unidad')).toHaveValue('320');
+  await expect(page.getByLabel('Tarifa de prueba')).toHaveValue('10');
+  await page.getByLabel('Consumo neto en batería').fill('0.5');
+  await ready(page);
+  await page.getByRole('button', { name: 'Cambiar ruta' }).click();
+  await page.getByLabel('Buscar ruta o destino').fill('Villa Coapa');
+  await page.locator('.route-option').first().click();
+  await ready(page);
+  await expect(page.getByLabel('Contexto hospitalario', { exact: true })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
