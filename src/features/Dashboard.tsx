@@ -202,7 +202,12 @@ export default function Dashboard({
     ] as const;
     return {
       grid: { left: 90, right: 45, top: 92, bottom: 35 },
-      tooltip: { trigger: 'axis', valueFormatter: (v: unknown) => mxn(Number(v)) },
+      tooltip: {
+        trigger: 'axis',
+        appendTo: 'body',
+        confine: true,
+        valueFormatter: (v: unknown) => mxn(Number(v)),
+      },
       legend: { top: 0, data: parts.map((p) => p[1]), textStyle: { fontSize: 11 } },
       xAxis: {
         type: 'value',
