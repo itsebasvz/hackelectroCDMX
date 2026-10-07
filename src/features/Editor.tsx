@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import type { Scenario } from '../domain/schema';
 import { getValue, withValue, evidenceOf } from './values';
+import { assumed } from '../data/catalog';
 import { sections, type Field } from './fields';
 function NumberField({
   field,

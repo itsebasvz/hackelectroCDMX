@@ -293,7 +293,7 @@ export const catalog: Catalog = {
     {
       id: 'F-DEMO',
       title: 'Parámetros exploratorios del hackatón',
-      url: 'https://github.com/itsebasvz/hackelectroCDMX/blob/main/docs/investigacion/ruta1/parametros-exploratorios-hackaton.csv',
+      url: 'https://github.com/itsebasvz/hackelectroCDMX/blob/main/docs/desarrollo/metodologia-motor.md',
       date: '2026-10-06',
       scope: 'Supuestos de prueba',
       license: 'CC BY 4.0 (trabajo propio)',
@@ -376,7 +376,7 @@ export const catalog: Catalog = {
       id: 'S20',
       title: 'EPA · factores de combustión',
       url: 'https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator-calculations-and-references',
-      date: 'Referencia registrada 2026-10-06',
+      date: 'Referencia de regla 2010; registrada 2026-10-06',
       scope: 'Estados Unidos · benchmark',
       license: 'Referencia · original no incorporado',
       limitation:

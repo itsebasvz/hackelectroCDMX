@@ -100,6 +100,12 @@ export default function RouteMap({ routeId }: Props) {
         container: container.current,
         center: [-99.17, 19.3],
         zoom: 12,
+        locale: {
+          'Map.Title': 'Mapa de ramales históricos',
+          'NavigationControl.ZoomIn': 'Acercar mapa',
+          'NavigationControl.ZoomOut': 'Alejar mapa',
+          'AttributionControl.ToggleAttribution': 'Mostrar atribuciones',
+        },
         attributionControl: { compact: true },
         style: {
           version: 8,
@@ -161,7 +167,7 @@ export default function RouteMap({ routeId }: Props) {
           'Mapa base parcialmente disponible. Geometría y cálculos locales permanecen disponibles.',
         ),
       );
-      m.on('idle', () => {
+      m.on('render', () => {
         if (m.getLayer('selected-route')) {
           const visible = m.queryRenderedFeatures({ layers: ['selected-route'] });
           setPainted(visible.some((f) => f.properties.recordId === active.current));
