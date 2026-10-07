@@ -2568,18 +2568,18 @@ footer > small {
 .map-journey {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
   padding: 14px 16px;
 }
 .map-journey .map-scrub {
   padding: 0;
   min-width: 0;
-  align-items: end;
+  align-items: center;
+  grid-template-columns: 88px minmax(0, 1fr);
 }
-.map-journey select,
-.map-journey input[type='range'] {
-  display: block;
-  margin: 0;
+.map-journey .map-scrub.is-day {
+  grid-template-columns: minmax(0, 1fr);
 }
 .map-journey .field {
   margin-bottom: 0;
@@ -2587,10 +2587,195 @@ footer > small {
 .map-navigation button {
   white-space: nowrap;
 }
-@container route-map (min-width: 640px) {
+.map-scope-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f8f5f6;
+}
+.map-scope-switch button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.map-scope-switch button[aria-pressed='true'] {
+  background: white;
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 3px #2920241a;
+}
+.map-scope-switch button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.map-scrub .distance-slider {
+  min-width: 0;
+}
+.journey-range {
+  min-width: 0;
+}
+.journey-slider {
+  position: relative;
+  height: 34px;
+  min-width: 0;
+}
+.journey-rail {
+  position: absolute;
+  top: 14px;
+  right: 9px;
+  left: 9px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #e8e2e5;
+  pointer-events: none;
+}
+.journey-rail > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+.journey-ticks {
+  position: absolute;
+  inset: 0 9px;
+  pointer-events: none;
+  z-index: 1;
+}
+.journey-ticks i {
+  position: absolute;
+  top: 10px;
+  width: 2px;
+  height: 14px;
+  transform: translateX(-1px);
+  background: white;
+  box-shadow: 0 0 0 1px #55585a;
+}
+.journey-ticks i.is-cycle {
+  top: 8px;
+  height: 18px;
+  background: #55585a;
+  box-shadow: 0 0 0 1px white;
+}
+.journey-slider input[type='range'] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  accent-color: var(--primary);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.journey-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+.journey-slider input[type='range']::-moz-range-track {
+  height: 6px;
+  background: transparent;
+}
+.journey-slider input[type='range']::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  appearance: none;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #686872;
+  box-shadow: 0 1px 4px #0004;
+}
+.journey-slider input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #686872;
+  box-shadow: 0 1px 4px #0004;
+}
+.journey-slider input[type='range']:focus-visible {
+  outline: none;
+}
+.journey-slider input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 3px #9d214833,
+    0 1px 4px #0004;
+}
+.journey-slider input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 0 0 3px #9d214833,
+    0 1px 4px #0004;
+}
+.journey-slider input[type='range']:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.journey-segments {
+  display: flex;
+  min-width: 0;
+  margin: 0 9px;
+}
+.journey-segments > span {
+  min-width: 0;
+  overflow: hidden;
+  border-top: 2px solid #e8e2e5;
+  padding: 4px 2px 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.journey-segments > span.is-active {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+@container route-map (min-width: 760px) {
+  .map-journey {
+    grid-template-columns: auto auto minmax(140px, 1fr);
+    gap: 12px;
+  }
+  .map-journey .map-navigation button {
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+}
+@container route-map (min-width: 481px) and (max-width: 759px) {
   .map-journey {
     grid-template-columns: auto minmax(0, 1fr);
-    align-items: end;
-    gap: 18px;
+  }
+  .map-journey .map-navigation {
+    grid-column: 1;
+  }
+  .map-scope-switch {
+    grid-column: 2;
+    justify-self: end;
+  }
+  .map-journey .map-scrub {
+    grid-column: 1 / -1;
+  }
+}
+@container route-map (max-width: 480px) {
+  .map-journey .map-navigation,
+  .map-scope-switch {
+    justify-self: start;
+  }
+  .map-journey .map-scrub.is-cycle {
+    grid-template-columns: 88px minmax(0, 1fr);
   }
 }

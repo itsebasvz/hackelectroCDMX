@@ -234,6 +234,7 @@ export default function RouteMap({
   const hospitalTrigger = useRef<HTMLElement | null>(null);
   const [mode, setMode] = useState<'route' | 'energy'>('route');
   const [context, setContext] = useState(routeId === 'M09-514');
+  const [scope, setScope] = useState<'day' | 'cycle'>('day');
   const [cycle, setCycle] = useState(1);
   const [fraction, setFraction] = useState(0);
   const [fallback, setFallback] = useState(false);
@@ -478,7 +479,72 @@ export default function RouteMap({
   }, [routeId, hospitals]);
   const limit = result ? batteryLimit(result) : null;
   const position = geometry ? positionOnTrace(geometry, fraction) : null;
-  const cartographic = geometry ? (traceSegments(geometry).at(-1)?.to ?? 0) : 0;
+  const cartographicSegments = geometry ? traceSegments(geometry) : [];
+  const cartographic = cartographicSegments.at(-1)?.to ?? 0;
+  const cycleCount = result?.scenario.operation.cycles ?? 1;
+  const progressValue =
+    scope === 'day' ? Math.round((activeCycle - 1 + fraction) * 1000) : Math.round(fraction * 1000);
+  const progressMax = scope === 'day' ? cycleCount * 1000 : 1000;
+  const currentPosition = result ? consumptionAt(result, activeCycle, fraction) : null;
+  const rangeLabel =
+    scope === 'day'
+      ? `Progreso del día · vuelta ${activeCycle} de ${cycleCount}`
+      : `Posición en la vuelta ${activeCycle}${position && geometry ? ` · trazo ${position.trace} de ${geometry.features.length}` : ''}`;
+  const rangeValueText = result
+    ? `Vuelta ${activeCycle} de ${cycleCount}, ${num(fraction * 100, 0)} por ciento de la vuelta, ${num(currentPosition?.km ?? 0, 2)} kilómetros acumulados en el día`
+    : 'Posición del recorrido';
+  const traceRanges = Array.from({ length: geometry?.features.length ?? 0 }, (_, i) => {
+    const trace = i + 1;
+    const segments = cartographicSegments.filter((segment) => segment.trace === trace);
+    const from = segments[0]?.from ?? 0;
+    const to = segments.at(-1)?.to ?? from;
+    return { from, to, size: cartographic ? (to - from) / cartographic : 0 };
+  });
+  const rangeSegments =
+    scope === 'day'
+      ? Array.from({ length: cycleCount }, (_, i) => ({
+          label:
+            cycleCount <= 10 ? `V${i + 1}` : i === 0 ? 'Inicio' : i === cycleCount - 1 ? 'Fin' : '',
+          active: i === activeCycle - 1,
+          size: 1 / cycleCount,
+        }))
+      : traceRanges.map((trace, i) => ({
+          label:
+            traceRanges.length <= 4
+              ? `T${i + 1}`
+              : i === 0
+                ? 'Inicio'
+                : i === traceRanges.length - 1
+                  ? 'Fin'
+                  : '',
+          active: i === (position?.trace ?? 1) - 1,
+          size: trace.size,
+        }));
+  const rangeTicks =
+    scope === 'day'
+      ? Array.from({ length: Math.max(0, cycleCount - 1) }, (_, i) => ({
+          position: ((i + 1) / cycleCount) * 100,
+          kind: 'cycle',
+        }))
+      : traceRanges.slice(0, -1).map((trace) => ({
+          position: (trace.to / (cartographic || 1)) * 100,
+          kind: 'trace',
+        }));
+  const updateProgress = (value: number) => {
+    if (scope === 'cycle') {
+      setFraction(value / 1000);
+      return;
+    }
+    const progress = Math.min(cycleCount, value / 1000);
+    if (progress >= cycleCount) {
+      setCycle(cycleCount);
+      setFraction(1);
+      return;
+    }
+    const completed = Math.floor(progress);
+    setCycle(completed + 1);
+    setFraction(progress - completed);
+  };
   const frameRoute = () => {
     const m = map.current;
     if (!m || !geometry?.features.length) return;
@@ -755,43 +821,80 @@ export default function RouteMap({
           <button
             className="secondary"
             disabled={!result || stale || !geometry?.features.length}
-            onClick={() => jump(result!.scenario.operation.cycles, 1)}
+            onClick={() => jump(cycleCount, 1)}
           >
             Fin del día
             <SkipForward size={14} aria-hidden="true" />
           </button>
         </div>
-        <div className="map-scrub">
-          <div className="field">
-            <label htmlFor="map-cycle">Vuelta del día</label>
-            <select
-              id="map-cycle"
-              value={activeCycle}
-              disabled={!result || stale}
-              onChange={(e) => setCycle(Number(e.target.value))}
-            >
-              {Array.from({ length: result?.scenario.operation.cycles ?? 1 }, (_, i) => (
-                <option key={i} value={i + 1}>
-                  {i + 1} de {result?.scenario.operation.cycles ?? 1}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="map-scope-switch" role="group" aria-label="Alcance de la barra">
+          <button type="button" aria-pressed={scope === 'day'} onClick={() => setScope('day')}>
+            Todo el día
+          </button>
+          <button type="button" aria-pressed={scope === 'cycle'} onClick={() => setScope('cycle')}>
+            Una vuelta
+          </button>
+        </div>
+        <div className={`map-scrub ${scope === 'day' ? 'is-day' : 'is-cycle'}`}>
+          {scope === 'cycle' && (
+            <div className="field map-cycle-field">
+              <label htmlFor="map-cycle">Vuelta del día</label>
+              <select
+                id="map-cycle"
+                value={activeCycle}
+                disabled={!result || stale}
+                onChange={(e) => setCycle(Number(e.target.value))}
+              >
+                {Array.from({ length: cycleCount }, (_, i) => (
+                  <option key={i} value={i + 1}>
+                    {i + 1} de {cycleCount}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="distance-slider">
-            <label htmlFor="map-distance">
-              Explora el recorrido · trazo {position?.trace ?? '—'}
-            </label>
-            <input
-              type="range"
-              id="map-distance"
-              min="0"
-              max="1000"
-              step="1"
-              value={Math.round(fraction * 1000)}
-              disabled={!geometry?.features.length || !result || stale}
-              onChange={(e) => setFraction(Number(e.target.value) / 1000)}
-              aria-valuetext={`${num(fraction * (result?.scenario.route.cycleKm ?? cartographic), 2)} kilómetros dentro del ciclo`}
-            />
+            <label htmlFor="map-distance">{rangeLabel}</label>
+            <div className="journey-range">
+              <div className="journey-slider">
+                <span className="journey-rail" aria-hidden="true">
+                  <span
+                    style={{ width: `${progressMax ? (progressValue / progressMax) * 100 : 0}%` }}
+                  />
+                </span>
+                <span className="journey-ticks" aria-hidden="true">
+                  {rangeTicks.map((tick, i) => (
+                    <i
+                      key={`${tick.kind}-${i}`}
+                      className={`is-${tick.kind}`}
+                      style={{ left: `${tick.position}%` }}
+                    />
+                  ))}
+                </span>
+                <input
+                  type="range"
+                  id="map-distance"
+                  min="0"
+                  max={progressMax}
+                  step="1"
+                  value={progressValue}
+                  disabled={!geometry?.features.length || !result || stale}
+                  onChange={(e) => updateProgress(Number(e.target.value))}
+                  aria-valuetext={rangeValueText}
+                />
+              </div>
+              <div className={`journey-segments is-${scope}`} aria-hidden="true">
+                {rangeSegments.map((segment, i) => (
+                  <span
+                    key={i}
+                    className={segment.active ? 'is-active' : ''}
+                    style={{ flexBasis: `${segment.size * 100}%` }}
+                  >
+                    {segment.label}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
