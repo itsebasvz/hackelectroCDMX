@@ -70,3 +70,18 @@ export function consumptionAt(r: Result, cycle: number, fraction: number) {
   const soc = r.scenario.energy.socMax - kwh / (r.scenario.ev.batteryKwh * r.scenario.energy.soh);
   return { km, kwh, soc };
 }
+
+/** Límite de energía utilizable, antes de invadir la reserva; incluye km adicionales. */
+export function batteryLimit(r: Result) {
+  const km = r.usableKwh / r.scenario.ev.consumption;
+  const cycleKm = r.scenario.route.cycleKm * (1 + r.scenario.operation.emptyRatio);
+  const raw = km / cycleKm;
+  const turns = Math.abs(raw - Math.round(raw)) < 1e-9 ? Math.round(raw) : raw;
+  const cycle = Math.max(1, Math.ceil(turns));
+  return {
+    km,
+    cycle,
+    fraction: Math.max(0, Math.min(1, turns - (cycle - 1))),
+    withinDay: turns <= r.scenario.operation.cycles,
+  };
+}

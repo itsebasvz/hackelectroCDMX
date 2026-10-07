@@ -2,7 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { defaultScenario } from '../data/defaults';
 import { evaluateScenario } from './evaluate';
 import { sensitivity, monthlyBudget, energyBudget } from './explore';
-import { consumptionAt, positionOnTrace, traceSegments, nearestFraction } from './geometry';
+import {
+  batteryLimit,
+  consumptionAt,
+  positionOnTrace,
+  traceSegments,
+  nearestFraction,
+} from './geometry';
 import type { FeatureCollection, LineString } from 'geojson';
 describe('exploración explicable', () => {
   it('reconcilia presupuesto mensual, incluida reposición y cierre de crédito', () => {
@@ -72,15 +78,30 @@ describe('exploración explicable', () => {
     const p = positionOnTrace(fc, 0.75)!;
     expect(nearestFraction(fc, p.coordinates)).toBeCloseTo(0.75, 5);
   });
+  it('asigna el límite al final de una vuelta y distingue límites fuera del día', () => {
+    const s = defaultScenario();
+    const base = evaluateScenario(s);
+    s.ev.consumption = base.usableKwh / ((base.dailyKm / s.operation.cycles) * 2);
+    const r = evaluateScenario(s);
+    expect(batteryLimit(r)).toMatchObject({ cycle: 2, fraction: 1, withinDay: true });
+    expect(consumptionAt(r, 2, 1).soc).toBeCloseTo(s.energy.socMin);
+    s.operation.cycles = 1;
+    expect(batteryLimit(evaluateScenario(s)).withinDay).toBe(false);
+    s.operation.cycles = 2;
+    expect(batteryLimit(evaluateScenario(s))).toMatchObject({
+      cycle: 2,
+      fraction: 1,
+      withinDay: true,
+    });
+  });
   it('ubica el umbral de reserva y escala el ciclo editado sin energía gratuita', () => {
     const s = defaultScenario();
     s.route.cycleKm = 25;
     s.operation.cycles = 16;
     const r = evaluateScenario(s);
-    const boundary =
-      r.usableKwh / s.ev.consumption / (s.route.cycleKm * (1 + s.operation.emptyRatio));
-    const cycle = Math.ceil(boundary);
-    const p = consumptionAt(r, cycle, boundary - (cycle - 1));
+    const limit = batteryLimit(r);
+    expect(limit.withinDay).toBe(true);
+    const p = consumptionAt(r, limit.cycle, limit.fraction);
     expect(p.soc).toBeCloseTo(s.energy.socMin, 9);
     expect(p.kwh).toBeCloseTo(r.usableKwh, 9);
     expect(consumptionAt(r, 16, 1).km).toBe(r.dailyKm);
