@@ -1,0 +1,135 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -99.1601357,
+          19.2894854
+        ]
+      },
+      "properties": {
+        "osmId": 217109099,
+        "shortName": "INCan",
+        "name": "Instituto Nacional de Cancerología",
+        "address": "Av. San Fernando 22, Sección XVI, Tlalpan",
+        "officialUrl": "https://incan.salud.gob.mx/",
+        "limitation": "Centro del inmueble cartografiado; no acceso ni parada comprobada. Existen otros inmuebles del instituto.",
+        "consultation": "2026-10-06",
+        "officialAccess": "Referencia institucional y domicilio recuperados en índice de búsqueda; apertura directa falló (timeout, TLS, red o 403). No se conserva HTML/PDF sin licencia.",
+        "osmUrl": "https://www.openstreetmap.org/way/217109099",
+        "sourceId": "CTX-OSM",
+        "coordinateNature": "tercero; centro de bounding box OSM",
+        "date": "2026-10-07T03:28:51Z",
+        "consulted": "2026-10-06",
+        "license": "ODbL-1.0"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -99.1585203,
+          19.2913143
+        ]
+      },
+      "properties": {
+        "osmId": 217108471,
+        "shortName": "INER",
+        "name": "Instituto Nacional de Enfermedades Respiratorias",
+        "address": "Calzada de Tlalpan 4502, Sección XVI, Tlalpan",
+        "officialUrl": "https://www.gob.mx/salud/iner/es/articulos/comite-de-bioseguridad-425679?idiom=es",
+        "limitation": "Centro cartográfico del inmueble; no entrada peatonal ni parada comprobada.",
+        "consultation": "2026-10-06",
+        "officialAccess": "Referencia institucional y domicilio recuperados en índice de búsqueda; apertura directa falló (timeout, TLS, red o 403). No se conserva HTML/PDF sin licencia.",
+        "osmUrl": "https://www.openstreetmap.org/way/217108471",
+        "sourceId": "CTX-OSM",
+        "coordinateNature": "tercero; centro de bounding box OSM",
+        "date": "2026-10-07T03:28:51Z",
+        "consulted": "2026-10-06",
+        "license": "ODbL-1.0"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -99.1564234,
+          19.2881298
+        ]
+      },
+      "properties": {
+        "osmId": 217109092,
+        "shortName": "INCMNSZ",
+        "name": "Instituto Nacional de Ciencias Médicas y Nutrición Salvador Zubirán",
+        "address": "Vasco de Quiroga 15, Sección XVI, Tlalpan",
+        "officialUrl": "https://www.incmnsz.mx/medicina/subdirecciones/subenfermeria/historia",
+        "limitation": "Centro cartográfico del inmueble; no entrada peatonal ni parada comprobada.",
+        "consultation": "2026-10-06",
+        "officialAccess": "Texto de página institucional recuperado por consulta web",
+        "osmUrl": "https://www.openstreetmap.org/way/217109092",
+        "sourceId": "CTX-OSM",
+        "coordinateNature": "tercero; centro de bounding box OSM",
+        "date": "2026-10-07T03:28:51Z",
+        "consulted": "2026-10-06",
+        "license": "ODbL-1.0"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -99.1605222,
+          19.2901052
+        ]
+      },
+      "properties": {
+        "osmId": 669622778,
+        "shortName": "Gea González",
+        "name": "Hospital General Dr. Manuel Gea González",
+        "address": "Calzada de Tlalpan 4800, Sección XVI, Tlalpan",
+        "officialUrl": "https://hospitalgea.salud.gob.mx/contenido/conocenos.html",
+        "limitation": "Referencia de uno de los edificios etiquetados GEA en OSM; ubicación aproximada dentro del conjunto, no entrada ni parada.",
+        "consultation": "2026-10-06",
+        "officialAccess": "Referencia institucional y domicilio recuperados en índice de búsqueda; apertura directa falló (timeout, TLS, red o 403). No se conserva HTML/PDF sin licencia.",
+        "osmUrl": "https://www.openstreetmap.org/way/669622778",
+        "sourceId": "CTX-OSM",
+        "coordinateNature": "tercero; centro de bounding box OSM",
+        "date": "2026-10-07T03:28:51Z",
+        "consulted": "2026-10-06",
+        "license": "ODbL-1.0"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -99.1488158,
+          19.2890462
+        ]
+      },
+      "properties": {
+        "osmId": 217015185,
+        "shortName": "INR",
+        "name": "Instituto Nacional de Rehabilitación Luis Guillermo Ibarra Ibarra",
+        "address": "Calzada México-Xochimilco 289, Arenal de Guadalupe, Tlalpan",
+        "officialUrl": "https://aniversario.inr.gob.mx/",
+        "limitation": "Centro cartográfico del inmueble; no entrada peatonal ni parada comprobada.",
+        "consultation": "2026-10-06",
+        "officialAccess": "Referencia institucional y domicilio recuperados en índice de búsqueda; apertura directa falló (timeout, TLS, red o 403). No se conserva HTML/PDF sin licencia.",
+        "osmUrl": "https://www.openstreetmap.org/way/217015185",
+        "sourceId": "CTX-OSM",
+        "coordinateNature": "tercero; centro de bounding box OSM",
+        "date": "2026-10-07T03:28:51Z",
+        "consulted": "2026-10-06",
+        "license": "ODbL-1.0"
+      }
+    }
+  ]
+}

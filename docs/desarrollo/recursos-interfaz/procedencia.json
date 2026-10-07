@@ -1,0 +1,22 @@
+{
+  "name": "GitHub mark 24",
+  "author": "GitHub Inc. / Primer Octicons",
+  "url": "https://github.com/primer/octicons",
+  "revision": "e7e03d50b03b5d303c550a1152f43b063c8bd798",
+  "date": "2026-10-06",
+  "license": "MIT",
+  "licenseUrl": "https://github.com/primer/octicons/blob/e7e03d50b03b5d303c550a1152f43b063c8bd798/LICENSE",
+  "modifications": "Ninguna al SVG; la interfaz usa una máscara CSS guinda. La licencia no otorga derechos adicionales de marca.",
+  "files": [
+    {
+      "path": "public/github.svg",
+      "sha256": "bce494189797623c34e39a41c2c38a132bdca23ce4e6ac06b70116ed7e91ce26",
+      "bytes": 873
+    },
+    {
+      "path": "docs/desarrollo/recursos-interfaz/OCTICONS-MIT.txt",
+      "sha256": "da259c8bd0de62713ccdcf88910aebca810644f98c2c912bad814fc79ea778df",
+      "bytes": 1068
+    }
+  ]
+}

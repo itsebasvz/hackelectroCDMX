@@ -1,0 +1,29 @@
+{
+  "name": "Contexto hospitalario de Ruta 1",
+  "author": "OpenStreetMap contributors; selección del equipo Aragonenes",
+  "sourceUrl": "https://overpass-api.de/api/interpreter",
+  "queryFile": "docs/desarrollo/recursos-hospitales/consulta-overpass.txt",
+  "originalFile": "docs/desarrollo/recursos-hospitales/osm-hospitales-original.json",
+  "originalSha256": "b6489d91cc4dd07c75b21505e9848679c0d481a4aa3cf5b85c578991aaf18174",
+  "originalBytes": 3543,
+  "derivedFile": "public/data/hospitals.geojson",
+  "derivedSha256": "31f4f3d4d696aa1fbcb06f3ff1824860176d60f06d4bd545007274af6bd6397d",
+  "derivedBytes": 5439,
+  "coverage": "Cinco referencias hospitalarias; Zona de Hospitales / Huipulco, Tlalpan",
+  "date": "2026-10-07T03:28:51Z",
+  "consulted": "2026-10-06",
+  "license": "ODbL-1.0",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "licenseStatus": "OPEN_WITH_ATTRIBUTION",
+  "redistribution": true,
+  "modification": true,
+  "attributionRequired": true,
+  "shareAlike": true,
+  "method": "Centros de bounding box devueltos por Overpass para inmuebles seleccionados. No geocodificación ni medición de entradas. Nombres/domicilios contrastados con referencias institucionales de seleccion.json.",
+  "limitations": "Contexto aproximado, no cobertura efectiva, paradas, demanda ni beneficio sanitario. No interviene en el motor. La fecha OSM no comprueba vigencia del servicio.",
+  "municipalCatalog": {
+    "url": "https://www.datos.cdmx.gob.mx/dataset/hospitales-y-centros-de-salud",
+    "license": "CC BY 4.0",
+    "use": "Consultado para cobertura: instalaciones del Gobierno CDMX; no usado como ubicación de estos institutos federales."
+  }
+}

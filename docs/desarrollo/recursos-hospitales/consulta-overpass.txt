@@ -1,0 +1,1 @@
+[out:json][timeout:20];(way(217015185);way(217108471);way(217109092);way(217109099);nwr["name"~"Gea",i](19.27,-99.18,19.32,-99.14););out center tags;

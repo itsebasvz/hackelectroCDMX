@@ -1,0 +1,188 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-07T03:28:51Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "way",
+  "id": 217015185,
+  "center": {
+    "lat": 19.2890462,
+    "lon": -99.1488158
+  },
+  "tags": {
+    "alt_name": "Luis Guillermo Ibarra Ibarra",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Instituto Nacional de Rehabilitación",
+    "wikidata": "Q5917584",
+    "wikipedia": "en:Instituto Nacional de Rehabilitación"
+  }
+},
+{
+  "type": "way",
+  "id": 217108471,
+  "center": {
+    "lat": 19.2913143,
+    "lon": -99.1585203
+  },
+  "tags": {
+    "addr:housenumber": "4502",
+    "addr:postcode": "14080",
+    "addr:street": "Calzada de Tlalpan",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Instituto Nacional de Enfermedades Respiratorias Ismael Cosío Villegas",
+    "name:es": "Instituto Nacional de Enfermedades Respiratorias",
+    "opening_hours": "24/7",
+    "phone": "+52 55 5487 1700",
+    "toilets:wheelchair": "no",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "way",
+  "id": 217109092,
+  "center": {
+    "lat": 19.2881298,
+    "lon": -99.1564234
+  },
+  "tags": {
+    "alt_name": "Instituto Nacional de Nutrición Salvador Zubirán",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Instituto Nacional de Ciencias Médicas y Nutrición Salvador Zubirán",
+    "short_name": "INCMNSZ",
+    "wikidata": "Q1689966",
+    "wikimedia_commons": "Category:Instituto Nacional de Ciencias Médicas y Nutrición Salvador Zubirán",
+    "wikipedia": "es:Instituto Nacional de Ciencias Médicas y Nutrición \"Salvador Zubirán\""
+  }
+},
+{
+  "type": "way",
+  "id": 217109099,
+  "center": {
+    "lat": 19.2894854,
+    "lon": -99.1601357
+  },
+  "tags": {
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Instituto Nacional de Cancerología"
+  }
+},
+{
+  "type": "way",
+  "id": 669622765,
+  "center": {
+    "lat": 19.2900176,
+    "lon": -99.1613174
+  },
+  "tags": {
+    "building": "hospital",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622767,
+  "center": {
+    "lat": 19.2897066,
+    "lon": -99.1607072
+  },
+  "tags": {
+    "building": "hospital",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622769,
+  "center": {
+    "lat": 19.2904717,
+    "lon": -99.1604712
+  },
+  "tags": {
+    "leisure": "garden",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622771,
+  "center": {
+    "lat": 19.2904592,
+    "lon": -99.1605016
+  },
+  "tags": {
+    "building": "hospital",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622773,
+  "center": {
+    "lat": 19.2908425,
+    "lon": -99.1606493
+  },
+  "tags": {
+    "building": "hospital",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622774,
+  "center": {
+    "lat": 19.2909115,
+    "lon": -99.1604066
+  },
+  "tags": {
+    "leisure": "garden",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622776,
+  "center": {
+    "lat": 19.2906209,
+    "lon": -99.1600548
+  },
+  "tags": {
+    "building": "hospital",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622778,
+  "center": {
+    "lat": 19.2901052,
+    "lon": -99.1605222
+  },
+  "tags": {
+    "building": "hospital",
+    "name": "GEA"
+  }
+},
+{
+  "type": "way",
+  "id": 669622779,
+  "center": {
+    "lat": 19.2906164,
+    "lon": -99.1611567
+  },
+  "tags": {
+    "building": "hospital",
+    "name": "GEA"
+  }
+}
+
+  ]
+}

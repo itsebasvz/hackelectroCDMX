@@ -14,4 +14,12 @@ await writeFile(
   JSON.stringify({ method: metadata.method, entries: notices }, null, 2),
 );
 await copyFile('LICENSE', 'dist/third-party/project-MIT.txt');
+await copyFile(
+  'docs/desarrollo/recursos-interfaz/OCTICONS-MIT.txt',
+  'dist/third-party/Octicons-MIT.txt',
+);
+await copyFile(
+  'docs/desarrollo/recursos-interfaz/procedencia.json',
+  'dist/third-party/Octicons-procedencia.json',
+);
 console.log(`${notices.length} avisos originales incluidos en la distribución.`);

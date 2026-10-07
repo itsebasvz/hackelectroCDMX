@@ -13,6 +13,8 @@ docs/CC-BY-4.0.txt -text whitespace=-blank-at-eof
 
 # Textos jurídicos copiados íntegramente: conservar bytes y checksums.
 docs/desarrollo/licencias-dependencias/** -text
+docs/desarrollo/recursos-interfaz/OCTICONS-MIT.txt -text
+docs/desarrollo/recursos-hospitales/osm-hospitales-original.json -text
 *.rar -text
 *.zip -text
 *.xlsx -text
