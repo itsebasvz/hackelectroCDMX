@@ -742,55 +742,57 @@ export default function RouteMap({
           )}
         </div>
       </div>
-      <div className="map-navigation" aria-label="Navegación del día simulado">
-        <button
-          className="secondary"
-          disabled={!result || stale || !geometry?.features.length}
-          onClick={() => jump(1, 0)}
-        >
-          <SkipBack size={14} aria-hidden="true" />
-          Inicio del día
-        </button>
-        <button
-          className="secondary"
-          disabled={!result || stale || !geometry?.features.length}
-          onClick={() => jump(result!.scenario.operation.cycles, 1)}
-        >
-          Fin del día
-          <SkipForward size={14} aria-hidden="true" />
-        </button>
-      </div>
-      <div className="map-scrub">
-        <div className="field">
-          <label htmlFor="map-cycle">Vuelta del día</label>
-          <select
-            id="map-cycle"
-            value={activeCycle}
-            disabled={!result || stale}
-            onChange={(e) => setCycle(Number(e.target.value))}
+      <div className="map-journey">
+        <div className="map-navigation" aria-label="Navegación del día simulado">
+          <button
+            className="secondary"
+            disabled={!result || stale || !geometry?.features.length}
+            onClick={() => jump(1, 0)}
           >
-            {Array.from({ length: result?.scenario.operation.cycles ?? 1 }, (_, i) => (
-              <option key={i} value={i + 1}>
-                {i + 1} de {result?.scenario.operation.cycles ?? 1}
-              </option>
-            ))}
-          </select>
+            <SkipBack size={14} aria-hidden="true" />
+            Inicio del día
+          </button>
+          <button
+            className="secondary"
+            disabled={!result || stale || !geometry?.features.length}
+            onClick={() => jump(result!.scenario.operation.cycles, 1)}
+          >
+            Fin del día
+            <SkipForward size={14} aria-hidden="true" />
+          </button>
         </div>
-        <div className="distance-slider">
-          <label htmlFor="map-distance">
-            Explora el recorrido · trazo {position?.trace ?? '—'}
-          </label>
-          <input
-            type="range"
-            id="map-distance"
-            min="0"
-            max="1000"
-            step="1"
-            value={Math.round(fraction * 1000)}
-            disabled={!geometry?.features.length || !result || stale}
-            onChange={(e) => setFraction(Number(e.target.value) / 1000)}
-            aria-valuetext={`${num(fraction * (result?.scenario.route.cycleKm ?? cartographic), 2)} kilómetros dentro del ciclo`}
-          />
+        <div className="map-scrub">
+          <div className="field">
+            <label htmlFor="map-cycle">Vuelta del día</label>
+            <select
+              id="map-cycle"
+              value={activeCycle}
+              disabled={!result || stale}
+              onChange={(e) => setCycle(Number(e.target.value))}
+            >
+              {Array.from({ length: result?.scenario.operation.cycles ?? 1 }, (_, i) => (
+                <option key={i} value={i + 1}>
+                  {i + 1} de {result?.scenario.operation.cycles ?? 1}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="distance-slider">
+            <label htmlFor="map-distance">
+              Explora el recorrido · trazo {position?.trace ?? '—'}
+            </label>
+            <input
+              type="range"
+              id="map-distance"
+              min="0"
+              max="1000"
+              step="1"
+              value={Math.round(fraction * 1000)}
+              disabled={!geometry?.features.length || !result || stale}
+              onChange={(e) => setFraction(Number(e.target.value) / 1000)}
+              aria-valuetext={`${num(fraction * (result?.scenario.route.cycleKm ?? cartographic), 2)} kilómetros dentro del ciclo`}
+            />
+          </div>
         </div>
       </div>
       <p className="map-method">

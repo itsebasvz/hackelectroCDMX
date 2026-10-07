@@ -2429,7 +2429,7 @@ footer > small {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px 0;
+  padding: 0;
 }
 .map-navigation button {
   min-height: 44px;
@@ -2562,5 +2562,35 @@ footer > small {
   .map-hud .hospital-callout {
     grid-column: 1 / -1;
     grid-row: 3;
+  }
+}
+
+.map-journey {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 14px 16px;
+}
+.map-journey .map-scrub {
+  padding: 0;
+  min-width: 0;
+  align-items: end;
+}
+.map-journey select,
+.map-journey input[type='range'] {
+  display: block;
+  margin: 0;
+}
+.map-journey .field {
+  margin-bottom: 0;
+}
+.map-navigation button {
+  white-space: nowrap;
+}
+@container route-map (min-width: 640px) {
+  .map-journey {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    gap: 18px;
   }
 }
