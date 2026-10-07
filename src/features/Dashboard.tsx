@@ -40,6 +40,9 @@ export function ComparisonTable({ r }: { r: Result }) {
       mxn(r.ev.months[0]!.ownerIncome),
     ],
     ['Capital propio inicial requerido', mxn(r.ice.ownRequired), mxn(r.ev.ownRequired)],
+    ['Aportación aplicada a obra / reserva', mxn(r.ice.supportFixed), mxn(r.ev.supportFixed)],
+    ['Aportación aplicada a adquisición', mxn(r.ice.supportCapital), mxn(r.ev.supportCapital)],
+    ['Principal financiado inicial', mxn(r.ice.principal), mxn(r.ev.principal)],
     ['Pago mensual inicial', mxn(r.ice.payment), mxn(r.ev.payment)],
     ['Menor margen mensual', mxn(r.ice.minMonthlyCash), mxn(r.ev.minMonthlyCash)],
     ['Deuda pendiente · mes 60', mxn(r.ice.debtRemaining), mxn(r.ev.debtRemaining)],
@@ -298,7 +301,8 @@ export default function Dashboard({ result: r }: { result: Result }) {
         <ComparisonTable r={r} />
         <p className="muted">
           Costo económico incluye adquisición, operación, trabajo e intereses; no suma principal dos
-          veces. El ingreso del concesionario es una condición de caja.{' '}
+          veces. El ingreso del concesionario es una condición de caja. El capital disponible se
+          utiliza para reducir deuda respetando reserva y enganche mínimo.{' '}
           {s.finance.kind === 'lease'
             ? 'En proveedor, la referencia de combustión se adquiere de contado.'
             : 'El financiamiento elegido se aplica a ambas referencias.'}

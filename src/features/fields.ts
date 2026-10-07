@@ -216,7 +216,7 @@ export const sections: Section[] = [
       },
       { path: 'finance.annualRate', label: 'Tasa nominal anual', unit: '%', percent: true },
       { path: 'finance.months', label: 'Plazo del crédito', unit: 'meses' },
-      { path: 'finance.downPayment', label: 'Enganche', unit: '%', percent: true },
+      { path: 'finance.downPayment', label: 'Enganche mínimo', unit: '%', percent: true },
       {
         path: 'finance.commissionRate',
         label: 'Comisión sobre principal',

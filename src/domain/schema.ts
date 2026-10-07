@@ -224,6 +224,9 @@ export interface FinancialResult {
   reserveEnd: number;
   residual: number;
   support: number;
+  supportFixed: number;
+  supportCapital: number;
+  financingFee: number;
 }
 export interface ChargeResult {
   hours: number;

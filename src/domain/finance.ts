@@ -3,8 +3,63 @@ export const money = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
 export function monthlyPayment(principal: number, annualRate: number, months: number): number {
   if (principal === 0) return 0;
   const r = annualRate / 12;
-  return money(r === 0 ? principal / months : (principal * r) / (1 - Math.pow(1 + r, -months)));
+  return money(
+    r === 0 ? principal / months : (principal * r) / -Math.expm1(-months * Math.log1p(r)),
+  );
 }
+
+/** Distribución que minimiza deuda para un presupuesto y aportación dados.
+ * Enganche es un mínimo; comisiones se pagan al inicio y la reserva permanece separada.
+ */
+export function allocateCapital(
+  eligible: number,
+  fixed: number,
+  support: number,
+  budget: number,
+  down: number,
+  commission: number,
+) {
+  const E = Math.round(eligible * 100),
+    F = Math.round(fixed * 100),
+    S = Math.round(support * 100),
+    B = Math.round(budget * 100);
+  const fee = (principal: number) => Math.round(principal * commission);
+  const remaining = (fixedSupport: number) => Math.max(0, E - Math.max(0, S - fixedSupport));
+  const maxLoan = (fixedSupport: number) => Math.floor(remaining(fixedSupport) * (1 - down));
+  const upfront = (fixedSupport: number, principal: number) =>
+    F - fixedSupport + remaining(fixedSupport) - principal + fee(principal);
+  // Menor asignación a costos no financiables que permite el enganche mínimo.
+  let lo = Math.min(F, Math.max(0, S - E)),
+    hi = Math.min(S, F);
+  if (upfront(hi, maxLoan(hi)) <= B)
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (upfront(mid, maxLoan(mid)) <= B) hi = mid;
+      else lo = mid + 1;
+    }
+  else lo = hi;
+  const supportFixed = lo;
+  // Principal mínimo que cabe en el capital propio, después de comisiones.
+  lo = 0;
+  hi = maxLoan(supportFixed);
+  if (upfront(supportFixed, hi) <= B)
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (upfront(supportFixed, mid) <= B) hi = mid;
+      else lo = mid + 1;
+    }
+  else lo = hi;
+  const principal = lo;
+  return {
+    principal: principal / 100,
+    fee: fee(principal) / 100,
+    upfront: upfront(supportFixed, principal) / 100,
+    supportFixed: supportFixed / 100,
+    supportCapital: Math.min(E, Math.max(0, S - supportFixed)) / 100,
+    unappliedSupport: Math.max(0, S - F - E) / 100,
+  };
+}
+
 export function financial(
   s: Scenario,
   vehicle: Vehicle,
@@ -27,15 +82,19 @@ export function financial(
   const reserveInitial = ec.initialReserve * fleet;
   const support = isEv ? ec.support : 0;
   const credit = f.kind === 'credit';
-  // Apoyo primero a obra no financiable y reserva, después al capital financiable.
+  // En centavos: asignar apoyo entre obra/reserva y adquisición, respetando
+  // enganche mínimo; usar capital disponible para reducir deuda, sin tocar reserva.
   const eligible = credit ? assets + (f.financeInfrastructure ? infrastructure : 0) : 0;
   const fixed = capex - eligible + reserveInitial;
-  const supportFixed = Math.min(support, fixed);
-  const remainingEligible = Math.max(0, eligible - Math.max(0, support - supportFixed));
-  const principal = credit ? money(remainingEligible * (1 - f.downPayment)) : 0;
-  const fee = money(principal * f.commissionRate);
-  const upfront = money(fixed - supportFixed + remainingEligible * f.downPayment + fee);
-  const unappliedSupport = money(Math.max(0, support - fixed - eligible));
+  const allocation = allocateCapital(
+    eligible,
+    fixed,
+    support,
+    ec.ownCapital,
+    f.downPayment,
+    f.commissionRate,
+  );
+  const { principal, fee, upfront, supportFixed, supportCapital, unappliedSupport } = allocation;
   const payment = isLease
     ? money(f.leasePerUnitMonth * fleet)
     : monthlyPayment(principal, f.annualRate, f.months);
@@ -121,5 +180,8 @@ export function financial(
     reserveEnd: reserve,
     residual,
     support,
+    supportFixed,
+    supportCapital,
+    financingFee: fee,
   };
 }

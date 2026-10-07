@@ -149,3 +149,48 @@ describe('búsqueda explicable', () => {
     expect(r.tested).toBe(0);
   });
 });
+
+// Casos independientes de asignación: evita imponer un orden que infle el apoyo.
+import { allocateCapital } from './finance';
+it('distribuye aportación y capital respetando enganche y comisiones', () => {
+  const a = allocateCapital(1000, 100, 100, 300, 0.2, 0);
+  expect(a).toMatchObject({ supportFixed: 0, supportCapital: 100, principal: 700, upfront: 300 });
+  const b = allocateCapital(1000, 100, 100, 200, 0.2, 0);
+  expect(b).toMatchObject({ supportFixed: 100, supportCapital: 0, principal: 800, upfront: 200 });
+  const c = allocateCapital(1000, 100, 0, 1000, 0.2, 0.1);
+  expect(c.principal).toBe(111.11);
+  expect(c.upfront).toBeLessThanOrEqual(1000);
+  const d = allocateCapital(1000, 100, 0, 2000, 0.2, 0);
+  expect(d.principal).toBe(0);
+  expect(d.upfront).toBe(1100);
+});
+it('asignación coincide con enumeración exhaustiva independiente en centavos', () => {
+  for (const E of [100, 140])
+    for (const F of [20, 35])
+      for (const S of [0, 20, 50, 180])
+        for (const B of [0, 50, 200])
+          for (const down of [0.2, 0.5])
+            for (const fee of [0, 0.1]) {
+              let best = Infinity;
+              for (let fixedSupport = 0; fixedSupport <= Math.min(S, F); fixedSupport++) {
+                const eligible = Math.max(0, E - Math.max(0, S - fixedSupport));
+                for (let loan = 0; loan <= Math.floor(eligible * (1 - down)); loan++) {
+                  const cash = F - fixedSupport + eligible - loan + Math.round(loan * fee);
+                  if (cash <= B) best = Math.min(best, loan);
+                }
+              }
+              const actual = allocateCapital(E / 100, F / 100, S / 100, B / 100, down, fee);
+              if (Number.isFinite(best)) {
+                expect(actual.principal).toBe(best / 100);
+                expect(actual.upfront).toBeLessThanOrEqual(B / 100);
+              } else expect(actual.upfront).toBeGreaterThan(B / 100);
+            }
+});
+it('tasas diminutas siguen siendo finitas y apoyo de contado se aplica completo', () => {
+  expect(monthlyPayment(120000, 1e-20, 60)).toBe(2000);
+  expect(allocateCapital(0, 1000, 900, 500, 1, 0)).toMatchObject({
+    upfront: 100,
+    supportFixed: 900,
+    unappliedSupport: 0,
+  });
+});
