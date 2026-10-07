@@ -65,3 +65,17 @@ El catálogo cita hechos comerciales de KINGO, Gree y Yutong, referencias PROFEC
 Código propio MIT, documentación propia CC BY 4.0. Los [textos originales de las dependencias](dependencias.json) se copian de sus paquetes, con checksums; no fueron redactados por el equipo. `npm run licenses` actualiza el registro después de cambiar dependencias. La compilación incluye esos avisos en `/third-party/licenses.json` y conserva las licencias OFL de las fuentes tipográficas.
 
 GitHub y Vercel son alojamiento administrado. El código y las bibliotecas son abiertos; `dist/` puede publicarse en otro servidor estático. `dist/`, `.vercel/`, el plan local y el registro local de progreso no se incorporan a Git.
+
+## Publicación
+
+URL pública: **https://hackelectro-cdmx.vercel.app**. Publicada y comprobada en navegador: cálculo completo, trazo histórico, búsqueda y avisos jurídicos disponibles.
+
+El proyecto Vercel se llama `hackelectro-cdmx`, bajo el equipo `hello-world-9171`. Node 22.x, `npm run build`, directorio `dist`, sin funciones de servidor. Para publicar una versión verificada mediante CLI:
+
+```bash
+vercel deploy --prod --yes --scope hello-world-9171
+```
+
+La cuenta Vercel autenticada permite publicar por CLI, pero rechazó el enlace automático del repositorio por falta de **Login Connection de GitHub**. Para habilitar despliegues al hacer push y previews de ramas, el titular debe conectar GitHub en su cuenta Vercel y vincular `itsebasvz/hackelectroCDMX` desde Project Settings → Git. No se afirma que esa integración esté activa. La compilación es portable e independiente de esta conexión.
+
+`.vercelignore` excluye seguimiento local, credenciales y fuentes de terceros conservadas localmente. Vercel CLI generó configuración/credenciales locales ignoradas; no deben incorporarse a Git ni al sitio.

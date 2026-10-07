@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=22.12 <23 || >=24.15"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0",

@@ -4,6 +4,8 @@ Espacio de trabajo del equipo para el **reto 2**: electrificar flotas de transpo
 
 La plataforma permite comparar combustión y electricidad por ramal, explorar carga y financiamiento y buscar la aportación inicial mínima manteniendo servicio e ingresos objetivo. Ruta 1 Universidad–San Fernando–Huipulco es el ejemplo documentado; la flota real y la decisión de inversión siguen por validar.
 
+**[Abrir la plataforma](https://hackelectro-cdmx.vercel.app)** · [Repositorio](https://github.com/itsebasvz/hackelectroCDMX)
+
 ## Ejecutar la plataforma
 
 Requiere Node 22.12+ compatible y npm.

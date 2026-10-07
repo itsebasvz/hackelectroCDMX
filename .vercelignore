@@ -1,0 +1,26 @@
+# Seguimiento privado y archivos locales: nunca enviarlos al despliegue.
+PLAN_LOCAL.md
+PROGRESO_LOCAL.md
+.git/
+node_modules/
+dist/
+test-results/
+playwright-report/
+coverage/
+.cache/
+.env
+.env.*
+.aws/
+.codex/
+.agents/
+
+# Documentación de terceros que sólo se conserva localmente.
+docs/originales/
+docs/fuentes/
+docs/transcripciones-visuales/
+docs/assets/
+docs/archivo/
+
+# El sitio sirve derivados en public/data; no necesita expedientes originales.
+docs/investigacion/
+docs/contexto/
