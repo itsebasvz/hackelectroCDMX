@@ -1676,6 +1676,15 @@
       "sha256": "cfec0482fb785fe27e3b368a2d9e84bf7a61b275e83ec582bf288e98cd530bb0"
     },
     {
+      "name": "prettier",
+      "version": "3.9.9",
+      "license": "MIT",
+      "dev": true,
+      "integrity": "sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==",
+      "text": "docs/desarrollo/licencias-dependencias/prettier-3.9.9.txt",
+      "sha256": "b0f2417199889f1c0d28ec4e0244eacf1a15de5819d61f641dd7d8f45153ac9c"
+    },
+    {
       "name": "pretty-format",
       "version": "27.5.1",
       "license": "MIT",

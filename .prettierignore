@@ -1,0 +1,7 @@
+node_modules
+dist
+PLAN_LOCAL.md
+PROGRESO_LOCAL.md
+docs
+public/data
+package-lock.json
