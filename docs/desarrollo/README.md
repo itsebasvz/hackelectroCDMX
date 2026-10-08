@@ -33,7 +33,7 @@ CI ejecuta tipos, pruebas, compilación y Playwright en Chromium sobre Ubuntu 24
 
 ## Recorrido de demostración
 
-La [interfaz de evaluación rediseñada](interfaz-evaluacion.md) explica controles, mapa, presupuesto y sensibilidad. En escritorio usa el ancho completo: parámetros a la izquierda, mapa al centro y diagnóstico a la derecha. «Cambiar ruta» abre el catálogo histórico; el resto de parámetros está en los cuatro grupos avanzados del panel.
+El [dashboard explicativo](redisenio-dashboard.md) y su [registro ambiental](fuentes-ambientales.json) documentan resultados, exploración y límites. La [interfaz de evaluación rediseñada](interfaz-evaluacion.md) explica controles, mapa, presupuesto y sensibilidad. En escritorio usa el ancho completo: parámetros a la izquierda, mapa al centro y diagnóstico a la derecha. «Cambiar ruta» abre el catálogo histórico; el resto de parámetros está en los cuatro grupos avanzados del panel.
 
 1. Abrir Ruta 1 y explicar que 20.340 km es una referencia cartográfica de 2022, no un ciclo actual medido.
 2. Consultar costos y márgenes sin esperar animación. El ejemplo inicial no fuerza un resultado favorable: puede ahorrar operación y aun incumplir capital o flujo.
