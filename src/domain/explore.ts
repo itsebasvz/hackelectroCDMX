@@ -52,11 +52,13 @@ export function explorationRange(s: Scenario, variable: SensitivityVariable): nu
     return Array.from({ length: Math.min(100, Math.max(12, 2 * current)) }, (_, i) => i + 1);
   const min = variable === 'consumption' ? 0.01 : 0;
   const max = variable === 'consumption' ? 100 : 1000;
-  const low = Math.max(min, current * 0.5);
-  const high = Math.min(max, variable === 'electricityPrice' && current === 0 ? 8 : current * 1.5);
-  const values = Array.from({ length: 11 }, (_, i) => low + ((high - low) * i) / 10);
+  const low = current * 0.5;
+  const high = variable === 'electricityPrice' && current === 0 ? 8 : current * 1.5;
+  const values = Array.from({ length: 11 }, (_, i) =>
+    Math.min(max, Math.max(min, low + ((high - low) * i) / 10)),
+  );
   // El punto central es exactamente la entrada, sin un duplicado por redondeo binario.
-  if (low === current * 0.5 && high === current * 1.5) values[5] = current;
+  if (high === current * 1.5) values[5] = current;
   return [...new Set([...values, current])].sort((a, b) => a - b);
 }
 /** Todos los puntos usan el evaluador. Cede el worker para recibir cancelaciones. */

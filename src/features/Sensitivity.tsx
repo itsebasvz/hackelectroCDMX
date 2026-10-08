@@ -330,13 +330,6 @@ export default function Sensitivity({
               </ul>
             </div>
           )}
-          <button
-            className="secondary"
-            disabled={disabled || current.value === data.current}
-            onClick={() => onApply(variable, current.value)}
-          >
-            Aplicar al escenario
-          </button>
           <details>
             <summary>Consultar curvas y valores calculados</summary>
             <div className="exploration-curves">
@@ -403,6 +396,15 @@ export default function Sensitivity({
           </details>
         </>
       )}
+      <button
+        className="secondary"
+        disabled={disabled || !current || !data || current.value === data.current}
+        onClick={() => {
+          if (current) onApply(variable, current.value);
+        }}
+      >
+        Aplicar al escenario
+      </button>
     </section>
   );
 }
