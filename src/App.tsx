@@ -272,10 +272,14 @@ export default function App() {
             Saltar al contenido
           </a>
           <header className="simulation-header">
-            <a className="simulation-brand" href="#/mapa" aria-label="HackElectro CDMX, inicio">
+            <a
+              className="simulation-brand"
+              href="#/mapa"
+              aria-label="Hackaton Electromovilidad CDMX, inicio"
+            >
               <BusFront size={22} />
               <span>
-                HackElectro <small>CDMX · RETO 2</small>
+                Hackaton Electromovilidad <small>CDMX · RETO 2</small>
               </span>
             </a>
             <div className="scenario-context">

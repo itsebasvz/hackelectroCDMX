@@ -45,6 +45,9 @@
   margin-top: 4px;
   color: var(--muted);
 }
+.simulation-brand > svg {
+  flex-shrink: 0;
+}
 .scenario-context {
   min-width: 0;
   flex: 1;
@@ -99,6 +102,7 @@
   align-items: center;
   font-size: 11px;
   min-height: 44px;
+  color: var(--primary);
 }
 .workspace-navigation {
   position: absolute;
@@ -695,6 +699,7 @@
   }
   .simulation-brand {
     font-size: 13px;
+    max-width: 160px;
   }
   .simulation-brand small {
     font-size: 9px;
