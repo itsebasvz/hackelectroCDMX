@@ -1,5 +1,5 @@
 import type { Result } from '../domain/schema';
-import { ComparisonTable, CashTable } from './Dashboard';
+import { ComparisonTable, CashTable } from './ResultTables';
 import { sections } from './fields';
 import { getValue, evidenceOf } from './values';
 import { num } from '../ui/format';

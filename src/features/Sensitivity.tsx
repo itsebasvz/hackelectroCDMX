@@ -13,15 +13,21 @@ export default function Sensitivity({
   error,
   disabled,
   onApply,
+  variables = ['cycles', 'consumption', 'electricityPrice'],
+  id = 'sensibilidad',
 }: {
+  variables?: readonly SensitivityVariable[];
+  id?: string;
   result: Result;
   points: SensitivitySeries[] | null;
   error: string;
   disabled: boolean;
   onApply: (variable: SensitivityVariable, value: number) => void;
 }) {
-  const [variable, setVariable] = useState<SensitivityVariable>('cycles');
+  const [variable, setVariable] = useState<SensitivityVariable>(variables[0]!);
   const [selection, setSelection] = useState<{
+    variables?: readonly SensitivityVariable[];
+    id?: string;
     result: Result;
     variable: SensitivityVariable;
     index: number;
@@ -158,7 +164,7 @@ export default function Sensitivity({
     [current],
   );
   return (
-    <section className="panel sensitivity-panel" id="sensibilidad" aria-busy={!series && !error}>
+    <section className="panel sensitivity-panel" id={id} aria-busy={!series && !error}>
       <div className="panel-title">
         <h2>Explora las condiciones del escenario</h2>
         <span className="pill neutral">Mismo recaudo · misma flota</span>
@@ -169,15 +175,15 @@ export default function Sensitivity({
       </p>
       <div className="exploration-controls">
         <div className="field">
-          <label htmlFor="exploration-variable">Variable a explorar</label>
+          <label htmlFor={`${id}-variable`}>Variable a explorar</label>
           <select
-            id="exploration-variable"
+            id={`${id}-variable`}
             value={variable}
             onChange={(e) => setVariable(e.target.value as SensitivityVariable)}
           >
-            {Object.entries(sensitivityVariables).map(([key, item]) => (
+            {variables.map((key) => (
               <option key={key} value={key}>
-                {item.label}
+                {sensitivityVariables[key].label}
               </option>
             ))}
           </select>
@@ -210,9 +216,9 @@ export default function Sensitivity({
               </b>
             </span>
           </div>
-          <label htmlFor="exploration-value">Valor explorado · {config.label}</label>
+          <label htmlFor={`${id}-value`}>Valor explorado · {config.label}</label>
           <input
-            id="exploration-value"
+            id={`${id}-value`}
             type="range"
             min="0"
             max={points.length - 1}
