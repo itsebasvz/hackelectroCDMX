@@ -13,7 +13,7 @@ El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon
 
 ## Commits
 
-- Antes de continuar el desarrollo, leer `PLAN_LOCAL.md` (copia exacta del plan aprobado) y `PROGRESO_LOCAL.md` (pasos, pruebas y commits). Ambos son locales e ignorados. Mantener el plan intacto y actualizar únicamente el progreso.
+- Antes de continuar el desarrollo, leer `PLAN_REDISENIO.md` (copia exacta del rediseño aprobado) y `PROGRESO_REDISENIO.md` (pasos, pruebas y commits). Ambos son locales e ignorados. Mantener el plan intacto y actualizar únicamente el progreso. El usuario pidió retirar los archivos de seguimiento anteriores; el rediseño se trabaja en `feat/redisenio-mapa`, con mapa protagonista y cuatro accesos: Configurar, Economía, Ambiente y Operación.
 - El usuario aprobó una aplicación React/TypeScript/Vite con motor puro en Web Worker, mapa MapLibre y dashboard, sin backend ni cuentas; ahora puede crearse `src/`. Seguir `DESIGN.md` y conservar la trazabilidad de supuestos y fuentes.
 
 - Usar **Conventional Commits con descripciones, cuerpos y notas en español**: `tipo(ámbito opcional): descripción`.
