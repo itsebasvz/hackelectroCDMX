@@ -275,11 +275,11 @@ export default function App() {
             <a
               className="simulation-brand"
               href="#/mapa"
-              aria-label="Hackaton Electromovilidad CDMX, inicio"
+              aria-label="Hackatón Electromovilidad CDMX, inicio"
             >
               <BusFront size={22} />
               <span>
-                Hackaton Electromovilidad <small>CDMX · RETO 2</small>
+                Hackatón Electromovilidad <small>CDMX · RETO 2</small>
               </span>
             </a>
             <div className="scenario-context">
