@@ -31,3 +31,40 @@ test('navega por tema y conserva una sola cartografía, selecciones y foco', asy
   await page.goto('/#desconocida');
   await expect(page).toHaveURL(/#\/mapa$/);
 });
+
+test('reproduce, pausa en reserva y conserva escenario y archivos', async ({ page }) => {
+  const { defaultScenario } = await import('../src/data/defaults');
+  const scenario = defaultScenario();
+  scenario.operation.cycles = 12;
+  await page.addInitScript(
+    (s) => localStorage.setItem('hackelectro:scenario:v1', JSON.stringify(s)),
+    scenario,
+  );
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Reproducir recorrido' })).toBeEnabled();
+  const before = await page.evaluate(() => localStorage.getItem('hackelectro:scenario:v1'));
+  const report = await page.locator('.print-report').textContent();
+  await page.clock.install();
+  await page.getByRole('button', { name: 'Reproducir recorrido' }).click();
+  await page.clock.runFor(100);
+  await page.clock.fastForward(60_000);
+  await expect(page.getByText('Reserva alcanzada · reproducción pausada')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reproducir recorrido' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continuar exploración' }).click();
+  await page.clock.runFor(100);
+  await page.clock.fastForward(60_000);
+  await expect(page.getByText('Recorrido explorado', { exact: true })).toBeVisible();
+  await expect(page.locator('#map-distance')).toHaveValue('12000');
+  await page.getByRole('button', { name: 'Reiniciar recorrido' }).click();
+  await expect(page.locator('#map-distance')).toHaveValue('0');
+  await page.getByRole('button', { name: 'Reproducir recorrido' }).click();
+  await page.clock.runFor(1000);
+  await page.getByRole('link', { name: 'Ambiente', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Reproducir recorrido' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cerrar panel' }).click();
+  const paused = await page.locator('#map-distance').inputValue();
+  await page.clock.runFor(1000);
+  expect(await page.locator('#map-distance').inputValue()).toBe(paused);
+  expect(await page.evaluate(() => localStorage.getItem('hackelectro:scenario:v1'))).toBe(before);
+  expect(await page.locator('.print-report').textContent()).toBe(report);
+});

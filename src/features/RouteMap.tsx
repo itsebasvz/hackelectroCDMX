@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Hospital as HospitalIcon, Flag, Maximize, SkipBack, SkipForward } from 'lucide-react';
+import {
+  Hospital as HospitalIcon,
+  Flag,
+  Maximize,
+  SkipBack,
+  SkipForward,
+  Play,
+  Pause,
+  RotateCcw,
+} from 'lucide-react';
 import { PointCard, DayCard, HospitalCard } from './MapCards';
 import { MapSymbol, VehicleIcon, type Hospital } from './MapSymbols';
 import * as maplibregl from 'maplibre-gl';
@@ -13,6 +22,7 @@ import {
   nearestFraction,
   batteryLimit,
 } from '../domain/geometry';
+import { usePlayback } from './usePlayback';
 import { num } from '../ui/format';
 import 'maplibre-gl/dist/maplibre-gl.css';
 maplibregl.setWorkerUrl(mapWorkerUrl);
@@ -275,6 +285,7 @@ export default function RouteMap({
     stale,
   });
   view.current = { routeId, result, mode, context, cycle: activeCycle, fraction, hospitals, stale };
+  const playbackPause = useRef(() => {});
   const fitted = useRef('');
   const update = () => {
     const v = view.current;
@@ -436,8 +447,10 @@ export default function RouteMap({
         if (!view.current.stale && view.current.result && geometryRef.current.features.length) {
           const f = nearestFraction(geometryRef.current, [e.lngLat.lng, e.lngLat.lat]);
           const p = positionOnTrace(geometryRef.current, f);
-          if (p && m.project([p.coordinates[0]!, p.coordinates[1]!]).dist(e.point) <= 20)
+          if (p && m.project([p.coordinates[0]!, p.coordinates[1]!]).dist(e.point) <= 20) {
+            playbackPause.current();
             setFraction(f);
+          }
         }
       });
       m.on('zoomend', () => setZoom(m.getZoom()));
@@ -478,7 +491,7 @@ export default function RouteMap({
   }, [routeId]);
   useEffect(() => {
     update();
-  }, [result, mode, context, activeCycle, fraction, hospitals]);
+  }, [result, mode, context, activeCycle, hospitals]);
   useEffect(() => {
     setCycle((current) => Math.min(current, cycleCount));
   }, [cycleCount]);
@@ -567,6 +580,23 @@ export default function RouteMap({
     setCycle(completed + 1);
     setFraction(progress - completed);
   };
+  const playback = usePlayback({
+    progress: progressValue,
+    max: progressMax,
+    limit: limit?.withinDay
+      ? scope === 'day'
+        ? (limit.cycle - 1 + limit.fraction) * 1000
+        : activeCycle === limit.cycle
+          ? limit.fraction * 1000
+          : activeCycle > limit.cycle
+            ? 0
+            : null
+      : null,
+    enabled: !!result && !stale && !!geometry?.features.length,
+    pauseKey: `${pauseKey}:${scope}:${routeId}`,
+    onProgress: updateProgress,
+  });
+  playbackPause.current = playback.manual;
   const frameRoute = () => {
     const m = map.current;
     if (!m || !geometry?.features.length) return;
@@ -580,6 +610,7 @@ export default function RouteMap({
   };
   const jump = (nextCycle: number, nextFraction: number) => {
     if (!result || stale || !geometry?.features.length) return;
+    playback.manual();
     setCycle(nextCycle);
     setFraction(nextFraction);
     const target = positionOnTrace(geometry, nextFraction);
@@ -607,6 +638,7 @@ export default function RouteMap({
       ? positionOnTrace(geometry, limit.fraction)
       : null;
   const openHospital = (hospital: Hospital) => {
+    playback.pause();
     hospitalTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setSelectedHospital(hospital);
@@ -618,6 +650,7 @@ export default function RouteMap({
   const groups =
     mapReady && context && routeId === 'M09-514' ? hospitalGroups(map.current, hospitals) : [];
   const openGroup = (group: ReturnType<typeof hospitalGroups>[number]) => {
+    playback.pause();
     if (group.features.length === 1) {
       openHospital(group.features[0]!.properties);
       return;
@@ -639,13 +672,22 @@ export default function RouteMap({
     <div className="map-explorer" data-panel={panelSide ?? 'none'} data-pause-key={pauseKey}>
       <div className="map-tools">
         <div className="map-modes" aria-label="Vista del mapa">
-          <button aria-pressed={mode === 'route'} onClick={() => setMode('route')}>
+          <button
+            aria-pressed={mode === 'route'}
+            onClick={() => {
+              playback.pause();
+              setMode('route');
+            }}
+          >
             Recorrido
           </button>
           <button
             aria-pressed={mode === 'energy'}
             disabled={!result || stale}
-            onClick={() => setMode('energy')}
+            onClick={() => {
+              playback.pause();
+              setMode('energy');
+            }}
           >
             Batería en el recorrido
           </button>
@@ -833,7 +875,71 @@ export default function RouteMap({
         </div>
       </div>
       <div className="map-journey">
-        <details className="journey-options">
+        <div className="playback-toolbar" role="group" aria-label="Reproducción del recorrido">
+          <button
+            className="playback-primary"
+            disabled={
+              !result ||
+              stale ||
+              !geometry?.features.length ||
+              (!playback.playing && progressValue >= progressMax)
+            }
+            onClick={playback.playing ? playback.pause : playback.play}
+            aria-label={playback.playing ? 'Pausar recorrido' : 'Reproducir recorrido'}
+          >
+            {playback.playing ? <Pause size={17} /> : <Play size={17} />}
+            <span>{playback.playing ? 'Pausar' : 'Reproducir'}</span>
+          </button>
+          <button
+            className="icon-action"
+            disabled={!result || stale || !geometry?.features.length}
+            onClick={playback.reset}
+            aria-label="Reiniciar recorrido"
+            title="Reiniciar recorrido"
+          >
+            <RotateCcw size={16} />
+          </button>
+          <label className="playback-speed">
+            <span className="sr-only">Ritmo visual</span>
+            <select
+              aria-label="Ritmo visual"
+              value={playback.speed}
+              onChange={(e) => playback.setSpeed(Number(e.target.value))}
+            >
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </label>
+          <span className="playback-note" role="status">
+            {playback.stop === 'reserve'
+              ? 'Reserva alcanzada · reproducción pausada'
+              : playback.stop === 'end'
+                ? 'Recorrido explorado'
+                : playback.playing
+                  ? 'Explorando el escenario'
+                  : 'Ritmo visual · sin velocidad real'}
+          </span>
+        </div>
+        {playback.stop === 'reserve' && (
+          <div className="playback-reserve">
+            <span>El resto del recorrido supera la energía disponible respetando la reserva.</span>
+            <button
+              className="text-button"
+              onClick={playback.continueAfterReserve}
+              disabled={stale}
+            >
+              Continuar exploración
+            </button>
+          </div>
+        )}
+
+        <details
+          className="journey-options"
+          onToggle={(e) => {
+            if (e.currentTarget.open) playback.pause();
+          }}
+        >
           <summary>Opciones del recorrido</summary>
           <div className="journey-toolbar">
             <div className="journey-control journey-navigation-control">
@@ -881,14 +987,20 @@ export default function RouteMap({
                 <button
                   type="button"
                   aria-pressed={scope === 'day'}
-                  onClick={() => setScope('day')}
+                  onClick={() => {
+                    playback.manual();
+                    setScope('day');
+                  }}
                 >
                   Todo el día
                 </button>
                 <button
                   type="button"
                   aria-pressed={scope === 'cycle'}
-                  onClick={() => setScope('cycle')}
+                  onClick={() => {
+                    playback.manual();
+                    setScope('cycle');
+                  }}
                 >
                   Una vuelta
                 </button>
@@ -900,7 +1012,10 @@ export default function RouteMap({
                 id="map-cycle"
                 value={activeCycle}
                 disabled={!result || stale}
-                onChange={(e) => setCycle(Number(e.target.value))}
+                onChange={(e) => {
+                  playback.manual();
+                  setCycle(Number(e.target.value));
+                }}
               >
                 {Array.from({ length: cycleCount }, (_, i) => (
                   <option key={i} value={i + 1}>
@@ -942,7 +1057,10 @@ export default function RouteMap({
                 step="1"
                 value={progressValue}
                 disabled={!geometry?.features.length || !result || stale}
-                onChange={(e) => updateProgress(Number(e.target.value))}
+                onChange={(e) => {
+                  playback.manual();
+                  updateProgress(Number(e.target.value));
+                }}
                 aria-valuetext={rangeValueText}
               />
             </div>
@@ -960,7 +1078,12 @@ export default function RouteMap({
           </div>
         </div>
       </div>
-      <details className="map-notes">
+      <details
+        className="map-notes"
+        onToggle={(e) => {
+          if (e.currentTarget.open) playback.pause();
+        }}
+      >
         <summary>Acerca del mapa</summary>
         <p className="map-method">
           Distribución uniforme por distancia; incluye adicionales proporcionalmente, sin tráfico ni

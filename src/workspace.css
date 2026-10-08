@@ -900,3 +900,72 @@
     display: none !important;
   }
 }
+.playback-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-right: 160px;
+}
+.playback-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+.playback-speed select {
+  min-height: 44px;
+  width: 70px;
+  padding: 8px;
+  font-size: 12px;
+}
+.playback-note {
+  font-size: 10px;
+  color: var(--muted);
+}
+.playback-reserve {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  font-size: 11px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff7e8;
+  margin: 8px 0;
+}
+.playback-reserve .text-button {
+  min-height: 36px;
+  margin-left: auto;
+  font-size: 11px;
+}
+.simulation-map .map-scrub {
+  padding-top: 8px;
+}
+.simulation-map .journey-options {
+  top: 18px;
+}
+.simulation-header .scenario-context h1 {
+  margin: 0;
+}
+@media (max-width: 1023px) {
+  .playback-toolbar {
+    padding-right: 0;
+    flex-wrap: wrap;
+  }
+  .playback-note {
+    flex-basis: 100%;
+  }
+  .journey-options > summary {
+    font-size: 10px;
+  }
+  .simulation-map .journey-options {
+    top: 68px;
+  }
+}
