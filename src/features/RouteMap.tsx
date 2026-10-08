@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Hospital as HospitalIcon, Flag, Maximize, SkipBack, SkipForward } from 'lucide-react';
+import {
+  Hospital as HospitalIcon,
+  Flag,
+  Maximize,
+  SkipBack,
+  SkipForward,
+  Play,
+  Pause,
+  RotateCcw,
+} from 'lucide-react';
 import { PointCard, DayCard, HospitalCard } from './MapCards';
 import { MapSymbol, VehicleIcon, type Hospital } from './MapSymbols';
 import * as maplibregl from 'maplibre-gl';
@@ -13,6 +22,7 @@ import {
   nearestFraction,
   batteryLimit,
 } from '../domain/geometry';
+import { usePlayback } from './usePlayback';
 import { num } from '../ui/format';
 import 'maplibre-gl/dist/maplibre-gl.css';
 maplibregl.setWorkerUrl(mapWorkerUrl);
@@ -26,6 +36,7 @@ function fitRoute(
   geometry: FeatureCollection<LineString>,
   hospitals: Hospitals | null,
   wide: boolean,
+  side: 'left' | 'right' | null = null,
 ) {
   const coords = [
     ...geometry.features.flatMap((f) => f.geometry.coordinates),
@@ -35,7 +46,14 @@ function fitRoute(
   const bounds = new maplibregl.LngLatBounds();
   coords.forEach((p) => bounds.extend([p[0]!, p[1]!]));
   m.fitBounds(bounds, {
-    padding: wide ? { top: 45, left: 270, right: 70, bottom: 170 } : 55,
+    padding: wide
+      ? {
+          top: 150,
+          left: side === 'left' ? 620 : 210,
+          right: side === 'right' ? Math.min(880, m.getContainer().clientWidth * 0.54 + 20) : 90,
+          bottom: 210,
+        }
+      : { top: 180, left: 35, right: 35, bottom: 240 },
     duration: 0,
     maxZoom: 14,
   });
@@ -220,7 +238,11 @@ export default function RouteMap({
   stale,
   cycles,
   onCycles,
+  panelSide = null,
+  pauseKey = '',
 }: {
+  panelSide?: 'left' | 'right' | null;
+  pauseKey?: string;
   routeId: string;
   result: Result | null;
   stale: boolean;
@@ -263,6 +285,7 @@ export default function RouteMap({
     stale,
   });
   view.current = { routeId, result, mode, context, cycle: activeCycle, fraction, hospitals, stale };
+  const playbackPause = useRef(() => {});
   const fitted = useRef('');
   const update = () => {
     const v = view.current;
@@ -315,9 +338,9 @@ export default function RouteMap({
       })),
     };
     (m.getSource('selected') as maplibregl.GeoJSONSource).setData(traced);
-    const wide = (container.current?.clientWidth ?? 0) >= 720;
+    const wide = (container.current?.clientWidth ?? 0) >= 1024;
     const hospitalContext = v.context && v.routeId === 'M09-514' ? v.hospitals : null;
-    const fitKey = `${v.routeId}:${wide}:${hospitalContext?.features.length ?? 0}`;
+    const fitKey = `${v.routeId}:${container.current?.clientWidth}:${container.current?.clientHeight}:${hospitalContext?.features.length ?? 0}`;
     if (selected.features.length && fitted.current !== fitKey) {
       fitRoute(m, selected, hospitalContext, wide);
       fitted.current = fitKey;
@@ -351,14 +374,11 @@ export default function RouteMap({
         container: container.current,
         center: [-99.17, 19.3],
         zoom: 12,
-        cooperativeGestures: true,
+        cooperativeGestures: false,
         locale: {
           'Map.Title': 'Mapa de ramales históricos',
           'NavigationControl.ZoomIn': 'Acercar mapa',
           'NavigationControl.ZoomOut': 'Alejar mapa',
-          'CooperativeGesturesHandler.WindowsHelpText': 'Usa Ctrl y la rueda para acercar el mapa',
-          'CooperativeGesturesHandler.MacHelpText': 'Usa ⌘ y la rueda para acercar el mapa',
-          'CooperativeGesturesHandler.MobileHelpText': 'Usa dos dedos para mover el mapa',
           'AttributionControl.ToggleAttribution': 'Mostrar atribuciones',
         },
         attributionControl: { compact: false },
@@ -424,8 +444,10 @@ export default function RouteMap({
         if (!view.current.stale && view.current.result && geometryRef.current.features.length) {
           const f = nearestFraction(geometryRef.current, [e.lngLat.lng, e.lngLat.lat]);
           const p = positionOnTrace(geometryRef.current, f);
-          if (p && m.project([p.coordinates[0]!, p.coordinates[1]!]).dist(e.point) <= 20)
+          if (p && m.project([p.coordinates[0]!, p.coordinates[1]!]).dist(e.point) <= 20) {
+            playbackPause.current();
             setFraction(f);
+          }
         }
       });
       m.on('zoomend', () => setZoom(m.getZoom()));
@@ -466,7 +488,7 @@ export default function RouteMap({
   }, [routeId]);
   useEffect(() => {
     update();
-  }, [result, mode, context, activeCycle, fraction, hospitals]);
+  }, [result, mode, context, activeCycle, hospitals]);
   useEffect(() => {
     setCycle((current) => Math.min(current, cycleCount));
   }, [cycleCount]);
@@ -555,6 +577,23 @@ export default function RouteMap({
     setCycle(completed + 1);
     setFraction(progress - completed);
   };
+  const playback = usePlayback({
+    progress: progressValue,
+    max: progressMax,
+    limit: limit?.withinDay
+      ? scope === 'day'
+        ? (limit.cycle - 1 + limit.fraction) * 1000
+        : activeCycle === limit.cycle
+          ? limit.fraction * 1000
+          : activeCycle > limit.cycle
+            ? 0
+            : null
+      : null,
+    enabled: !!result && !stale && !!geometry?.features.length,
+    pauseKey: `${pauseKey}:${scope}:${routeId}`,
+    onProgress: updateProgress,
+  });
+  playbackPause.current = playback.manual;
   const frameRoute = () => {
     const m = map.current;
     if (!m || !geometry?.features.length) return;
@@ -562,11 +601,13 @@ export default function RouteMap({
       m,
       geometry!,
       context && routeId === 'M09-514' ? hospitals : null,
-      (container.current?.clientWidth ?? 0) >= 720,
+      (container.current?.clientWidth ?? 0) >= 1024,
+      panelSide,
     );
   };
   const jump = (nextCycle: number, nextFraction: number) => {
     if (!result || stale || !geometry?.features.length) return;
+    playback.manual();
     setCycle(nextCycle);
     setFraction(nextFraction);
     const target = positionOnTrace(geometry, nextFraction);
@@ -594,6 +635,7 @@ export default function RouteMap({
       ? positionOnTrace(geometry, limit.fraction)
       : null;
   const openHospital = (hospital: Hospital) => {
+    playback.pause();
     hospitalTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setSelectedHospital(hospital);
@@ -605,6 +647,7 @@ export default function RouteMap({
   const groups =
     mapReady && context && routeId === 'M09-514' ? hospitalGroups(map.current, hospitals) : [];
   const openGroup = (group: ReturnType<typeof hospitalGroups>[number]) => {
+    playback.pause();
     if (group.features.length === 1) {
       openHospital(group.features[0]!.properties);
       return;
@@ -623,16 +666,25 @@ export default function RouteMap({
     });
   };
   return (
-    <div className="map-explorer">
+    <div className="map-explorer" data-panel={panelSide ?? 'none'} data-pause-key={pauseKey}>
       <div className="map-tools">
         <div className="map-modes" aria-label="Vista del mapa">
-          <button aria-pressed={mode === 'route'} onClick={() => setMode('route')}>
+          <button
+            aria-pressed={mode === 'route'}
+            onClick={() => {
+              playback.pause();
+              setMode('route');
+            }}
+          >
             Recorrido
           </button>
           <button
             aria-pressed={mode === 'energy'}
             disabled={!result || stale}
-            onClick={() => setMode('energy')}
+            onClick={() => {
+              playback.pause();
+              setMode('energy');
+            }}
           >
             Batería en el recorrido
           </button>
@@ -820,75 +872,168 @@ export default function RouteMap({
         </div>
       </div>
       <div className="map-journey">
-        <div className="journey-toolbar">
-          <div className="journey-control journey-navigation-control">
-            <span className="journey-control-label">Navegación del día</span>
-            <div className="map-navigation" role="group" aria-label="Navegación del día simulado">
-              <button
-                className="secondary"
-                disabled={!result || stale || !geometry?.features.length}
-                onClick={() => jump(1, 0)}
-              >
-                <SkipBack size={14} aria-hidden="true" />
-                Inicio del día
-              </button>
-              <button
-                className="secondary"
-                disabled={!result || stale || !geometry?.features.length}
-                onClick={() => jump(cycleCount, 1)}
-              >
-                Fin del día
-                <SkipForward size={14} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-          <div className="field journey-control journey-cycle-control">
-            <label htmlFor="map-cycle-count">Vueltas por unidad / día</label>
-            <input
-              id="map-cycle-count"
-              type="number"
-              min="1"
-              max="100"
-              step="1"
-              value={Number.isInteger(cycles) ? cycles : ''}
-              onChange={(e) => {
-                const value = e.target.value === '' ? Number.NaN : Number(e.target.value);
-                onCycles(Number.isInteger(value) ? Math.min(100, Math.max(1, value)) : Number.NaN);
-              }}
-              aria-label="Vueltas por unidad al día, de 1 a 100"
-            />
-          </div>
-          <div className="journey-control journey-scale-control">
-            <span className="journey-control-label">Escala de exploración</span>
-            <div className="map-scope-switch" role="group" aria-label="Escala de la barra">
-              <button type="button" aria-pressed={scope === 'day'} onClick={() => setScope('day')}>
-                Todo el día
-              </button>
-              <button
-                type="button"
-                aria-pressed={scope === 'cycle'}
-                onClick={() => setScope('cycle')}
-              >
-                Una vuelta
-              </button>
-            </div>
-          </div>
-          <div className="field journey-control journey-lap-control">
-            <label htmlFor="map-cycle">Vuelta del día</label>
+        <div className="playback-toolbar" role="group" aria-label="Reproducción del recorrido">
+          <button
+            className="playback-primary"
+            disabled={
+              !result ||
+              stale ||
+              !geometry?.features.length ||
+              (!playback.playing && progressValue >= progressMax)
+            }
+            onClick={playback.playing ? playback.pause : playback.play}
+            aria-label={playback.playing ? 'Pausar recorrido' : 'Reproducir recorrido'}
+          >
+            {playback.playing ? <Pause size={17} /> : <Play size={17} />}
+            <span>{playback.playing ? 'Pausar' : 'Reproducir'}</span>
+          </button>
+          <button
+            className="icon-action"
+            disabled={!result || stale || !geometry?.features.length}
+            onClick={playback.reset}
+            aria-label="Reiniciar recorrido"
+            title="Reiniciar recorrido"
+          >
+            <RotateCcw size={16} />
+          </button>
+          <label className="playback-speed">
+            <span className="sr-only">Ritmo visual</span>
             <select
-              id="map-cycle"
-              value={activeCycle}
-              disabled={!result || stale}
-              onChange={(e) => setCycle(Number(e.target.value))}
+              aria-label="Ritmo visual"
+              value={playback.speed}
+              onChange={(e) => playback.setSpeed(Number(e.target.value))}
             >
-              {Array.from({ length: cycleCount }, (_, i) => (
-                <option key={i} value={i + 1}>
-                  {i + 1} de {cycleCount}
-                </option>
-              ))}
+              <option value="1">1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
             </select>
-          </div>
+          </label>
+          <span className="playback-note" role="status">
+            {playback.stop === 'reserve'
+              ? 'Reserva alcanzada · reproducción pausada'
+              : playback.stop === 'end'
+                ? 'Recorrido explorado'
+                : playback.playing
+                  ? 'Explorando el escenario'
+                  : 'Ritmo visual · sin velocidad real'}
+          </span>
         </div>
+        {playback.stop === 'reserve' && (
+          <div className="playback-reserve">
+            <span>El resto del recorrido supera la energía disponible respetando la reserva.</span>
+            <button
+              className="text-button"
+              onClick={playback.continueAfterReserve}
+              disabled={stale}
+            >
+              Continuar exploración
+            </button>
+          </div>
+        )}
+
+        <details
+          className="journey-options"
+          onToggle={(e) => {
+            if (e.currentTarget.open) playback.pause();
+          }}
+        >
+          <summary>Opciones del recorrido</summary>
+          <div className="journey-toolbar">
+            {limit?.withinDay && (
+              <button
+                className="secondary journey-limit"
+                disabled={!result || stale}
+                onClick={jumpLimit}
+              >
+                <Flag size={14} />
+                Ir a la reserva
+              </button>
+            )}
+
+            <div className="journey-control journey-navigation-control">
+              <span className="journey-control-label">Navegación del día</span>
+              <div className="map-navigation" role="group" aria-label="Navegación del día simulado">
+                <button
+                  className="secondary"
+                  disabled={!result || stale || !geometry?.features.length}
+                  onClick={() => jump(1, 0)}
+                >
+                  <SkipBack size={14} aria-hidden="true" />
+                  Inicio del día
+                </button>
+                <button
+                  className="secondary"
+                  disabled={!result || stale || !geometry?.features.length}
+                  onClick={() => jump(cycleCount, 1)}
+                >
+                  Fin del día
+                  <SkipForward size={14} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+            <div className="field journey-control journey-cycle-control">
+              <label htmlFor="map-cycle-count">Vueltas por unidad / día</label>
+              <input
+                id="map-cycle-count"
+                type="number"
+                min="1"
+                max="100"
+                step="1"
+                value={Number.isInteger(cycles) ? cycles : ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? Number.NaN : Number(e.target.value);
+                  onCycles(
+                    Number.isInteger(value) ? Math.min(100, Math.max(1, value)) : Number.NaN,
+                  );
+                }}
+                aria-label="Vueltas por unidad al día, de 1 a 100"
+              />
+            </div>
+            <div className="journey-control journey-scale-control">
+              <span className="journey-control-label">Escala de exploración</span>
+              <div className="map-scope-switch" role="group" aria-label="Escala de la barra">
+                <button
+                  type="button"
+                  aria-pressed={scope === 'day'}
+                  onClick={() => {
+                    playback.manual();
+                    setScope('day');
+                  }}
+                >
+                  Todo el día
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={scope === 'cycle'}
+                  onClick={() => {
+                    playback.manual();
+                    setScope('cycle');
+                  }}
+                >
+                  Una vuelta
+                </button>
+              </div>
+            </div>
+            <div className="field journey-control journey-lap-control">
+              <label htmlFor="map-cycle">Vuelta del día</label>
+              <select
+                id="map-cycle"
+                value={activeCycle}
+                disabled={!result || stale}
+                onChange={(e) => {
+                  playback.manual();
+                  setCycle(Number(e.target.value));
+                }}
+              >
+                {Array.from({ length: cycleCount }, (_, i) => (
+                  <option key={i} value={i + 1}>
+                    {i + 1} de {cycleCount}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </details>
         <div className="map-scrub">
           <div className="journey-progress-heading">
             <label htmlFor="map-distance">{rangeLabel}</label>
@@ -920,7 +1065,10 @@ export default function RouteMap({
                 step="1"
                 value={progressValue}
                 disabled={!geometry?.features.length || !result || stale}
-                onChange={(e) => updateProgress(Number(e.target.value))}
+                onChange={(e) => {
+                  playback.manual();
+                  updateProgress(Number(e.target.value));
+                }}
                 aria-valuetext={rangeValueText}
               />
             </div>
@@ -938,48 +1086,56 @@ export default function RouteMap({
           </div>
         </div>
       </div>
-      <p className="map-method">
-        Distribución uniforme por distancia; incluye adicionales proporcionalmente, sin tráfico ni
-        pendientes. {stale && 'Resultado anterior; espera el cálculo o corrige las entradas. '}
-        {result &&
-          Math.abs(cartographic - result.scenario.route.cycleKm) > 0.02 &&
-          `Cartografía: ${num(cartographic, 2)} km; ciclo editado: ${num(result.scenario.route.cycleKm, 2)} km. `}
-        El vehículo representa una posición explorada, no seguimiento real.
-      </p>
-      {routeId === 'M09-514' && context && (
-        <details className="hospital-references">
-          <summary>Zona de Hospitales: referencias y límites</summary>
-          <p>
-            Ubicaciones aproximadas de inmuebles; no paradas, cobertura comprobada ni demanda.
-            Coordenadas © OpenStreetMap contributors,{' '}
-            <a
-              href="https://opendatacommons.org/licenses/odbl/1-0/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              ODbL 1.0
+      <details
+        className="map-notes"
+        onToggle={(e) => {
+          if (e.currentTarget.open) playback.pause();
+        }}
+      >
+        <summary>Acerca del mapa</summary>
+        <p className="map-method">
+          Distribución uniforme por distancia; incluye adicionales proporcionalmente, sin tráfico ni
+          pendientes. {stale && 'Resultado anterior; espera el cálculo o corrige las entradas. '}
+          {result &&
+            Math.abs(cartographic - result.scenario.route.cycleKm) > 0.02 &&
+            `Cartografía: ${num(cartographic, 2)} km; ciclo editado: ${num(result.scenario.route.cycleKm, 2)} km. `}
+          El vehículo representa una posición explorada, no seguimiento real.
+        </p>
+        {routeId === 'M09-514' && context && (
+          <details className="hospital-references">
+            <summary>Zona de Hospitales: referencias y límites</summary>
+            <p>
+              Ubicaciones aproximadas de inmuebles; no paradas, cobertura comprobada ni demanda.
+              Coordenadas © OpenStreetMap contributors,{' '}
+              <a
+                href="https://opendatacommons.org/licenses/odbl/1-0/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                ODbL 1.0
+              </a>
+              .
+            </p>
+            {hospitalError && <p role="status">{hospitalError}</p>}
+            <ul>
+              {hospitals?.features.map((f) => (
+                <li key={f.properties.shortName}>
+                  <button className="text-button" onClick={() => openHospital(f.properties)}>
+                    {f.properties.shortName}
+                  </button>
+                  <span>{f.properties.address}</span>
+                  <a href={f.properties.officialUrl} target="_blank" rel="noreferrer">
+                    Fuente institucional ↗
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a href="/data/hospitals-manifest.json" target="_blank" rel="noreferrer">
+              Procedencia y licencia de la capa
             </a>
-            .
-          </p>
-          {hospitalError && <p role="status">{hospitalError}</p>}
-          <ul>
-            {hospitals?.features.map((f) => (
-              <li key={f.properties.shortName}>
-                <button className="text-button" onClick={() => openHospital(f.properties)}>
-                  {f.properties.shortName}
-                </button>
-                <span>{f.properties.address}</span>
-                <a href={f.properties.officialUrl} target="_blank" rel="noreferrer">
-                  Fuente institucional ↗
-                </a>
-              </li>
-            ))}
-          </ul>
-          <a href="/data/hospitals-manifest.json" target="_blank" rel="noreferrer">
-            Procedencia y licencia de la capa
-          </a>
-        </details>
-      )}
+          </details>
+        )}
+      </details>
     </div>
   );
 }

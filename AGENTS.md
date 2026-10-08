@@ -13,7 +13,7 @@ El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon
 
 ## Commits
 
-- Antes de continuar el desarrollo, leer `PLAN_LOCAL.md` (copia exacta del plan aprobado) y `PROGRESO_LOCAL.md` (pasos, pruebas y commits). Ambos son locales e ignorados. Mantener el plan intacto y actualizar únicamente el progreso.
+- Antes de continuar el desarrollo, leer `PLAN_REDISENIO.md` (copia exacta del rediseño aprobado) y `PROGRESO_REDISENIO.md` (pasos, pruebas y commits). Ambos son locales e ignorados. Mantener el plan intacto y actualizar únicamente el progreso. El usuario pidió retirar los archivos de seguimiento anteriores; el rediseño se trabaja en `feat/redisenio-mapa`, con mapa protagonista y cuatro accesos: Configurar, Economía, Ambiente y Operación.
 - El usuario aprobó una aplicación React/TypeScript/Vite con motor puro en Web Worker, mapa MapLibre y dashboard, sin backend ni cuentas; ahora puede crearse `src/`. Seguir `DESIGN.md` y conservar la trazabilidad de supuestos y fuentes.
 
 - Usar **Conventional Commits con descripciones, cuerpos y notas en español**: `tipo(ámbito opcional): descripción`.
@@ -32,7 +32,7 @@ El equipo eligió el **reto 2, «Electrifica tu flota»**, del Electro Hackathon
 
 ## Aplicación y verificación
 
-- Rediseño aprobado el 6 de octubre de 2026: ancho completo, controles esenciales + cuatro grupos avanzados, mapa con consumo por distancia y contexto hospitalario, presupuesto por componentes y sensibilidad a vueltas usando el mismo evaluador. Consultar `docs/desarrollo/interfaz-evaluacion.md`. Mantener compatibilidad del JSON v1; no convertir contexto hospitalario en demanda ni variación de vueltas en más recaudo. Los puntos OSM son referencias aproximadas de inmuebles bajo ODbL, no paradas.
+- Rediseño vigente aprobado el 7 de octubre de 2026: mapa a toda la ventana, cuatro accesos flotantes (Configurar, Economía, Ambiente y Operación), paneles con URL propia y reproducción del recorrido calculado. Consultar `docs/desarrollo/redisenio-mapa.md` y `docs/desarrollo/interfaz-evaluacion.md`. Reutilizar las herramientas existentes y conservar compatibilidad del JSON v1; no convertir contexto hospitalario en demanda ni variación de vueltas en más recaudo. La reproducción es ritmo visual, no velocidad, seguimiento real ni prueba de solvencia. Los puntos OSM son referencias aproximadas de inmuebles bajo ODbL, no paradas.
 
 - Consultar `docs/desarrollo/README.md` y `docs/desarrollo/metodologia-motor.md`. Ejecutar `npm run check`, `npm run test:e2e` y `npm run format:check` antes de publicar.
 - Reservar inversión, principal, ingreso objetivo y liquidez por separado. El enganche es mínimo; asignar capital/apoyo sin inflar artificialmente el apoyo. No rescatar déficit recurrente mediante aportación inicial.

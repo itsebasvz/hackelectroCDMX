@@ -1,20 +1,19 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {
-  ArrowUpRight,
-  Download,
-  Upload,
-  Printer,
-  Save,
-  RotateCcw,
   Search,
   MapPin,
-  ArrowRight,
   BookOpen,
-  Info,
   X,
   SlidersHorizontal,
   BusFront,
+  Leaf,
+  Coins,
+  Activity,
+  FolderOpen,
+  ChevronRight,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import type { RouteRecord, Scenario } from './domain/schema';
 import { ScenarioSchema } from './domain/schema';
@@ -23,13 +22,20 @@ import { useEngine } from './features/useEngine';
 import Controls, { focusParameter } from './features/Controls';
 import Diagnostic from './features/Diagnostic';
 import { withValue } from './features/values';
-import Dashboard from './features/Dashboard';
+import { CostPanel, EnergyPanel, ResultMetrics } from './features/ResultViews';
+import FinancePanel from './features/FinancePanel';
+import Environment from './features/Environment';
+import Sensitivity from './features/Sensitivity';
+import WorkspacePanel, { useCompactWorkspace } from './features/WorkspacePanel';
+import { useWorkspaceRoute, navigate, type WorkspacePath } from './features/navigation';
+import { presentedConditions } from './features/conditions';
 import Optimizer from './features/Optimizer';
 import Report from './features/Report';
-import { download, serializeScenario, parseScenario, resultsCsv } from './features/files';
-import { num } from './ui/format';
 import { sensitivityVariables } from './domain/explore';
-import environmentalSources from '../docs/desarrollo/fuentes-ambientales.json';
+import { num } from './ui/format';
+import './workspace.css';
+import FilesPanel from './features/FilesPanel';
+import SourcesPanel from './features/SourcesPanel';
 const RouteMap = lazy(() => import('./features/RouteMap'));
 const SAVED_KEY = 'hackelectro:saved:v1';
 const normalize = (text: string) =>
@@ -53,15 +59,27 @@ function readSaved(): Scenario[] {
 export default function App() {
   const { scenario, setScenario, reset, storageError } = useScenario();
   const engine = useEngine(scenario);
+  const route = useWorkspaceRoute();
+  const compact = useCompactWorkspace();
+  const [expanded, setExpanded] = useState(false);
+  const [visited, setVisited] = useState<Set<WorkspacePath>>(() => new Set([route.path]));
+  useEffect(() => {
+    setVisited((previous) =>
+      previous.has(route.path) ? previous : new Set([...previous, route.path]),
+    );
+    setExpanded(false);
+  }, [route.path]);
+  useEffect(() => {
+    if (route.path === '/configurar' && route.field) focusParameter(route.field);
+  }, [route.path, route.field, visited]);
+  const onParameter = (path: string) => navigate('/configurar', path);
   const [routes, setRoutes] = useState<RouteRecord[]>([]);
   const [query, setQuery] = useState('');
   const [routesError, setRoutesError] = useState('');
   const [routeDialog, setRouteDialog] = useState(false);
   const [notice, setNotice] = useState('');
   const [saved, setSaved] = useState<Scenario[]>(readSaved);
-  const [sourceDialog, setSourceDialog] = useState(false);
   const [name, setName] = useState(scenario.name);
-  const file = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const controller = new AbortController();
     fetch('/data/routes.json', { signal: controller.signal })
@@ -87,13 +105,6 @@ export default function App() {
         a.name.localeCompare(b.name, 'es'),
     );
   const valid = engine.status === 'ready' && engine.result !== null;
-  const guarded = async (action: () => Promise<void> | void) => {
-    try {
-      await action();
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'No se pudo completar la acción.');
-    }
-  };
   const save = () => {
     const parsed = ScenarioSchema.safeParse({ ...scenario, name: name.trim() || scenario.name });
     if (!parsed.success) {
@@ -142,88 +153,197 @@ export default function App() {
       'Combinación aplicada. Los acuerdos de carga, financiamiento y autorización siguen pendientes.',
     );
   };
+  const modal = route.path !== '/mapa' && (expanded || compact);
+  const failures = engine.result
+    ? presentedConditions(engine.result).filter((c) => c.status === 'fail').length
+    : 0;
+  const onExplore = (variable: keyof typeof sensitivityVariables, value: number) => {
+    const path = sensitivityVariables[variable].path;
+    setScenario(withValue(scenario, path, value));
+    onParameter(path);
+  };
+  const views: Partial<Record<WorkspacePath, React.ReactNode>> = {
+    '/configurar': (
+      <Controls scenario={scenario} onChange={setScenario} onRoutes={() => setRouteDialog(true)} />
+    ),
+    '/economia/caja': engine.result && (
+      <FinancePanel
+        result={engine.result}
+        stale={!valid}
+        points={engine.revenuePoints}
+        error={engine.revenueError}
+      />
+    ),
+    '/economia/costos': engine.result && (
+      <>
+        <ResultMetrics result={engine.result} />
+        <CostPanel result={engine.result} />
+      </>
+    ),
+    '/economia/pruebas': engine.result && (
+      <Sensitivity
+        id="pruebas-economia"
+        variables={['electricityPrice']}
+        result={engine.result}
+        points={engine.points}
+        error={engine.sensitivityError}
+        disabled={!valid}
+        onApply={onExplore}
+      />
+    ),
+    '/economia/alternativas': (
+      <Optimizer
+        search={engine.search}
+        searching={engine.searching}
+        progress={engine.progress}
+        onSearch={engine.startSearch}
+        onCancel={engine.cancel}
+        onApply={apply}
+        disabled={!valid}
+      />
+    ),
+    '/ambiente': engine.result && <Environment result={engine.result} />,
+    '/operacion/energia': engine.result && <EnergyPanel result={engine.result} />,
+    '/operacion/condiciones': (
+      <Diagnostic
+        result={engine.result}
+        stale={!valid}
+        onSearch={() => navigate('/economia/alternativas')}
+        onParameter={onParameter}
+      />
+    ),
+    '/operacion/pruebas': engine.result && (
+      <Sensitivity
+        id="pruebas-operacion"
+        variables={['cycles', 'consumption']}
+        result={engine.result}
+        points={engine.points}
+        error={engine.sensitivityError}
+        disabled={!valid}
+        onApply={onExplore}
+      />
+    ),
+    '/archivos': (
+      <FilesPanel
+        scenario={scenario}
+        result={engine.result}
+        name={name}
+        onName={setName}
+        saved={saved}
+        onSave={save}
+        onChange={setScenario}
+        onReset={reset}
+        onNotice={setNotice}
+        storageError={storageError}
+        valid={valid}
+      />
+    ),
+    '/fuentes': <SourcesPanel scenario={scenario} />,
+  };
+  const tabs =
+    route.area === 'economia'
+      ? [
+          ['/economia/caja', 'Caja'],
+          ['/economia/costos', 'Costos'],
+          ['/economia/pruebas', 'Pruebas'],
+          ['/economia/alternativas', 'Alternativas'],
+        ]
+      : route.area === 'operacion'
+        ? [
+            ['/operacion/energia', 'Energía'],
+            ['/operacion/condiciones', 'Condiciones'],
+            ['/operacion/pruebas', 'Pruebas'],
+          ]
+        : [];
   return (
     <>
-      <a className="skip-link" href="#contenido">
-        Saltar al contenido
-      </a>
-      <header className="header">
-        <div className="header-inner">
+      <div className="simulation-app">
+        <div className="workspace-surround" inert={modal || undefined}>
           <a
-            href="#contenido"
-            className="brand"
-            aria-label="Hackatón Electromovilidad CDMX 2026, inicio"
+            className="skip-link"
+            href={route.path === '/mapa' ? '#contenido' : '#workspace-panel-title'}
+            onClick={(event) => {
+              event.preventDefault();
+              document
+                .getElementById(route.path === '/mapa' ? 'map-distance' : 'workspace-panel-title')
+                ?.focus({ preventScroll: true });
+            }}
           >
-            Hackatón Electromovilidad <span>CDMX 2026</span>
+            Saltar al contenido
           </a>
-          <span className="header-mission">
-            Electrificar el transporte sin poner en riesgo el trabajo
-          </span>
-          <a
-            className="header-link"
-            href="https://github.com/itsebasvz/hackelectroCDMX"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Equipo Aragonenes <span className="github-mark" aria-hidden="true" />
-          </a>
-        </div>
-      </header>
-      <nav className="nav" aria-label="Secciones de evaluación">
-        <div className="container nav-inner">
-          <a href="#ramal">
-            <MapPin size={16} />
-            Simulador
-          </a>
-          <a href="#resultados">
-            <BusFront size={16} />
-            Comparación
-          </a>
-          <a href="#sensibilidad">
-            <SlidersHorizontal size={16} />
-            Explorar condiciones
-          </a>
-          <a href="#condiciones">
-            <ArrowRight size={16} />
-            Buscar alternativas
-          </a>
-          <button onClick={() => setSourceDialog(true)}>
-            <BookOpen size={16} />
-            Fuentes y supuestos
-          </button>
-        </div>
-      </nav>
-      <main id="contenido" className="container">
-        <section className="workspace-intro">
-          <div>
-            <span className="eyebrow">RETO 2 · EVALUACIÓN POR RAMAL</span>
-            <h1>El futuro de una ruta empieza con una buena decisión.</h1>
-            <p>
-              Compara vehículos, ajusta su operación y descubre condiciones para mantener el
-              servicio y el ingreso.
-            </p>
-          </div>
-          <button className="text-button" onClick={() => setSourceDialog(true)}>
-            <Info size={16} />
-            Exploración con datos públicos
-          </button>
-        </section>
-        <section id="ramal" className="evaluation-workspace" aria-label="Simulador por ramal">
-          <Controls
-            scenario={scenario}
-            onChange={setScenario}
-            onRoutes={() => setRouteDialog(true)}
-          />
-          <div className="route-map-area">
-            <div className="map-topline">
-              <div>
-                <span className="small-label">EXPLORA EL RECORRIDO</span>
-                <h2>{scenario.route.name}</h2>
-              </div>
-              <span className="pill historical">
-                Geometría {scenario.route.internalDate.slice(0, 4)}
+          <header className="simulation-header">
+            <a
+              className="simulation-brand"
+              href="#/mapa"
+              aria-label="Hackatón Electromovilidad CDMX, inicio"
+            >
+              <BusFront size={22} />
+              <span>
+                Hackatón Electromovilidad <small>CDMX · RETO 2</small>
               </span>
+            </a>
+            <div className="scenario-context">
+              <h1 title={scenario.name}>{scenario.name}</h1>
+              <button
+                className="route-switch"
+                onClick={() => setRouteDialog(true)}
+                title={scenario.route.name}
+              >
+                <MapPin size={14} />
+                <span>{scenario.route.name}</span>
+                <ChevronRight size={14} />
+              </button>
             </div>
+            <div className="simulation-badge">
+              <span className="status-dot" />
+              <b>Simulación</b>
+              <small>Resultados al editar</small>
+            </div>
+            <a
+              className="team-link"
+              href="https://github.com/itsebasvz/hackelectroCDMX"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Equipo Aragonenes en GitHub"
+            >
+              <span className="github-mark" /> <span>Aragonenes</span>
+            </a>
+          </header>
+          <nav className="workspace-navigation" aria-label="Áreas del escenario">
+            {[
+              {
+                path: '/configurar',
+                area: 'configurar',
+                label: 'Configurar',
+                icon: SlidersHorizontal,
+              },
+              { path: '/economia/caja', area: 'economia', label: 'Economía', icon: Coins },
+              { path: '/ambiente', area: 'ambiente', label: 'Ambiente', icon: Leaf },
+              { path: '/operacion/energia', area: 'operacion', label: 'Operación', icon: Activity },
+            ].map(({ path, area, label, icon: Icon }) => (
+              <a
+                key={path}
+                href={`#${path}`}
+                data-area={area}
+                aria-current={route.area === area ? 'page' : undefined}
+                aria-expanded={route.area === area}
+                aria-controls="workspace-panel-title"
+              >
+                <Icon size={20} />
+                <span>{label}</span>
+                <ChevronRight className="nav-chevron" size={14} />
+              </a>
+            ))}
+            <div className="workspace-utilities">
+              <a href="#/archivos" aria-current={route.area === 'archivos' ? 'page' : undefined}>
+                <FolderOpen size={18} /> Archivos
+              </a>
+              <a href="#/fuentes" aria-current={route.area === 'fuentes' ? 'page' : undefined}>
+                <BookOpen size={18} /> Fuentes
+              </a>
+            </div>
+          </nav>
+          <main id="contenido" className="simulation-map" aria-label="Simulador por ramal">
             <Suspense
               fallback={<div className="map-shell map-empty">Cargando vista territorial…</div>}
             >
@@ -235,29 +355,35 @@ export default function App() {
                   engine.result?.scenario.route.id === scenario.route.id ? engine.result : null
                 }
                 stale={!valid}
+                panelSide={
+                  route.path === '/mapa' ? null : route.area === 'configurar' ? 'left' : 'right'
+                }
+                pauseKey={`${route.path}:${routeDialog}`}
               />
             </Suspense>
-            <div className="map-bottomline">
+          </main>
+          <aside aria-label="Resumen de condiciones">
+            {' '}
+            <a
+              className={`scenario-health ${failures ? 'has-issues' : ''}`}
+              href="#/operacion/condiciones"
+            >
               <span>
-                <b>{num(scenario.route.cycleKm, 3)} km</b> por ciclo de prueba
+                {failures ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />} Estado del
+                escenario
               </span>
-              <span>
-                <b>{scenario.operation.fleet} unidades</b> del escenario
-              </span>
-              <span>
-                <b>Datos sustituibles</b> no seguimiento real
-              </span>
-            </div>
-          </div>
-          <Diagnostic
-            result={engine.result}
-            stale={!valid}
-            onSearch={() =>
-              document.getElementById('condiciones')?.scrollIntoView({ behavior: 'smooth' })
-            }
-          />
-        </section>
-        <div className="calculation-state" role="status">
+              <b>
+                {engine.result
+                  ? failures
+                    ? `${failures} condiciones por resolver`
+                    : 'Cálculos favorables · pendientes externos'
+                  : 'Preparando evaluación…'}
+              </b>
+              <ChevronRight size={16} />
+            </a>
+          </aside>
+        </div>
+        <div className="workspace-status" role="status" inert={modal || undefined}>
           {engine.status === 'calculating'
             ? 'Calculando los cambios…'
             : engine.status === 'invalid'
@@ -266,211 +392,67 @@ export default function App() {
                 ? 'No se pudo completar el cálculo.'
                 : 'Escenario actualizado · los resultados cambian al editar los parámetros.'}
         </div>
+        <WorkspacePanel
+          path={route.path}
+          expanded={expanded}
+          onExpand={() => setExpanded((v) => !v)}
+          modal={modal}
+          calculationStatus={
+            engine.status === 'ready'
+              ? 'Actualizado'
+              : engine.status === 'calculating'
+                ? 'Calculando…'
+                : 'Revisar entradas'
+          }
+        >
+          {tabs.length > 0 && (
+            <nav className="workspace-tabs" aria-label={`Vistas de ${route.title}`}>
+              {tabs.map(([path, label]) => (
+                <a
+                  key={path}
+                  href={`#${path}`}
+                  aria-current={route.path === path ? 'page' : undefined}
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
+          )}
+          {!valid && engine.result && (
+            <p className="panel-stale" role="status">
+              Resultado anterior. Corrige las entradas o espera el nuevo cálculo.
+            </p>
+          )}
+          {[...visited]
+            .filter((path) => path !== '/mapa')
+            .map((path) => (
+              <div
+                key={path}
+                className="workspace-view"
+                tabIndex={0}
+                role="region"
+                aria-label={`Contenido de ${route.title}`}
+                hidden={route.path !== path}
+                aria-busy={engine.status === 'calculating' && path !== '/configurar'}
+              >
+                {views[path] || <p role="status">Preparando los resultados del escenario…</p>}
+              </div>
+            ))}
+        </WorkspacePanel>
         {engine.error && (
-          <div className="error-banner" role="alert">
+          <div className="workspace-alert" role="alert">
             {engine.error}
           </div>
         )}
         {notice && (
-          <p className="scenario-notice" role="status">
-            {notice}
-          </p>
-        )}
-        <section id="resultados" aria-busy={engine.status === 'calculating'}>
-          {engine.result ? (
-            <Dashboard
-              result={engine.result}
-              points={engine.points}
-              sensitivityError={engine.sensitivityError}
-              revenuePoints={engine.revenuePoints}
-              revenueError={engine.revenueError}
-              stale={!valid}
-              onExplore={(variable, value) => {
-                const path = sensitivityVariables[variable].path;
-                setScenario(withValue(scenario, path, value));
-                focusParameter(path);
-              }}
-            />
-          ) : (
-            <div className="panel loading-panel">
-              <h2>Preparando la comparación</h2>
-              <p>Estamos calculando el consumo y los costos de tu escenario.</p>
-            </div>
-          )}
-        </section>
-        <Optimizer
-          search={engine.search}
-          searching={engine.searching}
-          progress={engine.progress}
-          onSearch={engine.startSearch}
-          onCancel={engine.cancel}
-          onApply={apply}
-          disabled={!valid}
-        />
-        <section className="panel scenario-tools">
-          <div className="section-heading">
-            <span className="eyebrow">COPIAS Y ARCHIVOS REPRODUCIBLES</span>
-            <h2>Guardar y compartir la evaluación</h2>
-            <p>
-              Guardar conserva una copia local. Exportar incluye parámetros, catálogo, fuentes y
-              versiones para recalcular el escenario.
-            </p>
-          </div>
-          <div className="sharing-groups">
-            <section className="sharing-local" aria-labelledby="sharing-local-title">
-              <h3 id="sharing-local-title">Copias en este navegador</h3>
-              <p>Guarda o abre una copia local. Importa un JSON para recalcular sus parámetros.</p>
-              <div className="save-row">
-                <div className="field">
-                  <label htmlFor="scenario-name">Nombre del escenario</label>
-                  <input
-                    id="scenario-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    maxLength={200}
-                  />
-                </div>
-                <button className="secondary" onClick={save} disabled={!valid}>
-                  <Save size={16} />
-                  Guardar escenario
-                </button>
-                {saved.length > 0 && (
-                  <div className="field">
-                    <label htmlFor="saved-choice">Abrir un escenario guardado</label>
-                    <select
-                      id="saved-choice"
-                      value=""
-                      onChange={(e) => {
-                        const item = saved[Number(e.target.value)];
-                        if (item) setScenario(structuredClone(item));
-                      }}
-                    >
-                      <option value="" disabled>
-                        Seleccionar copia local…
-                      </option>
-                      {saved.map((item, i) => (
-                        <option key={`${item.name}-${i}`} value={i}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-              <button className="secondary" onClick={() => file.current?.click()}>
-                <Upload size={16} />
-                Importar escenario JSON
-              </button>
-              <input
-                ref={file}
-                type="file"
-                accept=".json,application/json"
-                hidden
-                onChange={(e) => {
-                  const selected = e.target.files?.[0];
-                  if (selected)
-                    void guarded(async () => {
-                      if (selected.size > 5_000_000) throw new Error('El archivo supera 5 MB.');
-                      setScenario(await parseScenario(await selected.text()));
-                      setNotice('Escenario importado y enviado al motor para recalcular.');
-                    });
-                  e.target.value = '';
-                }}
-              />
-            </section>
-            <section className="sharing-downloads" aria-labelledby="sharing-downloads-title">
-              <h3 id="sharing-downloads-title">Archivos para compartir</h3>
-              <div className="download-choice">
-                <button className="primary" disabled={!valid} onClick={() => window.print()}>
-                  <Printer size={16} />
-                  Descargar informe / PDF
-                </button>
-                <p>
-                  Versión imprimible con diagnóstico, detalle económico, flujo, entradas y fuentes.
-                  Guarda como PDF desde el diálogo de impresión.
-                </p>
-              </div>
-              <div className="download-choice">
-                <button
-                  className="secondary"
-                  disabled={!valid}
-                  onClick={() =>
-                    void guarded(async () =>
-                      download(
-                        await serializeScenario({
-                          ...scenario,
-                          name: name.trim() || scenario.name,
-                        }),
-                        'hackelectro-escenario.json',
-                        'application/json',
-                      ),
-                    )
-                  }
-                >
-                  <Download size={16} />
-                  Descargar escenario JSON
-                </button>
-                <p>Parámetros, catálogo y fuentes para reproducir y recalcular la evaluación.</p>
-              </div>
-              <div className="download-choice">
-                <button
-                  className="secondary"
-                  disabled={!valid}
-                  onClick={() => {
-                    if (engine.result)
-                      download(
-                        resultsCsv(engine.result),
-                        'hackelectro-resultados.csv',
-                        'text/csv;charset=utf-8',
-                      );
-                  }}
-                >
-                  <Download size={16} />
-                  Descargar resultados CSV
-                </button>
-                <p>Entradas y resultados tabulares para revisar en una hoja de cálculo.</p>
-              </div>
-            </section>
-          </div>
-          <div className="restore-action">
-            <button
-              className="text-button"
-              onClick={() => {
-                reset();
-                setNotice('Se restauró el ejemplo inicial; tus escenarios guardados permanecen.');
-              }}
-            >
-              <RotateCcw size={15} />
-              Restaurar ejemplo
+          <div className="workspace-notice" role="status">
+            <span>{notice}</span>
+            <button className="icon-action" aria-label="Cerrar aviso" onClick={() => setNotice('')}>
+              <X size={17} />
             </button>
           </div>
-          {storageError && (
-            <p className="notice" role="status">
-              {storageError}
-            </p>
-          )}
-        </section>
-        <footer>
-          <div className="footer-brand">
-            <strong>Equipo Aragonenes</strong>
-          </div>
-          <p>
-            Una herramienta exploratoria para una transición justa. Código MIT · documentación
-            propia CC BY 4.0 · fuentes con sus derechos.
-          </p>
-          <button className="text-button" onClick={() => setSourceDialog(true)}>
-            <BookOpen size={15} />
-            Fuentes y metodología
-          </button>
-          <small>
-            <a href="/third-party/licenses.json" target="_blank" rel="noreferrer">
-              Licencias de dependencias
-            </a>{' '}
-            · Proyecto estudiantil independiente. Identidad visual inspirada en los portales de
-            CDMX; sin aval institucional.
-          </small>
-        </footer>
-      </main>
+        )}
+      </div>
       <Dialog.Root open={routeDialog} onOpenChange={setRouteDialog}>
         <Dialog.Portal>
           <Dialog.Overlay className="dialog-overlay" />
@@ -519,85 +501,6 @@ export default function App() {
             <small>
               {filtered.length} coincidencias · se muestran hasta 40 · archivo histórico
             </small>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-      <Dialog.Root open={sourceDialog} onOpenChange={setSourceDialog}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="dialog-overlay" />
-          <Dialog.Content className="dialog">
-            <Dialog.Title>Evidencia y condiciones de uso</Dialog.Title>
-            <Dialog.Description>
-              La fuente orienta el parámetro; los supuestos permiten explorar, sin sustituir la
-              comprobación del ramal.
-            </Dialog.Description>
-            <Dialog.Close className="dialog-close" aria-label="Cerrar fuentes">
-              <X size={21} />
-            </Dialog.Close>
-            <div className="evidence-scale">
-              <strong>A</strong> Ruta 1 oficial <strong>B</strong> Zona oficial <strong>C</strong>{' '}
-              CDMX comparable <strong>D</strong> México <strong>E</strong> Externo{' '}
-              <strong>F</strong> Supuesto
-            </div>
-            <p>
-              La naturaleza se registra por separado. Un hecho comercial mexicano es D, no una
-              medición de Ruta 1. Los parámetros modificados se identifican como F.
-            </p>
-            <h2>Datos y factores utilizados en los cálculos</h2>
-            <p>
-              Los factores ambientales M15 y S20 tienen alcances diferentes. Las ediciones usan los
-              parámetros del escenario.
-            </p>
-            {scenario.catalog.sources.map((source) => (
-              <article className="source" key={source.id}>
-                <span className="source-id">{source.id}</span>
-                <div>
-                  <h3>
-                    <a href={source.url} target="_blank" rel="noreferrer">
-                      {source.title}
-                      <ArrowUpRight size={14} />
-                    </a>
-                  </h3>
-                  <small>
-                    {source.date} · {source.scope}
-                  </small>
-                  <p>{source.limitation}</p>
-                  <small>{source.license}</small>
-                </div>
-              </article>
-            ))}
-            <h2>Contexto científico ambiental</h2>
-            <p>Estas referencias explican el alcance humano; no añaden factores a los cálculos.</p>
-            {environmentalSources.references
-              .filter((source) => source.role === 'context')
-              .map((source) => (
-                <article className="source" key={source.id}>
-                  <span className="source-id">{source.id}</span>
-                  <div>
-                    <h3>
-                      <a href={source.url} target="_blank" rel="noreferrer">
-                        {source.institution} · {source.title}
-                        <ArrowUpRight size={14} />
-                      </a>
-                    </h3>
-                    <small>
-                      Publicación: {source.publication} · consulta: {source.consulted}
-                    </small>
-                    <p>{source.claim}</p>
-                    <small>
-                      {source.locator} · {source.scope}. {source.license}. {source.recovery}.
-                    </small>
-                  </div>
-                </article>
-              ))}
-            <a
-              href="https://github.com/itsebasvz/hackelectroCDMX/blob/main/docs/documento-maestro-ruta1.md"
-              target="_blank"
-              rel="noreferrer"
-              className="secondary"
-            >
-              Abrir documento maestro <ArrowUpRight size={16} />
-            </a>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>

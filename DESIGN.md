@@ -1,6 +1,48 @@
 # Gobierno de la Ciudad de México — Style Reference
 
-**Aplicación al evaluador, decisión del usuario del 6 de octubre de 2026:** la mesa de evaluación y sus resultados aprovechan el ancho de escritorio con márgenes de 24 px; esta decisión sustituye el máximo de 1200 px de la referencia para este producto. Encabezado compacto, controles visibles, mapa central y diagnóstico lateral. Se conservan la paleta, tipografía, contraste y requisitos de accesibilidad de esta guía. En móvil se apilan los paneles y las tablas tienen desplazamiento propio.
+**Aplicación al evaluador, rediseño aprobado el 7 de octubre de 2026:** el mapa es el espacio principal de simulación, a toda la ventana. Cuatro accesos flotantes (Configurar, Economía, Ambiente y Operación) abren un panel de trabajo a la vez. Esta composición sustituye la mesa de columnas y la página larga. Los modos de portal que siguen son referencias; las reglas de producto siguientes tienen prioridad para este evaluador. Se conserva identidad propia de un proyecto estudiantil, sin aval del Gobierno.
+
+## Modo de producto: dashboard sobre el mapa
+
+### Orientación y jerarquía
+
+- Inicio: mapa, contexto del escenario, resumen energético/estado y reproducción pausada. Sin hero ni panel de resultados abierto automáticamente.
+- Cuatro accesos con Lucide y texto visible: Configurar, Economía, Ambiente y Operación. Archivos y Fuentes son utilidades secundarias visibles.
+- Economía: Caja, Costos, Pruebas y Alternativas. Operación: Energía, Condiciones y Pruebas. La selección queda indicada por texto/estado accesible y guinda; las pestañas son enlaces navegables con URL propia.
+- Una sola instancia del mapa y del motor. Las vistas visitadas conservan formularios, selecciones, detalles abiertos y desplazamiento al cambiar de sección.
+- “Simulación” y “Resultados al editar” permanecen en el contexto de escritorio. El vehículo indica “Escenario simulado”. Nunca sugerir telemetría, aforos o velocidad reales.
+
+### Composición y medidas
+
+- Lienzo de trabajo: `100dvh`. Escritorio desde 1024 px; márgenes exteriores de 20 px, barra superior desde 16 px y navegación lateral de 156 px.
+- Barra superior compacta: identidad, nombre del escenario, ramal, carácter simulado y equipo. Nombres largos truncados visualmente con texto completo accesible.
+- Configurar: panel izquierdo de 400 px. Consultas: panel derecho `clamp(560px, 54vw, 860px)`, limitado por el espacio de navegación. Encabezado fijo y contenido con desplazamiento propio.
+- Paneles separados de reproducción, atribuciones y barra superior. Ampliación con cierre/restauración, conservando contenido y foco; el mapa queda fuera de la interacción mientras la vista ampliada ocupa el área de trabajo.
+- Sobre el mapa: tarjeta de posición de 244 px, resumen energético diario compacto, leyenda, modos, referencias hospitalarias y controles geográficos. Al abrir paneles se retiran las superposiciones que compiten por el mismo espacio.
+- Reproducción inferior: acción primaria, reinicio, ritmo visual, opciones y progreso. Las opciones agrupan los controles completos de día/vuelta; ningún parámetro se elimina para simplificar el diseño.
+- Encuadrar considera el área visible y los paneles. Abrir una sección no cambia la cámara.
+
+### Superficies, tipografía y movimiento
+
+- Superficies blancas opacas sobre cartografía atenuada. Bordes `#E7E2E5`, texto gris legible, guinda `#9D2148` para selección/acciones, rosa tenue para agrupaciones. Dorado conserva su papel gráfico.
+- Radio de panel 18 px, superficies/controles de 10–16 px; sombras discretas para distinguir flotación. Evitar cristales translúcidos detrás de texto, degradados decorativos y exceso de contornos.
+- Inter para campos/datos y Montserrat para identidad/títulos. Títulos de panel de 22 px, lectura habitual de 12–16 px; importes visibles y números tabulares. Formularios conservan evidencia y ayuda.
+- Interacciones de 160–220 ms; entrada del panel de 220 ms con opacidad y desplazamiento breve. Sin pulsaciones permanentes, rebotes, parallax ni animaciones de cifras.
+- Movimiento reducido: transiciones instantáneas y reproducción con pasos discretos de un segundo. El control manual sigue disponible.
+
+### Accesibilidad, estados y pantallas estrechas
+
+- Objetivo WCAG 2.2 AA: foco visible, contraste, textos de estado, interacción por teclado y objetivos de al menos 44 px en controles de trabajo.
+- Panel lateral no modal en escritorio: puede alternarse el foco con el mapa. Ampliado o compacto: diálogo, fondo inerte y foco contenido. Cerrar vuelve al acceso que abrió la vista.
+- Etiquetas, unidades y límites permanecen cerca del dato. Tooltips complementan cifras visibles; tablas conservan desplazamiento horizontal propio.
+- Estados diferenciados: preparación, actualización, resultado vigente, invalidez y error. Los resultados anteriores se identifican y no permiten aplicar/exportar como vigentes.
+- Menos de 1024 px: navegación superior compacta, panel a ancho disponible, controles agrupados y utilidades visibles. No se elimina ninguna función. A 390 px, los cuatro accesos mantienen icono y nombre.
+- La impresión muestra el informe completo independientemente de la ruta; oculta mapa y paneles flotantes.
+
+### Reproducción e interpretación
+
+La reproducción es una exploración del resultado existente: 60 segundos por escala a 1×, con ritmos 2× y 4×. No equivale a duración real del servicio. Empieza pausada, se detiene al final y pausa al abrir vistas, editar, navegar manualmente u ocultar la pestaña. En la reserva se detiene y explica el límite; continuar requiere una acción explícita y conserva la advertencia energética.
+
 > Plataforma pública, clara y amable: identidad institucional en guinda y dorado, grandes puntos de entrada orientados a tareas, superficies blancas y rosadas muy suaves, tarjetas redondeadas y subproductos digitales —como Llave CDMX— con acentos morado/magenta controlados.
 
 **Theme:** light

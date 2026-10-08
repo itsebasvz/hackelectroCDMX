@@ -25,8 +25,8 @@ Thumbs.db
 /docs/assets/
 
 # Seguimiento local del plan aprobado
-/PLAN_LOCAL.md
-/PROGRESO_LOCAL.md
+/PLAN_REDISENIO.md
+/PROGRESO_REDISENIO.md
 /node_modules/
 /dist/
 /test-results/

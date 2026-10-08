@@ -27,13 +27,33 @@ async function ready(page: import('@playwright/test').Page) {
     page.getByText('Escenario actualizado · los resultados cambian al editar los parámetros.'),
   ).toBeVisible();
 }
+async function open(page: import('@playwright/test').Page, path: string) {
+  await page.evaluate((value) => {
+    location.hash = value;
+  }, path);
+  await expect(page.locator('.workspace-view:not([hidden])')).toBeVisible();
+}
+async function map(page: import('@playwright/test').Page) {
+  await page.evaluate(() => {
+    location.hash = '/mapa';
+  });
+  await expect(page.locator('.workspace-panel')).toBeHidden();
+}
+async function options(page: import('@playwright/test').Page) {
+  if (!(await page.locator('.journey-options').evaluate((el) => (el as HTMLDetailsElement).open)))
+    await page.getByText('Opciones del recorrido', { exact: true }).click();
+}
+async function notes(page: import('@playwright/test').Page) {
+  if (!(await page.locator('.map-notes').evaluate((el) => (el as HTMLDetailsElement).open)))
+    await page.getByText('Acerca del mapa', { exact: true }).click();
+}
 test('evalúa, edita, conserva resultado inválido y encuentra condiciones', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await ready(page);
-  await expect(page.getByRole('heading', { name: '¿Qué cambia al electrificar?' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Cambiar ruta' })).toBeVisible();
+  await open(page, '/operacion/condiciones');
+  await expect(page.getByRole('heading', { name: 'Hay condiciones por resolver' })).toBeVisible();
   await page
     .locator('[data-condition=initial]')
     .getByRole('button', { name: 'Revisar parámetro' })
@@ -42,16 +62,20 @@ test('evalúa, edita, conserva resultado inválido y encuentra condiciones', asy
   await expect(page.getByLabel('Capital inicial propio disponible')).toBeFocused();
   await page.getByLabel('Longitud del ciclo de prueba').fill('25');
   await ready(page);
-  await expect(page.getByText('210 km', { exact: true })).toBeVisible();
+  await expect(page.locator('.derived-note b')).toContainText('210 km diarios por unidad');
   await page.getByLabel('Longitud del ciclo de prueba').fill('');
   await expect(
     page.getByText(
       'Corrige las entradas. Se conserva el último resultado válido, ahora desactualizado.',
     ),
   ).toBeVisible();
-  await expect(page.getByRole('heading', { name: '¿Qué cambia al electrificar?' })).toBeVisible();
+  await open(page, '/economia/costos');
+  await expect(page.getByRole('heading', { name: 'Comparación económica' })).toBeVisible();
+  await open(page, '/economia/alternativas');
   await expect(page.getByRole('button', { name: 'Evaluar combinaciones' })).toBeDisabled();
+  await open(page, '/configurar');
   await page.getByLabel('Longitud del ciclo de prueba').fill('20.340012617');
+  await open(page, '/economia/alternativas');
   await ready(page);
   await page.getByRole('button', { name: 'Evaluar combinaciones' }).click();
   await expect(page.getByText(/180 combinaciones evaluadas/)).toBeVisible();
@@ -60,12 +84,14 @@ test('evalúa, edita, conserva resultado inválido y encuentra condiciones', asy
   ).toBeVisible();
   await page.getByRole('button', { name: 'Explorar esta combinación' }).first().click();
   await ready(page);
-  await expect(page.getByText('Cumple cálculos · verificaciones pendientes')).toBeVisible();
+  await open(page, '/operacion/condiciones');
+  await expect(page.getByRole('heading', { name: 'Los cálculos son favorables' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 test('exporta, importa, guarda copias y recalcula', async ({ page }) => {
   await page.goto('/');
   await ready(page);
+  await open(page, '/archivos');
   await page.getByLabel('Nombre del escenario').fill('Piloto hospitalario');
   await page.getByRole('button', { name: 'Guardar escenario', exact: true }).click();
   await expect(page.getByText('Escenario guardado en este navegador.')).toBeVisible();
@@ -93,6 +119,7 @@ test('exporta, importa, guarda copias y recalcula', async ({ page }) => {
 test('otro ramal y autobús urbano mantienen parámetros explícitos', async ({ page }) => {
   await page.goto('/');
   await ready(page);
+  await open(page, '/configurar');
   await page.getByRole('button', { name: 'Cambiar ruta' }).click();
   await page.getByLabel('Buscar ruta o destino').fill('Villa Coapa');
   const first = page.locator('.route-option').first();
@@ -110,6 +137,7 @@ test('presupuesto agrupa etapas y permite consultar un mes con saldo de deuda', 
 }) => {
   await page.goto('/');
   await ready(page);
+  await open(page, '/economia/caja');
   const financePanel = page.locator('.finance-chart-panel');
   await expect(
     financePanel.getByRole('heading', { name: 'Distribución mensual del recaudo' }),
@@ -140,7 +168,8 @@ test('accesibilidad del flujo, diálogo y móvil sin desbordamiento', async ({ p
   expect(base.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual(
     [],
   );
-  await page.getByRole('button', { name: 'Fuentes y supuestos' }).click();
+  await page.getByRole('link', { name: 'Fuentes', exact: true }).click();
+  await page.getByRole('button', { name: 'Ampliar panel' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   const dialog = await new AxeBuilder({ page }).include('[role=dialog]').analyze();
   expect(dialog.violations).toEqual([]);
@@ -166,22 +195,27 @@ test('copia local funciona sin teselas ni WebGL, con salida imprimible', async (
   await expect(
     page.getByRole('group', { name: 'Trazos históricos del ramal, sin mapa base' }),
   ).toBeVisible();
+  await options(page);
   await page.getByRole('button', { name: 'Fin del día', exact: true }).click();
+  await page.getByText('Opciones del recorrido', { exact: true }).click();
   await expect(page.locator('.map-point-card')).toContainText('42.71 kWh');
+  await notes(page);
   await page.getByText('Zona de Hospitales: referencias y límites', { exact: true }).click();
   await page
     .locator('.hospital-references')
     .getByRole('button', { name: 'INCan', exact: true })
     .click();
+  await page.getByText('Acerca del mapa', { exact: true }).click();
   await expect(page.locator('.hospital-callout')).toContainText('San Fernando 22');
   await expect(page.getByRole('button', { name: 'Centrar hospital', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Cerrar referencia hospitalaria' }).click();
   await page.context().setOffline(true);
+  await open(page, '/configurar');
   await page.getByRole('button', { name: 'Minibús · diésel', exact: true }).click();
   await ready(page);
   await page.emulateMedia({ media: 'print' });
   await expect(page.locator('.print-report')).toBeVisible();
-  await expect(page.locator('.header')).not.toBeVisible();
+  await expect(page.locator('.simulation-app')).not.toBeVisible();
   await expect(
     page.locator('.print-report').getByRole('heading', { name: 'Entradas y procedencia' }),
   ).toBeVisible();
@@ -199,9 +233,11 @@ test('pinta el ramal incluso si la geometría llega después del estilo', async 
   await page.goto('/');
   await ready(page);
   await expect(page.locator('.map-canvas')).toHaveAttribute('data-route-rendered', 'true');
+  await open(page, '/configurar');
   await page.getByRole('button', { name: 'Cambiar ruta' }).click();
   await page.getByLabel('Buscar ruta o destino').fill('Villa Coapa');
   await page.locator('.route-option').first().click();
+  await map(page);
   await expect(page.locator('.map-canvas')).toHaveAttribute('data-route-rendered', 'true');
   expect(errors).toEqual([]);
 });
@@ -217,19 +253,28 @@ test('explora consumo, hospitales y sensibilidad sin alterar el recaudo', async 
   await expect(
     page.getByRole('button', { name: 'Batería en el recorrido', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
+  await options(page);
   await page.getByLabel('Vuelta del día').selectOption('8');
+  await page.getByText('Opciones del recorrido', { exact: true }).click();
+  await options(page);
   await page.getByRole('button', { name: 'Fin del día', exact: true }).click();
+  await page.getByText('Opciones del recorrido', { exact: true }).click();
   await expect(
     page.locator('.map-point-card').getByText('42.71 kWh', { exact: true }),
   ).toBeVisible();
+  await notes(page);
   await page.getByText('Zona de Hospitales: referencias y límites', { exact: true }).click();
   await page
     .locator('.hospital-references')
     .getByRole('button', { name: 'INCan', exact: true })
     .click();
+  await page.getByText('Acerca del mapa', { exact: true }).click();
   await expect(page.locator('.hospital-callout')).toContainText('San Fernando 22');
   await page.getByRole('button', { name: 'Cerrar referencia hospitalaria' }).click();
+  await open(page, '/operacion/pruebas');
   await expect(page.getByLabel('Valor explorado · Vueltas diarias')).toBeVisible();
+  await open(page, '/configurar');
+  await open(page, '/operacion/pruebas');
   const explorer = page.getByLabel('Valor explorado · Vueltas diarias');
   await explorer.focus();
   await explorer.press('Home');
@@ -244,6 +289,7 @@ test('explora consumo, hospitales y sensibilidad sin alterar el recaudo', async 
   await expect(page.getByLabel('Tarifa de prueba')).toHaveValue('10');
   await page.getByLabel('Consumo neto en batería').fill('0.5');
   await ready(page);
+  await open(page, '/configurar');
   await page.getByRole('button', { name: 'Cambiar ruta' }).click();
   await page.getByLabel('Buscar ruta o destino').fill('Villa Coapa');
   await page.locator('.route-option').first().click();
@@ -259,18 +305,24 @@ test('mapa contextual navega al límite y conserva accesibilidad y parámetros',
   await expect(page.locator('.vehicle-symbol .lucide-van')).toBeVisible();
   await page.locator('.vehicle-symbol').click();
   await expect(page.locator('.map-vehicle-details')).toContainText('16 plazas');
+  await options(page);
   await page.getByRole('button', { name: 'Fin del día', exact: true }).click();
+  await page.getByText('Opciones del recorrido', { exact: true }).click();
   await expect(page.getByLabel('Vuelta del día')).toHaveValue('8');
   await expect(page.locator('#map-distance')).toHaveValue('8000');
   await expect(page.locator('.map-point-card')).toContainText('42.71 kWh');
+  await options(page);
   await page.getByRole('button', { name: 'Inicio del día', exact: true }).click();
+  await page.getByText('Opciones del recorrido', { exact: true }).click();
   await expect(page.getByLabel('Vuelta del día')).toHaveValue('1');
   await expect(page.locator('#map-distance')).toHaveValue('0');
-  const map = page.locator('.map-canvas');
-  const box = await map.boundingBox();
-  await map.click({ position: { x: box!.width - 80, y: 210 } });
+  const canvas = page.locator('.map-canvas');
+  const box = await canvas.boundingBox();
+  await canvas.click({ position: { x: box!.width - 80, y: 210 } });
   await expect(page.locator('#map-distance')).toHaveValue('0');
+  await open(page, '/configurar');
   await page.getByLabel('Consumo neto en batería').fill('1');
+  await map(page);
   await ready(page);
   await expect(page.locator('.map-day-card')).toContainText('Faltan');
   await page.getByRole('button', { name: 'Ver límite de batería', exact: true }).click();
@@ -286,11 +338,13 @@ test('mapa contextual navega al límite y conserva accesibilidad y parámetros',
   await expect(page.getByLabel('Ascensos diarios por unidad')).toHaveValue('320');
   await expect(page.getByLabel('Ciclos diarios por unidad')).toHaveValue('8');
   await page.getByRole('button', { name: 'Encuadrar ruta', exact: true }).click();
+  await notes(page);
   await page.getByText('Zona de Hospitales: referencias y límites', { exact: true }).click();
   await page
     .locator('.hospital-references')
     .getByRole('button', { name: 'INCan', exact: true })
     .click();
+  await page.getByText('Acerca del mapa', { exact: true }).click();
   await expect(page.locator('.hospital-callout')).toContainText(
     'Instituto Nacional de Cancerología',
   );
@@ -299,11 +353,16 @@ test('mapa contextual navega al límite y conserva accesibilidad y parámetros',
   await page.getByRole('button', { name: 'Cerrar referencia hospitalaria' }).click();
   await page.getByLabel('Contexto hospitalario', { exact: true }).uncheck();
   await expect(page.locator('.hospital-symbol')).toHaveCount(0);
+  await open(page, '/configurar');
   await page.getByRole('button', { name: 'Minibús · diésel', exact: true }).click();
   await ready(page);
+  await map(page);
   await expect(page.locator('.vehicle-symbol .lucide-bus-front')).toBeVisible();
+  await open(page, '/configurar');
   await page.getByLabel('Longitud del ciclo de prueba').fill('');
+  await map(page);
   await expect(page.locator('.map-point-card')).toContainText('Resultado anterior');
+  await options(page);
   await expect(page.getByRole('button', { name: 'Fin del día', exact: true })).toBeDisabled();
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations).toEqual([]);
@@ -314,8 +373,9 @@ test('exploración aplica sólo al confirmar y reinicia selección al editar, in
 }) => {
   await page.goto('/');
   await ready(page);
-  const panel = page.locator('#sensibilidad');
-  const variable = page.getByLabel('Variable a explorar');
+  await open(page, '/configurar');
+  await open(page, '/operacion/pruebas');
+  const variable = page.locator('#pruebas-operacion').getByLabel('Variable a explorar');
   await variable.selectOption('consumption');
   const consumption = page.getByLabel('Valor explorado · Consumo eléctrico');
   await expect(consumption).toBeVisible();
@@ -329,17 +389,22 @@ test('exploración aplica sólo al confirmar y reinicia selección al editar, in
   await page.getByLabel('Consumo neto en batería').fill('0.4');
   await page.getByLabel('Consumo neto en batería').fill('0.6');
   await ready(page);
+  await open(page, '/operacion/pruebas');
   await expect(consumption).toHaveAttribute('aria-valuetext', '0.6 kWh/km en batería');
   await consumption.focus();
   await consumption.press('End');
+  await open(page, '/configurar');
   await page.getByLabel('Consumo neto en batería').fill('');
+  await open(page, '/operacion/pruebas');
   await expect(page.getByRole('button', { name: 'Aplicar al escenario' })).toBeDisabled();
+  await open(page, '/configurar');
   await page.getByLabel('Consumo neto en batería').fill('0.25');
   await ready(page);
   await page.locator('#advanced-energy summary').click();
   await page.getByLabel('Electricidad variable').fill('0');
   await ready(page);
-  await variable.selectOption('electricityPrice');
+  await open(page, '/economia/pruebas');
+  const panel = page.locator('#pruebas-economia');
   const price = page.getByLabel('Valor explorado · Precio de electricidad');
   await expect(price).toHaveAttribute('aria-valuetext', '0 MXN/kWh comprado');
   await expect(panel).toContainText('cargos de potencia y fijos permanecen constantes');
@@ -358,6 +423,8 @@ test('ambiente cambia ámbito/período y el informe conserva estados y detalle c
 }) => {
   await page.goto('/');
   await ready(page);
+  await open(page, '/operacion/condiciones');
+  await open(page, '/ambiente');
   const environment = page.locator('#ambiente');
   await expect(page.getByLabel('Ámbito ambiental')).toHaveValue('fleet');
   await expect(page.getByLabel('Período ambiental')).toHaveValue('year');
@@ -381,53 +448,49 @@ test('ambiente cambia ámbito/período y el informe conserva estados y detalle c
   await expect(report).toContainText('Contexto científico ambiental');
 });
 
-test('resultados y diagnóstico en escritorio y móvil conservan orden y alturas naturales', async ({
+test('paneles en escritorio y móvil conservan lectura, desplazamiento y herramientas', async ({
   page,
 }) => {
   await page.goto('/');
   await ready(page);
-  await expect(page.getByLabel('Valor explorado · Vueltas diarias')).toBeVisible();
-  for (const width of [1920, 1440, 1024, 390]) {
+  for (const width of [1920, 1440, 1280, 1024, 390]) {
     await page.setViewportSize({ width, height: 1000 });
-    await expect(
-      page.getByRole('heading', { name: 'Impacto ambiental del escenario' }),
-    ).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-      true,
-    );
-    const energy = await page.locator('.results-left > .panel').first().boundingBox();
-    const comparison = await page.locator('.results-left > .comparison').boundingBox();
-    const finance = await page.locator('.finance-chart-panel').boundingBox();
-    expect(comparison!.y).toBeGreaterThan(energy!.y + energy!.height);
-    if (width >= 900) expect(Math.abs(finance!.y - energy!.y)).toBeLessThan(2);
-    else expect(finance!.y).toBeGreaterThan(comparison!.y + comparison!.height);
-    if (width >= 1280) {
-      const map = await page.locator('.route-map-area').boundingBox();
-      const diagnosis = await page.locator('.diagnostic-panel').boundingBox();
-      expect(Math.abs(map!.height - diagnosis!.height)).toBeLessThan(2);
-      const scroll = page.locator('.diagnostic-scroll');
-      expect(await scroll.evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(true);
-      await scroll.focus();
-      await scroll.press('End');
-      await expect.poll(() => scroll.evaluate((e) => e.scrollTop)).toBeGreaterThan(0);
+    await map(page);
+    const canvas = await page.locator('.map-shell').boundingBox();
+    expect(canvas!.width).toBe(width);
+    expect(canvas!.height).toBe(1000);
+    for (const [path, selector] of [
+      ['/economia/caja', '.finance-chart-panel'],
+      ['/operacion/condiciones', '.diagnostic-panel'],
+      ['/operacion/pruebas', '#pruebas-operacion'],
+      ['/ambiente', '#ambiente'],
+      ['/configurar', '.controls-panel'],
+    ]) {
+      await open(page, path!);
+      await expect(page.locator(selector!)).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+      const bounds = (await page.locator('.workspace-panel').boundingBox())!;
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+      const scroll = page.locator('.workspace-view:not([hidden])');
+      await scroll.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+      expect(await scroll.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+      await scroll.evaluate((el) => el.scrollTo(0, 0));
     }
-    await page.locator('.results-columns').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `test-results/dashboard-${width}.png` });
-    if (width === 1440 || width === 390) {
-      await page
-        .locator('#sensibilidad')
-        .screenshot({ path: `test-results/exploracion-${width}.png` });
-      await page.locator('#ambiente').screenshot({ path: `test-results/ambiente-${width}.png` });
-    }
   }
 });
 
 test('sin alternativas muestra ausencia y motivos sin marcar éxito', async ({ page }) => {
   await page.goto('/');
   await ready(page);
+  await open(page, '/configurar');
   await page.locator('#advanced-service summary').click();
   await page.getByLabel('Tarifa de prueba').fill('0');
   await ready(page);
+  await open(page, '/economia/alternativas');
   await page.getByRole('button', { name: 'Evaluar combinaciones' }).click();
   await expect(page.locator('.search-summary.empty')).toContainText('ninguna cumple');
   await expect(page.locator('.alternative')).toHaveCount(0);
@@ -443,12 +506,14 @@ const pesos = (v: number) =>
     maximumFractionDigits: 2,
   }).format(v);
 async function importFinancialScenario(page: import('@playwright/test').Page, s: Scenario) {
+  await open(page, '/archivos');
   await page.locator('input[type=file]').setInputFiles({
     name: 'finanzas.json',
     mimeType: 'application/json',
     buffer: Buffer.from(await serializeScenario(s)),
   });
   await ready(page);
+  await open(page, '/economia/caja');
   await expect(page.getByLabel('Caída del recaudo supuesto')).toBeEnabled();
 }
 
@@ -481,9 +546,12 @@ test('panel financiero abre el mes más exigente, reconcilia cifras y aísla la 
   const reportBefore = await page.locator('.print-report').textContent();
   const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
   const downloadText = async (label: string) => {
+    await open(page, '/archivos');
     const pending = page.waitForEvent('download');
     await page.getByRole('button', { name: label, exact: true }).click();
-    return readFile((await (await pending).path())!, 'utf8');
+    const bytes = await readFile((await (await pending).path())!, 'utf8');
+    await open(page, '/economia/caja');
+    return bytes;
   };
   const jsonBefore = await downloadText('Descargar escenario JSON'),
     csvBefore = await downloadText('Descargar resultados CSV');
@@ -530,12 +598,16 @@ test('panel financiero abre el mes más exigente, reconcilia cifras y aísla la 
   await afterCredit.focus();
   await afterCredit.press('Enter');
   await expect(month).toHaveValue('37');
+  await open(page, '/configurar');
   await page.getByLabel('Longitud del ciclo de prueba').fill('');
+  await open(page, '/economia/caja');
   await expect(panel).toContainText('Resultado anterior');
   await expect(drop).toBeDisabled();
   await expect(month).toBeDisabled();
   await expect(panel.getByRole('button').first()).toBeDisabled();
+  await open(page, '/configurar');
   await page.getByLabel('Longitud del ciclo de prueba').fill(String(s.route.cycleKm));
+  await open(page, '/economia/caja');
   await ready(page);
   await expect(drop).toBeEnabled();
   await expect(drop).toHaveValue('10');

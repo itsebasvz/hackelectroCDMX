@@ -33,7 +33,7 @@ CI ejecuta tipos, pruebas, compilación y Playwright en Chromium sobre Ubuntu 24
 
 ## Recorrido de demostración
 
-El [panel financiero](panel-financiero.md) explica capacidad de pago, destino del ahorro y pruebas temporales de menor recaudo. El [dashboard explicativo](redisenio-dashboard.md) y su [registro ambiental](fuentes-ambientales.json) documentan resultados, exploración y límites. La [interfaz de evaluación rediseñada](interfaz-evaluacion.md) explica controles, mapa, presupuesto y sensibilidad. En escritorio usa el ancho completo: parámetros a la izquierda, mapa al centro y diagnóstico a la derecha. El diagnóstico concentra condiciones calculadas y externas; resultados, exploración y ambiente siguen después. «Cambiar ruta» abre el catálogo histórico; el resto de parámetros está en los cuatro grupos avanzados del panel.
+El [dashboard sobre el mapa](redisenio-mapa.md) reúne el inventario y la navegación vigente. Abre con cartografía, resumen y reproducción pausada; Configurar abre el editor completo. Economía concentra presupuesto, costos, pruebas económicas y alternativas; Ambiente conserva ámbito/período; Operación reúne energía, condiciones y pruebas de vueltas/consumo. Archivos y Fuentes son utilidades visibles. Los paneles conservan estado al cerrar o ampliar y cada vista tiene URL propia. El [panel financiero](panel-financiero.md) mantiene capacidad de pago, ahorro y menor recaudo; [interfaz y límites](interfaz-evaluacion.md).
 
 1. Abrir Ruta 1 y explicar que 20.340 km es una referencia cartográfica de 2022, no un ciclo actual medido.
 2. Consultar costos y márgenes sin esperar animación. El ejemplo inicial no fuerza un resultado favorable: puede ahorrar operación y aun incumplir capital o flujo.
@@ -70,7 +70,7 @@ El catálogo cita hechos comerciales de KINGO, Gree y Yutong, referencias PROFEC
 
 Código propio MIT, documentación propia CC BY 4.0. Los [textos originales de las dependencias](dependencias.json) se copian de sus paquetes, con checksums; no fueron redactados por el equipo. `npm run licenses` actualiza el registro después de cambiar dependencias. La compilación incluye esos avisos en `/third-party/licenses.json` y conserva las licencias OFL de las fuentes tipográficas.
 
-GitHub y Vercel son alojamiento administrado. El código y las bibliotecas son abiertos; `dist/` puede publicarse en otro servidor estático. `dist/`, `.vercel/`, el plan local y el registro local de progreso no se incorporan a Git.
+GitHub y Vercel son alojamiento administrado. El código y las bibliotecas son abiertos; `dist/` puede publicarse en otro servidor estático. `dist/`, `.vercel/`, `PLAN_REDISENIO.md` y `PROGRESO_REDISENIO.md` no se incorporan a Git.
 
 ## Publicación
 

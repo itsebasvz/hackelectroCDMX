@@ -7,10 +7,12 @@ export default function Diagnostic({
   result: r,
   stale,
   onSearch,
+  onParameter = focusParameter,
 }: {
   result: Result | null;
   stale: boolean;
   onSearch: () => void;
+  onParameter?: (path: string) => void;
 }) {
   if (!r)
     return (
@@ -41,7 +43,7 @@ export default function Diagnostic({
             <button
               className="text-button"
               onClick={() =>
-                focusParameter(
+                onParameter(
                   c.id === 'monthly' && r.scenario.finance.kind === 'lease'
                     ? 'finance.leasePerUnitMonth'
                     : conditionParameters[c.id]!,

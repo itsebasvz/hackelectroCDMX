@@ -4,11 +4,9 @@ Especificación aprobada e implementación de octubre de 2026. Cada bloque sigue
 
 ## Composición y diagnóstico
 
-Mapa, parámetros y diagnóstico completo abren la página. Después, dos columnas independientes reúnen energía y comparación económica a la izquierda, distribución mensual y deuda a la derecha. Siguen exploración, ambiente, alternativas y archivos. En móvil se conserva ese orden.
+La composición vigente está en [Dashboard sobre el mapa](redisenio-mapa.md): mapa persistente y cuatro accesos temáticos. Economía reúne métricas/comparación, presupuesto y búsqueda; Operación contiene energía, diagnóstico y pruebas técnicas. Ambiente tiene su propia vista. Los bloques conservan conclusión, evidencia y detalle consultable.
 
-El diagnóstico es único: todas las condiciones muestran estado escrito y explicación, incluso las favorables. «Cumple el cálculo» no acredita inversión. Conector desconocido significa «Por confirmar». Autorización, patio/conexión, accesibilidad/disponibilidad y oferta financiera siguen visibles como comprobaciones externas. En escritorio amplio la lista se desplaza dentro del panel; en pantallas menores conserva altura natural. El informe comparte los mismos estados y conserva desglose económico y flujo completos.
-
-La energía diaria y la recuperación nocturna tienen conclusiones separadas. La comparación abre con costo económico de cinco años, costo por km, capital propio inicial y mínimo de caja mensual. Las quince filas y los sesenta meses permanecen consultables. La perspectiva en arrendamiento es la del operador. Operación más barata no equivale a mayor ingreso; costo, desembolso inicial, principal y liquidez son magnitudes distintas.
+El diagnóstico sigue siendo único: muestra todas las condiciones calculadas y externas, trabajo presupuestado y enlaces al parámetro. «Revisar parámetro» abre el editor y enfoca el campo después del montaje. Guardado, exportación y fuentes se consultan desde utilidades visibles.
 
 ## Exploración con el mismo evaluador
 
