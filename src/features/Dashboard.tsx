@@ -18,6 +18,7 @@ import {
   type SensitivityVariable,
 } from '../domain/explore';
 import Sensitivity from './Sensitivity';
+import Environment from './Environment';
 const Chart = lazy(() => import('../ui/Chart'));
 
 function describeBudgetPhase(phase: BudgetPhase, r: Result) {
@@ -692,6 +693,7 @@ export default function Dashboard({
         disabled={stale}
         onApply={onExplore}
       />
+      <Environment result={r} />
     </div>
   );
 }

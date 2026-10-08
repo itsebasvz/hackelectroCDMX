@@ -29,6 +29,7 @@ import Report from './features/Report';
 import { download, serializeScenario, parseScenario, resultsCsv } from './features/files';
 import { num } from './ui/format';
 import { sensitivityVariables } from './domain/explore';
+import environmentalSources from '../docs/desarrollo/fuentes-ambientales.json';
 const RouteMap = lazy(() => import('./features/RouteMap'));
 const SAVED_KEY = 'hackelectro:saved:v1';
 const normalize = (text: string) =>
@@ -516,6 +517,11 @@ export default function App() {
               La naturaleza se registra por separado. Un hecho comercial mexicano es D, no una
               medición de Ruta 1. Los parámetros modificados se identifican como F.
             </p>
+            <h2>Datos y factores utilizados en los cálculos</h2>
+            <p>
+              Los factores ambientales M15 y S20 tienen alcances diferentes. Las ediciones usan los
+              parámetros del escenario.
+            </p>
             {scenario.catalog.sources.map((source) => (
               <article className="source" key={source.id}>
                 <span className="source-id">{source.id}</span>
@@ -534,6 +540,30 @@ export default function App() {
                 </div>
               </article>
             ))}
+            <h2>Contexto científico ambiental</h2>
+            <p>Estas referencias explican el alcance humano; no añaden factores a los cálculos.</p>
+            {environmentalSources.references
+              .filter((source) => source.role === 'context')
+              .map((source) => (
+                <article className="source" key={source.id}>
+                  <span className="source-id">{source.id}</span>
+                  <div>
+                    <h3>
+                      <a href={source.url} target="_blank" rel="noreferrer">
+                        {source.institution} · {source.title}
+                        <ArrowUpRight size={14} />
+                      </a>
+                    </h3>
+                    <small>
+                      Publicación: {source.publication} · consulta: {source.consulted}
+                    </small>
+                    <p>{source.claim}</p>
+                    <small>
+                      {source.locator} · {source.scope}. {source.license}. {source.recovery}.
+                    </small>
+                  </div>
+                </article>
+              ))}
             <a
               href="https://github.com/itsebasvz/hackelectroCDMX/blob/main/docs/documento-maestro-ruta1.md"
               target="_blank"

@@ -4,7 +4,10 @@ import { sections } from './fields';
 import { getValue, evidenceOf } from './values';
 import { num } from '../ui/format';
 import { presentedConditions, conditionStates } from './conditions';
+import { environmentalView } from '../domain/environment';
+import environmentalSources from '../../docs/desarrollo/fuentes-ambientales.json';
 export default function Report({ result: r }: { result: Result }) {
+  const environment = environmentalView(r, 'fleet', 'year');
   return (
     <article className="print-report">
       <h1>Electromovilidad CDMX 2026 · evaluación por ramal</h1>
@@ -79,6 +82,24 @@ export default function Report({ result: r }: { result: Result }) {
         {num(r.emissions.evCO2eKgDay, 2)} kg CO₂e/unidad/día. Factores de alcances diferentes; sin
         reducción neta ni ciclo de vida.
       </p>
+      <p>
+        Flota de {environment.units} unidades · año = doce meses de {r.scenario.operation.days} días
+        operativos. Combustible sustituido: {num(environment.liters, 2)} L. CO₂ por escape evitado:{' '}
+        {num(environment.tailpipeCO2Kg, 2)} kg; escape eléctrico: cero. Recarga:{' '}
+        {num(environment.electricityCO2eKg, 2)} kg CO₂e.
+      </p>
+      <ul>
+        {environment.parts.map((p) => (
+          <li key={p.label}>
+            {p.label}: {num(p.kwh, 2)} kWh · {num(p.co2eKg, 2)} kg CO₂e.
+          </li>
+        ))}
+      </ul>
+      <p>
+        Persisten partículas por desgaste. Reducir fuentes de escape es relevante alrededor del
+        servicio hospitalario, sin cuantificar exposición ni enfermedades evitadas. Fabricación,
+        batería y fin de vida no están incluidos.
+      </p>
       <h2>Supuestos y límites</h2>
       <ul>
         {r.warnings.map((w) => (
@@ -95,6 +116,18 @@ export default function Report({ result: r }: { result: Result }) {
           {source.license}. {source.limitation}
         </p>
       ))}
+      <h3>Contexto científico ambiental</h3>
+      {environmentalSources.references
+        .filter((s) => s.role === 'context')
+        .map((s) => (
+          <p key={s.id}>
+            {s.id} · {s.institution} · {s.title} · {s.publication}
+            <br />
+            {s.url}
+            <br />
+            Consulta {s.consulted} · {s.locator}. {s.claim}. {s.license}. {s.recovery}.
+          </p>
+        ))}
     </article>
   );
 }
