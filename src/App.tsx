@@ -282,6 +282,8 @@ export default function App() {
               result={engine.result}
               points={engine.points}
               sensitivityError={engine.sensitivityError}
+              revenuePoints={engine.revenuePoints}
+              revenueError={engine.revenueError}
               stale={!valid}
               onExplore={(variable, value) => {
                 const path = sensitivityVariables[variable].path;

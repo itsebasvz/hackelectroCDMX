@@ -1,6 +1,15 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
+import { defaultScenario } from '../src/data/defaults';
+import { evaluateScenario } from '../src/domain/evaluate';
+import {
+  cashSummary,
+  financialAnalysis,
+  revenueStressScenario,
+} from '../src/domain/financialAnalysis';
+import { serializeScenario } from '../src/features/files';
+import type { Scenario } from '../src/domain/schema';
 // Teselas sintéticas sólo en pruebas: evita depender de Internet o cargar OSM en CI.
 test.beforeEach(async ({ page }) => {
   await page.route('https://tile.openstreetmap.org/**', (r) =>
@@ -105,12 +114,12 @@ test('presupuesto agrupa etapas y permite consultar un mes con saldo de deuda', 
   await expect(
     financePanel.getByRole('heading', { name: 'Distribución mensual del recaudo' }),
   ).toBeVisible();
+  await expect(financePanel.locator('.budget-single-phase')).toContainText('Meses 1–60');
+  await expect(financePanel.getByRole('button', { name: /Meses 1–60/ })).toHaveCount(0);
+  await financePanel
+    .getByText('Consultar deuda, intereses, comisiones y reservas', { exact: true })
+    .click();
   await expect(financePanel.getByRole('heading', { name: 'Evolución de la deuda' })).toBeVisible();
-  await expect(financePanel.getByRole('button', { name: /Meses 1–60/ })).toHaveCount(1);
-  await expect(financePanel.getByRole('button', { name: /Meses 1–60/ })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
   await financePanel.getByText('Consultar un mes específico').click();
   const monthSlider = financePanel.getByLabel('Mes del presupuesto');
   await expect(monthSlider).toHaveAttribute('type', 'range');
@@ -424,4 +433,180 @@ test('sin alternativas muestra ausencia y motivos sin marcar éxito', async ({ p
   await expect(page.locator('.alternative')).toHaveCount(0);
   await page.getByText('Por qué se descartaron combinaciones').click();
   await expect(page.locator('.search-results')).toContainText('Déficit mensual persistente');
+});
+
+const pesos = (v: number) =>
+  new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(v);
+async function importFinancialScenario(page: import('@playwright/test').Page, s: Scenario) {
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'finanzas.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(await serializeScenario(s)),
+  });
+  await ready(page);
+  await expect(page.getByLabel('Caída del recaudo supuesto')).toBeEnabled();
+}
+
+test('panel financiero abre el mes más exigente, reconcilia cifras y aísla la prueba temporal', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await ready(page);
+  const s = defaultScenario();
+  s.finance = s.catalog.finances.find((f) => f.kind === 'credit' && f.months === 36)!;
+  s.economy.batteryReplacementMonth = 24;
+  s.economy.batteryReplacementCost = 500000;
+  await importFinancialScenario(page, s);
+  const r = evaluateScenario(s),
+    summary = cashSummary(r.ev.months),
+    analysis = financialAnalysis(r)[summary.month - 1]!;
+  const panel = page.locator('.finance-chart-panel');
+  await expect(panel.locator('.finance-conclusion')).toContainText(
+    `${pesos(summary.minimum)} mínimo de caja · mes ${summary.month}`,
+  );
+  await expect(panel.locator('.finance-conclusion')).toContainText(
+    `${summary.deficitMonths} de 60 meses con déficit`,
+  );
+  await expect(panel.locator('.exact-month summary')).toContainText(`Mes ${summary.month} de 60`);
+  await expect(panel.locator('.capacity-row').last()).toContainText(pesos(analysis.ev.available));
+  await expect(panel.locator('.cash-bridge')).toContainText(pesos(analysis.bridge.end));
+  await expect(
+    panel.getByRole('button', { name: /Mes 24: Reposición programada/ }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  const reportBefore = await page.locator('.print-report').textContent();
+  const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+  const downloadText = async (label: string) => {
+    const pending = page.waitForEvent('download');
+    await page.getByRole('button', { name: label, exact: true }).click();
+    return readFile((await (await pending).path())!, 'utf8');
+  };
+  const jsonBefore = await downloadText('Descargar escenario JSON'),
+    csvBefore = await downloadText('Descargar resultados CSV');
+  const drop = page.getByLabel('Caída del recaudo supuesto');
+  await expect(drop).toHaveValue('10');
+  await drop.focus();
+  await drop.press('End');
+  await expect(drop).toHaveValue('30');
+  const stress = evaluateScenario(revenueStressScenario(s, 30));
+  const results = panel.locator('.stress-results');
+  await expect(results.locator('article').last()).toContainText(
+    pesos(stress.ev.months[23]!.freeCash),
+  );
+  await expect(results.locator('article').last()).toContainText(
+    `${cashSummary(stress.ev.months).deficitMonths} / 60`,
+  );
+  const { generatedAt: previousGeneratedAt, ...previousJson } = JSON.parse(jsonBefore);
+  const { generatedAt: currentGeneratedAt, ...currentJson } = JSON.parse(
+    await downloadText('Descargar escenario JSON'),
+  );
+  expect(previousGeneratedAt).toBeTruthy();
+  expect(currentGeneratedAt).toBeTruthy();
+  expect(currentJson).toEqual(previousJson);
+  expect(await downloadText('Descargar resultados CSV')).toBe(csvBefore);
+  expect(await page.locator('.print-report').textContent()).toBe(reportBefore);
+  expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  await panel.getByText('Consultar un mes específico').click();
+  const month = panel.getByLabel('Mes del presupuesto');
+  await month.focus();
+  await month.press('End');
+  await expect(results.locator('article').last()).toContainText(
+    pesos(stress.ev.months[59]!.freeCash),
+  );
+  await panel
+    .getByText('Consultar deuda, intereses, comisiones y reservas', { exact: true })
+    .click();
+  await expect(panel.locator('.finance-detail')).toContainText(
+    'Su descenso no demuestra capacidad de pago',
+  );
+  await expect(panel.locator('.finance-detail-values')).toContainText(
+    `Faltante descontado de caja: ${pesos(analysis.reserve.shortfall)}`,
+  );
+  const afterCredit = panel.getByRole('button', { name: /Después de la última cuota/ });
+  await afterCredit.focus();
+  await afterCredit.press('Enter');
+  await expect(month).toHaveValue('37');
+  await page.getByLabel('Longitud del ciclo de prueba').fill('');
+  await expect(panel).toContainText('Resultado anterior');
+  await expect(drop).toBeDisabled();
+  await expect(month).toBeDisabled();
+  await expect(panel.getByRole('button').first()).toBeDisabled();
+  await page.getByLabel('Longitud del ciclo de prueba').fill(String(s.route.cycleKm));
+  await ready(page);
+  await expect(drop).toBeEnabled();
+  await expect(drop).toHaveValue('10');
+  await expect(month).toHaveValue('24');
+  expect(
+    (await new AxeBuilder({ page }).include('.finance-chart-panel').analyze()).violations,
+  ).toEqual([]);
+});
+
+test('finanzas distingue renta sin deuda, contado insuficiente y deuda posterior al horizonte', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await ready(page);
+  const panel = page.locator('.finance-chart-panel');
+  const s = defaultScenario();
+  s.finance = s.catalog.finances.find((f) => f.kind === 'lease')!;
+  await importFinancialScenario(page, s);
+  await expect(panel).toContainText('Renta mensual activa');
+  await panel
+    .getByText('Consultar deuda, intereses, comisiones y reservas', { exact: true })
+    .click();
+  await expect(panel).toContainText('Sin saldo de deuda financiada');
+  await expect(panel.locator('.capacity-row').last()).toContainText(
+    pesos(s.finance.leasePerUnitMonth * s.operation.fleet),
+  );
+  s.finance = s.catalog.finances.find((f) => f.kind === 'cash')!;
+  s.operation.fare = 0;
+  s.economy.laborCost = 1;
+  await importFinancialScenario(page, s);
+  await expect(panel).toContainText('una cuota cero tampoco resolvería');
+  await expect(panel.locator('.finance-conclusion')).toContainText(
+    'presupuesto laboral es inferior',
+  );
+  await expect(panel.locator('.capacity-row').last()).not.toContainText('equivalente al');
+  s.finance = s.catalog.finances.find((f) => f.kind === 'credit' && f.months === 84)!;
+  s.operation.fare = 10;
+  s.economy.laborCost = 18000;
+  await importFinancialScenario(page, s);
+  await expect(panel.locator('.finance-detail')).toContainText('Deuda pendiente al mes 60');
+  await expect(panel.locator('.finance-detail')).toContainText('El compromiso continúa');
+});
+
+test('holgura positiva equivale al recaudo y tooltip completo cabe en móvil', async ({ page }) => {
+  await page.goto('/');
+  await ready(page);
+  const s = defaultScenario();
+  s.operation.fare = 20;
+  await importFinancialScenario(page, s);
+  const panel = page.locator('.finance-chart-panel');
+  await expect(panel.locator('.capacity-row').last()).toContainText('Holgura');
+  await expect(panel.locator('.capacity-row').last()).toContainText('equivalente al');
+  await expect(panel.locator('.finance-conclusion')).toContainText('0 de 60 meses con déficit');
+  await page.setViewportSize({ width: 390, height: 1000 });
+  const chart = panel.locator(':scope > .chart');
+  await chart.scrollIntoViewIfNeeded();
+  const box = (await chart.boundingBox())!;
+  await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.45);
+  const tooltip = page.locator('.finance-tooltip');
+  await expect(tooltip).toBeVisible();
+  for (const label of [
+    'Operación',
+    'Personal presupuestado',
+    'Ingreso concesionario presupuestado',
+    'Financiamiento',
+    'Reserva y reposición',
+    'Resultado de caja',
+  ])
+    await expect(tooltip).toContainText(label);
+  const bounds = (await tooltip.boundingBox())!;
+  expect(bounds.x).toBeGreaterThanOrEqual(0);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

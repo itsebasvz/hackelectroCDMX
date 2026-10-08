@@ -1,6 +1,6 @@
 # Interfaz de evaluación por ramal
 
-Actualización 2026-10-07: el [dashboard explicativo](redisenio-dashboard.md) sustituye la composición de resultados y la sensibilidad descritas abajo, con diagnóstico único, tres variables, ámbito/período ambiental y cierre de archivos. Las reglas de mapa, controles, presupuesto y deuda se conservan.
+Actualización 2026-10-07: el [dashboard explicativo](redisenio-dashboard.md) sustituye la composición de resultados y la sensibilidad descritas abajo, con diagnóstico único, tres variables, ámbito/período ambiental y cierre de archivos. Las reglas de mapa y controles se conservan. El [panel financiero](panel-financiero.md) actualiza presupuesto, capacidad de pago, ahorro y deuda.
 
 Rediseño aprobado el 6 de octubre de 2026. La pregunta guía sigue siendo: **¿bajo qué condiciones puede electrificarse sin perjudicar a pasajeros y trabajadores?** Los resultados describen escenarios editables; no validan una inversión real.
 
@@ -48,9 +48,13 @@ El contexto hospitalario está activado inicialmente sólo para Ruta 1. Cinco re
 
 **Energía diaria:** las barras comparan energía disponible sin invadir reserva y requerida para servicio/adicionales, en kWh por unidad. Margen o déficit, reserva apartada, energía comprada/pérdidas y horas de carga de la flota se muestran por separado. No se comparan litros con kWh en una misma escala energética.
 
-**Presupuesto mensual:** dos barras de escala común desglosan operación, presupuesto laboral, ingreso objetivo del concesionario, pagos, reserva/reposición y margen libre. El recaudo se marca como referencia. Una línea de tiempo agrupa meses consecutivos con la misma distribución visible a pesos enteros y separa meses con reposición programada; seleccionar una etapa abre el primer mes del tramo. «Explorar un mes exacto» permite recorrer el horizonte con un deslizador, sin una lista de 60 opciones. Un margen negativo aparece como déficit y los egresos pueden superar el recaudo: no se recorta para aparentar equilibrio.
+**Panel financiero:** abre con «¿El recaudo sostiene los pagos y el ingreso presupuestado?» y el mínimo de caja eléctrica de los 60 meses, su primer mes y el conteo de meses deficitarios. Arranca en ese mes exacto aunque la última cuota difiera por centavos. Conserva las barras apiladas y la referencia del recaudo; el desglose visible tiene importes a centavos. Personal e ingreso del concesionario son montos presupuestados y el excedente de caja no tiene reparto asignado.
 
-La curva financiera muestra el principal inicial en el mes cero y el saldo de deuda después de cada pago, para combustión y eléctrico. Los hitos marcan créditos liquidados y reposición de batería cuando están programados en el escenario. Al seleccionar un mes, los saldos exactos de ambas alternativas se actualizan bajo la curva. La curva no proyecta degradación, cambios de tasa, inflación ni eventos no incluidos en las entradas; si no hay principal financiado, explica que los pagos de renta se ven en el presupuesto, sin registrarlos como deuda.
+La línea de tiempo agrupa meses consecutivos con la misma distribución visible a pesos enteros y separa reposiciones; seleccionar una etapa abre su primer mes. Una única etapa se presenta como rótulo compacto. «Consultar un mes específico» permite recorrer 1–60 con teclado/deslizador. El déficit permanece visible, sin recortar los egresos para aparentar equilibrio.
+
+Le siguen barras de capacidad disponible con marcador del pago previsto, holgura/brecha y equivalencia del excedente positivo en recaudo. El puente conecta caja de combustión con caja eléctrica mediante diferencias firmadas de operación, pagos y reserva/reposición. La prueba temporal de caída de recaudo 0–30% usa el evaluador y abre en 10%; cambia únicamente ascensos y muestra ambas cajas del mes, mínimos y meses deficitarios. No modifica guardado ni exportaciones. Véanse indicadores, ejemplos y límites en la [guía del panel](panel-financiero.md).
+
+La curva de deuda, saldos del mes, intereses, comisiones, deuda pendiente al mes 60, hitos y reservas están en detalle consultable. La curva supone todos los pagos previstos incluso cuando hay déficit: no acredita solvencia. Una renta conserva cuota aunque no genere deuda del operador. Provisión y saldo de reserva se distinguen; cobertura/faltante sólo aparecen para reposiciones programadas, sin atribuir cobertura de averías. Al editar o invalidar se reinician período y prueba, se deshabilitan sus controles y se identifica el presupuesto anterior.
 
 La categoría de reserva/reposición del mes es el residuo contable:
 

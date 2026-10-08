@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import {
   BatteryCharging,
   Coins,
@@ -9,71 +9,12 @@ import {
 } from 'lucide-react';
 import type { Result, FinancialResult } from '../domain/schema';
 import { mxn, num } from '../ui/format';
-import {
-  energyBudget,
-  groupBudgetPhases,
-  monthlyBudget,
-  type BudgetPhase,
-  type SensitivitySeries,
-  type SensitivityVariable,
-} from '../domain/explore';
+import { energyBudget, type SensitivitySeries, type SensitivityVariable } from '../domain/explore';
 import Sensitivity from './Sensitivity';
+import FinancePanel from './FinancePanel';
+import type { RevenueStressPoint } from '../domain/financialAnalysis';
 import Environment from './Environment';
 const Chart = lazy(() => import('../ui/Chart'));
-
-function describeBudgetPhase(phase: BudgetPhase, r: Result) {
-  const replacement = r.ev.months.find(
-    (m) => m.month >= phase.startMonth && m.month <= phase.endMonth && m.replacement > 0,
-  );
-  if (replacement) return 'Reposición programada';
-
-  const currentIce = r.ice.months[phase.startMonth - 1]!;
-  const currentEv = r.ev.months[phase.startMonth - 1]!;
-  const previousIce = r.ice.months[phase.startMonth - 2];
-  const previousEv = r.ev.months[phase.startMonth - 2];
-  if (
-    (previousIce?.payment && currentIce.payment === 0) ||
-    (previousEv?.payment && currentEv.payment === 0)
-  )
-    return 'Después de la última cuota';
-  if (currentIce.payment > 0 || currentEv.payment > 0)
-    return r.scenario.finance.kind === 'lease' ? 'Renta mensual activa' : 'Cuota mensual activa';
-  return 'Sin pagos mensuales';
-}
-
-function debtAxisLabel(value: number) {
-  if (Math.abs(value) >= 1_000_000) return `$${num(value / 1_000_000, 1)} M`;
-  if (Math.abs(value) >= 1_000) return `$${num(value / 1_000, 0)} mil`;
-  return mxn(value);
-}
-
-function financeEvents(r: Result) {
-  const events: { month: number; label: string; kind: 'payoff' | 'replacement' }[] = [];
-  const horizon = Math.min(r.ice.months.length, r.ev.months.length);
-  if (r.scenario.finance.kind === 'credit') {
-    for (const [name, finance] of [
-      ['de combustión', r.ice],
-      ['del vehículo eléctrico', r.ev],
-    ] as const) {
-      if (finance.principal <= 0) continue;
-      const lastPaid = [...finance.months].reverse().find((m) => m.payment > 0);
-      if (lastPaid?.balance === 0)
-        events.push({
-          month: lastPaid.month,
-          label: `Crédito ${name} liquidado${lastPaid.month === horizon ? ' al cierre del horizonte' : ''}`,
-          kind: 'payoff',
-        });
-    }
-  }
-  const replacement = r.ev.months.find((m) => m.replacement > 0);
-  if (replacement && replacement.month <= horizon)
-    events.push({
-      month: replacement.month,
-      label: 'Reposición de batería',
-      kind: 'replacement',
-    });
-  return events;
-}
 
 export function ComparisonTable({ r, concise = false }: { r: Result; concise?: boolean }) {
   const rows: [string, string, string][] = [
@@ -189,23 +130,20 @@ export default function Dashboard({
   result: r,
   points,
   sensitivityError,
+  revenuePoints,
+  revenueError,
   stale,
   onExplore,
 }: {
   result: Result;
   points: SensitivitySeries[] | null;
   sensitivityError: string;
+  revenuePoints: RevenueStressPoint[] | null;
+  revenueError: string;
   stale: boolean;
   onExplore: (variable: SensitivityVariable, value: number) => void;
 }) {
   const s = r.scenario;
-  const [month, setMonth] = useState(1);
-  const horizon = Math.min(r.ice.months.length, r.ev.months.length);
-  const selectedIceMonth = r.ice.months[month - 1]!;
-  const selectedEvMonth = r.ev.months[month - 1]!;
-  const budgetPhases = useMemo(() => groupBudgetPhases(r.ice.months, r.ev.months), [r]);
-  const events = useMemo(() => financeEvents(r), [r]);
-  const hasDebt = r.ice.principal > 0 || r.ev.principal > 0;
   const failed = r.constraints.filter((c) => c.status === 'fail');
   const savings = r.ice.operatingMonth - r.ev.operatingMonth;
   const energy = energyBudget(r);
@@ -249,130 +187,6 @@ export default function Dashboard({
     }),
     [r],
   );
-  const cashOption = useMemo(() => {
-    const budgets = [
-      monthlyBudget(r.ice.months[month - 1]!),
-      monthlyBudget(r.ev.months[month - 1]!),
-    ];
-    const parts = [
-      ['operating', 'Operación', '#55585A'],
-      ['workers', 'Personal', '#266CB4'],
-      ['owner', 'Ingreso concesionario', '#B28E5C'],
-      ['payment', 'Financiamiento', '#9D2148'],
-      ['reserve', 'Reserva y reposición', '#8F4889'],
-      ['margin', 'Resultado de caja', '#027A35'],
-    ] as const;
-    return {
-      grid: { left: 90, right: 45, top: 64, bottom: 46 },
-      tooltip: {
-        trigger: 'axis',
-        appendTo: 'body',
-        confine: true,
-        valueFormatter: (v: unknown) => mxn(Number(v)),
-      },
-      legend: { top: 0, data: parts.map((p) => p[1]), textStyle: { fontSize: 11 } },
-      xAxis: {
-        type: 'value',
-        axisLabel: { formatter: (v: number) => num(v / 1000, 0) },
-        name: 'Miles de MXN',
-        nameLocation: 'middle',
-        nameGap: 30,
-      },
-      yAxis: {
-        type: 'category',
-        data: [s.ice.fuel === 'diesel' ? 'Diésel' : 'Gasolina', 'Eléctrico'],
-        inverse: true,
-      },
-      series: parts.map(([key, name, color], i) => ({
-        name,
-        type: 'bar',
-        stack: 'cash',
-        barMaxWidth: 48,
-        itemStyle: { color },
-        data: budgets.map((b) => ({
-          value: b[key],
-          itemStyle: { color: key === 'margin' && b.margin < 0 ? '#B51C42' : color },
-        })),
-        ...(i === 0
-          ? {
-              markLine: {
-                symbol: 'none',
-                label: { show: false },
-                data: [{ xAxis: budgets[0]!.revenue }],
-                lineStyle: { color: '#3d3c40', type: 'dashed' },
-              },
-            }
-          : {}),
-      })),
-    };
-  }, [r, month]);
-  const debtOption = useMemo(() => {
-    const labels = ['Inicio', ...Array.from({ length: horizon }, (_, index) => `Mes ${index + 1}`)];
-    const eventMonths = [...new Set(events.map((event) => event.month))];
-    return {
-      color: ['#55585A', '#9D2148'],
-      grid: { left: 60, right: 16, top: 28, bottom: 25 },
-      tooltip: {
-        trigger: 'axis',
-        appendTo: 'body',
-        confine: true,
-        valueFormatter: (value: unknown) => mxn(Number(value)),
-      },
-      legend: { top: 0, data: ['Combustión', 'Eléctrico'], textStyle: { fontSize: 10 } },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: labels,
-        axisLabel: {
-          interval: 11,
-          formatter: (value: string) => (value === 'Inicio' ? value : `M${value.slice(4)}`),
-          fontSize: 9,
-        },
-      },
-      yAxis: {
-        type: 'value',
-        min: 0,
-        axisLabel: { formatter: (value: number) => debtAxisLabel(value), fontSize: 9 },
-        splitNumber: 3,
-      },
-      series: [
-        {
-          name: 'Combustión',
-          type: 'line',
-          showSymbol: false,
-          lineStyle: { width: 2 },
-          data: [r.ice.principal, ...r.ice.months.slice(0, horizon).map((m) => m.balance)],
-          ...(eventMonths.length
-            ? {
-                markLine: {
-                  silent: true,
-                  symbol: 'none',
-                  label: { show: false },
-                  lineStyle: { type: 'dashed', opacity: 0.75 },
-                  data: eventMonths.map((eventMonth) => ({
-                    xAxis: `Mes ${eventMonth}`,
-                    lineStyle: {
-                      color: events.some(
-                        (event) => event.month === eventMonth && event.kind === 'replacement',
-                      )
-                        ? '#8F4889'
-                        : '#B28E5C',
-                    },
-                  })),
-                },
-              }
-            : {}),
-        },
-        {
-          name: 'Eléctrico',
-          type: 'line',
-          showSymbol: false,
-          lineStyle: { width: 2 },
-          data: [r.ev.principal, ...r.ev.months.slice(0, horizon).map((m) => m.balance)],
-        },
-      ],
-    };
-  }, [r, horizon, events]);
   return (
     <div className="dashboard">
       <div className="dashboard-heading">
@@ -513,178 +327,7 @@ export default function Dashboard({
             </details>
           </section>
         </div>
-        <section className="panel finance-chart-panel">
-          <div className="panel-title finance-panel-title">
-            <div>
-              <h3>Distribución mensual del recaudo</h3>
-              <p className="finance-panel-subtitle">Montos de la flota · escenario editable</p>
-            </div>
-            <Coins size={19} />
-          </div>
-          <div className="budget-timeline">
-            <div className="budget-timeline-heading">
-              <div>
-                <span className="eyebrow">ETAPAS DEL HORIZONTE · {horizon} MESES</span>
-                <p>Selecciona una etapa. Los meses con presupuestos equivalentes se agrupan.</p>
-              </div>
-              <span className="revenue-label">
-                Recaudo mensual del escenario <b>{mxn(selectedEvMonth.revenue)}</b>
-              </span>
-            </div>
-            <div className="budget-phases" role="group" aria-label="Etapas del presupuesto mensual">
-              {budgetPhases.map((phase, index) => {
-                const active = month >= phase.startMonth && month <= phase.endMonth;
-                const range =
-                  phase.startMonth === phase.endMonth
-                    ? `Mes ${phase.startMonth}`
-                    : `Meses ${phase.startMonth}–${phase.endMonth}`;
-                const description = describeBudgetPhase(phase, r);
-                const iceMargin = r.ice.months[phase.startMonth - 1]!.freeCash;
-                const margin = r.ev.months[phase.startMonth - 1]!.freeCash;
-                return (
-                  <button
-                    key={`${phase.startMonth}-${phase.endMonth}`}
-                    className={`budget-phase${active ? ' selected' : ''}`}
-                    type="button"
-                    aria-pressed={active}
-                    aria-label={`${range}: ${description}. Resultado de caja, combustión ${mxn(iceMargin)} por mes, eléctrico ${mxn(margin)} por mes.`}
-                    onClick={() => setMonth(phase.startMonth)}
-                  >
-                    <span className="budget-phase-index">
-                      Etapa {index + 1}
-                      {active ? ' · Seleccionada' : ''}
-                    </span>
-                    <strong>{range}</strong>
-                    <span>{description}</span>
-                    <small className="budget-phase-results">
-                      <span>
-                        Combustión{' '}
-                        <b className={iceMargin < 0 ? 'negative' : ''}>{mxn(iceMargin)}/mes</b>
-                      </span>
-                      <span>
-                        Eléctrico <b className={margin < 0 ? 'negative' : ''}>{mxn(margin)}/mes</b>
-                      </span>
-                    </small>
-                  </button>
-                );
-              })}
-            </div>
-            <details className="exact-month">
-              <summary>
-                <span>Consultar un mes específico</span>
-                <b>
-                  Mes {month} de {horizon}
-                </b>
-              </summary>
-              <div className="exact-month-control">
-                <label htmlFor="budget-month">Mes del presupuesto</label>
-                <input
-                  id="budget-month"
-                  type="range"
-                  min="1"
-                  max={horizon}
-                  step="1"
-                  value={month}
-                  onChange={(event) => setMonth(Number(event.target.value))}
-                  aria-valuetext={`Mes ${month} de ${horizon}`}
-                />
-                <output htmlFor="budget-month">Mes {month}</output>
-              </div>
-            </details>
-          </div>
-          <Suspense fallback={<div className="chart" />}>
-            <Chart
-              option={cashOption}
-              label={`Presupuesto del mes ${month}. Recaudo de flota ${mxn(selectedEvMonth.revenue)}. Margen de combustión ${mxn(selectedIceMonth.freeCash)}, eléctrico ${mxn(selectedEvMonth.freeCash)}. Consulte la tabla mensual para componentes.`}
-            />
-          </Suspense>
-          <section className="debt-evolution" aria-labelledby="debt-evolution-title">
-            <div className="debt-evolution-heading">
-              <div>
-                <h4 id="debt-evolution-title">
-                  {hasDebt ? 'Evolución de la deuda' : 'Sin saldo de deuda financiada'}
-                </h4>
-                <p>
-                  {hasDebt
-                    ? 'Saldo pendiente después de cada pago. El mes 0 muestra el principal inicial.'
-                    : 'Saldo financiado en el escenario · MXN'}
-                </p>
-              </div>
-              <span>
-                Mes seleccionado · {month} de {horizon}
-              </span>
-            </div>
-            {hasDebt ? (
-              <Suspense fallback={<div className="debt-chart-placeholder" />}>
-                <div className="debt-curve">
-                  <Chart
-                    option={debtOption}
-                    label={`Curva de deuda durante ${horizon} meses. Mes ${month}: saldo de combustión ${mxn(selectedIceMonth.balance)} y saldo eléctrico ${mxn(selectedEvMonth.balance)}.`}
-                  />
-                </div>
-              </Suspense>
-            ) : (
-              <p className="debt-empty">
-                No se genera saldo financiado en este escenario. Los pagos de renta, si existen,
-                aparecen en el presupuesto mensual.
-              </p>
-            )}
-            <div
-              className="debt-balances"
-              role="status"
-              aria-label={`Saldos de deuda al mes ${month}`}
-            >
-              <div className="debt-balance">
-                <i className="debt-dot combustion" />
-                <span>Combustión</span>
-                <b>{mxn(selectedIceMonth.balance)}</b>
-              </div>
-              <div className="debt-balance">
-                <i className="debt-dot electric" />
-                <span>Eléctrico</span>
-                <b>{mxn(selectedEvMonth.balance)}</b>
-              </div>
-            </div>
-            {events.length > 0 && (
-              <div className="finance-events-section">
-                <h5>Hitos del escenario</h5>
-                <ul className="finance-events" aria-label="Hitos financieros del escenario">
-                  {events.map((event) => (
-                    <li
-                      className={`finance-event ${event.kind}`}
-                      key={`${event.kind}-${event.month}-${event.label}`}
-                    >
-                      <span>{event.label}</span>
-                      <b>Mes {event.month}</b>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
-          <div className="chart-explanation">
-            <p>
-              En este escenario, operar la flota eléctrica cuesta{' '}
-              <b>
-                {mxn(Math.abs(savings))}/mes {savings >= 0 ? 'menos' : 'más'}
-              </b>{' '}
-              que la flota de combustión. No incluye financiamiento ni costos de personal.
-            </p>
-            <p>
-              En el mes {month}, al descontar operación, personal, ingreso objetivo del
-              concesionario, pagos y reserva del recaudo supuesto, el resultado de caja eléctrico es{' '}
-              <b className={selectedEvMonth.freeCash < 0 ? 'negative' : ''}>
-                {mxn(selectedEvMonth.freeCash)}
-              </b>
-              .
-            </p>
-          </div>
-          <small>
-            La línea discontinua marca el recaudo supuesto del escenario. «Reserva y reposición»
-            reúne la provisión mensual y la reposición no cubierta; no equivale al saldo acumulado
-            de la reserva. Un resultado de caja negativo es déficit, no ingreso disponible.
-          </small>
-        </section>
+        <FinancePanel result={r} stale={stale} points={revenuePoints} error={revenueError} />
       </div>
       <Sensitivity
         result={r}
