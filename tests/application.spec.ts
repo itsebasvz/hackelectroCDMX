@@ -41,10 +41,10 @@ test('evalúa, edita, conserva resultado inválido y encuentra condiciones', asy
     ),
   ).toBeVisible();
   await expect(page.getByRole('heading', { name: '¿Qué cambia al electrificar?' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Buscar combinación' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Evaluar combinaciones' })).toBeDisabled();
   await page.getByLabel('Longitud del ciclo de prueba').fill('20.340012617');
   await ready(page);
-  await page.getByRole('button', { name: 'Buscar combinación' }).click();
+  await page.getByRole('button', { name: 'Evaluar combinaciones' }).click();
   await expect(page.getByText(/180 combinaciones evaluadas/)).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Explorar esta combinación' }).first(),
@@ -62,7 +62,7 @@ test('exporta, importa, guarda copias y recalcula', async ({ page }) => {
   await expect(page.getByText('Escenario guardado en este navegador.')).toBeVisible();
   await ready(page);
   const pending = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Exportar JSON' }).click();
+  await page.getByRole('button', { name: 'Descargar escenario JSON' }).click();
   const exported = await pending;
   const path = await exported.path();
   expect(path).toBeTruthy();
@@ -298,4 +298,130 @@ test('mapa contextual navega al límite y conserva accesibilidad y parámetros',
   await expect(page.getByRole('button', { name: 'Fin del día', exact: true })).toBeDisabled();
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations).toEqual([]);
+});
+
+test('exploración aplica sólo al confirmar y reinicia selección al editar, incluido precio cero', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await ready(page);
+  const panel = page.locator('#sensibilidad');
+  const variable = page.getByLabel('Variable a explorar');
+  await variable.selectOption('consumption');
+  const consumption = page.getByLabel('Valor explorado · Consumo eléctrico');
+  await expect(consumption).toBeVisible();
+  await consumption.focus();
+  await consumption.press('End');
+  await expect(consumption).toHaveAttribute('aria-valuetext', '0.375 kWh/km en batería');
+  await expect(page.getByLabel('Consumo neto en batería')).toHaveValue('0.25');
+  await page.getByRole('button', { name: 'Aplicar al escenario' }).click();
+  await ready(page);
+  await expect(page.getByLabel('Consumo neto en batería')).toHaveValue('0.375');
+  await page.getByLabel('Consumo neto en batería').fill('0.4');
+  await page.getByLabel('Consumo neto en batería').fill('0.6');
+  await ready(page);
+  await expect(consumption).toHaveAttribute('aria-valuetext', '0.6 kWh/km en batería');
+  await consumption.focus();
+  await consumption.press('End');
+  await page.getByLabel('Consumo neto en batería').fill('');
+  await expect(page.getByRole('button', { name: 'Aplicar al escenario' })).toBeDisabled();
+  await page.getByLabel('Consumo neto en batería').fill('0.25');
+  await ready(page);
+  await page.locator('#advanced-energy summary').click();
+  await page.getByLabel('Electricidad variable').fill('0');
+  await ready(page);
+  await variable.selectOption('electricityPrice');
+  const price = page.getByLabel('Valor explorado · Precio de electricidad');
+  await expect(price).toHaveAttribute('aria-valuetext', '0 MXN/kWh comprado');
+  await expect(panel).toContainText('cargos de potencia y fijos permanecen constantes');
+  await price.focus();
+  await price.press('End');
+  await expect(price).toHaveAttribute('aria-valuetext', '8 MXN/kWh comprado');
+  await expect(page.getByLabel('Electricidad variable')).toHaveValue('0');
+  await page.getByRole('button', { name: 'Aplicar al escenario' }).click();
+  await ready(page);
+  await expect(page.getByLabel('Electricidad variable')).toHaveValue('8');
+  await expect(page.getByLabel('Ciclos diarios por unidad')).toHaveValue('8');
+});
+
+test('ambiente cambia ámbito/período y el informe conserva estados y detalle completo', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await ready(page);
+  const environment = page.locator('#ambiente');
+  await expect(page.getByLabel('Ámbito ambiental')).toHaveValue('fleet');
+  await expect(page.getByLabel('Período ambiental')).toHaveValue('year');
+  await expect(environment).toContainText('Año = doce meses equivalentes');
+  const amount = () => environment.locator('.environment-results strong').allTextContents();
+  const parse = (text: string) => Number(text.replace(/[^0-9.-]/g, ''));
+  const year = (await amount()).map(parse);
+  await page.getByLabel('Ámbito ambiental').selectOption('unit');
+  await page.getByLabel('Período ambiental').selectOption('day');
+  const day = (await amount()).map(parse);
+  for (let i = 0; i < 3; i++) expect(year[i]!).toBeCloseTo(day[i]! * 3 * 26 * 12, -2);
+  await expect(environment).toContainText('eléctrico: 0 kg CO₂ por escape');
+  await expect(environment).not.toContainText('%');
+  await expect(page.getByRole('heading', { name: '¿Qué necesita comprobarse?' })).toHaveCount(0);
+  await expect(page.locator('[data-condition=connector]')).toContainText('Por confirmar');
+  await page.emulateMedia({ media: 'print' });
+  const report = page.locator('.print-report');
+  await expect(report).toContainText('Conector — Por confirmar');
+  await expect(report.locator('.comparison-table tbody tr')).toHaveCount(15);
+  await expect(report.locator('table').last().locator('tbody tr')).toHaveCount(60);
+  await expect(report).toContainText('Contexto científico ambiental');
+});
+
+test('resultados y diagnóstico en escritorio y móvil conservan orden y alturas naturales', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await ready(page);
+  await expect(page.getByLabel('Valor explorado · Vueltas diarias')).toBeVisible();
+  for (const width of [1920, 1440, 1024, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect(
+      page.getByRole('heading', { name: 'Impacto ambiental del escenario' }),
+    ).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    const energy = await page.locator('.results-left > .panel').first().boundingBox();
+    const comparison = await page.locator('.results-left > .comparison').boundingBox();
+    const finance = await page.locator('.finance-chart-panel').boundingBox();
+    expect(comparison!.y).toBeGreaterThan(energy!.y + energy!.height);
+    if (width >= 900) expect(Math.abs(finance!.y - energy!.y)).toBeLessThan(2);
+    else expect(finance!.y).toBeGreaterThan(comparison!.y + comparison!.height);
+    if (width >= 1280) {
+      const map = await page.locator('.route-map-area').boundingBox();
+      const diagnosis = await page.locator('.diagnostic-panel').boundingBox();
+      expect(Math.abs(map!.height - diagnosis!.height)).toBeLessThan(2);
+      const scroll = page.locator('.diagnostic-scroll');
+      expect(await scroll.evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(true);
+      await scroll.focus();
+      await scroll.press('End');
+      await expect.poll(() => scroll.evaluate((e) => e.scrollTop)).toBeGreaterThan(0);
+    }
+    await page.locator('.results-columns').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/dashboard-${width}.png` });
+    if (width === 1440 || width === 390) {
+      await page
+        .locator('#sensibilidad')
+        .screenshot({ path: `test-results/exploracion-${width}.png` });
+      await page.locator('#ambiente').screenshot({ path: `test-results/ambiente-${width}.png` });
+    }
+  }
+});
+
+test('sin alternativas muestra ausencia y motivos sin marcar éxito', async ({ page }) => {
+  await page.goto('/');
+  await ready(page);
+  await page.locator('#advanced-service summary').click();
+  await page.getByLabel('Tarifa de prueba').fill('0');
+  await ready(page);
+  await page.getByRole('button', { name: 'Evaluar combinaciones' }).click();
+  await expect(page.locator('.search-summary.empty')).toContainText('ninguna cumple');
+  await expect(page.locator('.alternative')).toHaveCount(0);
+  await page.getByText('Por qué se descartaron combinaciones').click();
+  await expect(page.locator('.search-results')).toContainText('Déficit mensual persistente');
 });
