@@ -1069,3 +1069,17 @@
     max-width: 80px;
   }
 }
+.workspace-view .controls-panel .presets button {
+  min-height: 44px;
+  font-size: 11px;
+}
+.workspace-view .check-field {
+  min-height: 44px;
+}
+.simulation-map .map-modes button {
+  min-height: 44px;
+}
+.simulation-map .map-symbol {
+  min-width: 44px;
+  min-height: 44px;
+}
