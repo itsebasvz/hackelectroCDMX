@@ -1,0 +1,902 @@
+/* Composición del simulador: una cartografía persistente y paneles temáticos. */
+[hidden] {
+  display: none !important;
+}
+.simulation-app {
+  --dock-width: 156px;
+  --work-left: 196px;
+  --work-top: 104px;
+  --work-bottom: 188px;
+  position: relative;
+  height: 100dvh;
+  min-height: 620px;
+  overflow: hidden;
+  background: #f8f5f6;
+}
+.workspace-surround {
+  height: 100%;
+}
+.simulation-header {
+  position: absolute;
+  inset: 16px 20px auto;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 20px;
+  min-height: 72px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px #2e2b2f0d;
+}
+.simulation-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--primary);
+  font: 700 17px var(--font-display);
+  flex-shrink: 0;
+}
+.simulation-brand small {
+  display: block;
+  font: 600 10px var(--font-ui);
+  letter-spacing: 0.09em;
+  margin-top: 4px;
+  color: var(--muted);
+}
+.scenario-context {
+  min-width: 0;
+  flex: 1;
+  border-left: 1px solid var(--border);
+  padding-left: 24px;
+}
+.scenario-context h1 {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.route-switch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 24px;
+  max-width: 100%;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--muted);
+  font-size: 11px;
+}
+.route-switch span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.simulation-badge {
+  display: grid;
+  grid-template-columns: 8px auto;
+  gap: 3px 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+.simulation-badge small {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: 10px;
+}
+.team-link {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  min-height: 44px;
+}
+.workspace-navigation {
+  position: absolute;
+  z-index: 15;
+  top: var(--work-top);
+  left: 20px;
+  width: var(--dock-width);
+  display: grid;
+  gap: 8px;
+}
+.workspace-navigation > a,
+.workspace-utilities a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  border-radius: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: 0 3px 12px #2e2b2f08;
+  font: 600 12px var(--font-ui);
+  transition:
+    background 180ms,
+    color 180ms,
+    box-shadow 180ms,
+    transform 180ms;
+}
+.workspace-navigation > a:hover {
+  transform: translateX(2px);
+  background: #fbf7f9;
+  box-shadow: 0 4px 14px #2e2b2f14;
+}
+.workspace-navigation a[aria-current='page'] {
+  color: white;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.nav-chevron {
+  margin-left: auto;
+}
+.workspace-utilities {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #d9d2d6;
+}
+.workspace-utilities a {
+  min-height: 44px;
+  font-weight: 500;
+  box-shadow: none;
+}
+.simulation-map {
+  position: absolute;
+  inset: 0;
+}
+.simulation-map .map-explorer,
+.simulation-map .map-stage,
+.simulation-map .map-shell {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  container-type: normal;
+  border: 0;
+  border-radius: 0;
+}
+.simulation-map .map-canvas {
+  height: 100%;
+}
+.simulation-map .map-tools {
+  position: absolute;
+  z-index: 5;
+  top: var(--work-top);
+  left: var(--work-left);
+  padding: 0;
+  border: 0;
+  background: none;
+  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+}
+.simulation-map .map-modes {
+  background: white;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px #2e2b2f12;
+}
+.simulation-map .map-modes button {
+  min-height: 36px;
+  font-size: 11px;
+  padding: 8px 12px;
+}
+.simulation-map .map-tools .check-field {
+  background: white;
+  min-height: 44px;
+  font-size: 11px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin: 0;
+}
+.simulation-map .map-hud {
+  display: contents;
+}
+.simulation-map .map-card {
+  position: absolute;
+  z-index: 6;
+  box-shadow: 0 4px 16px #2e2b2f0d;
+  border-radius: 14px;
+}
+.simulation-map .map-point-card {
+  top: 164px;
+  left: var(--work-left);
+  width: 244px;
+  max-height: calc(100% - 380px);
+  overflow: auto;
+}
+.simulation-map .map-day-card {
+  left: 20px;
+  bottom: 82px;
+  width: var(--dock-width);
+  padding: 12px;
+}
+.simulation-map .map-day-verdict {
+  font-size: 13px;
+}
+.simulation-map .map-day-card small {
+  font-size: 10px;
+}
+.simulation-map .map-hud .map-legend {
+  position: absolute;
+  top: 164px;
+  right: 80px;
+  z-index: 6;
+  background: white;
+  width: 210px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11px;
+  box-shadow: 0 4px 16px #2e2b2f0d;
+}
+.simulation-map .hospital-callout {
+  right: 20px;
+  bottom: 200px;
+  width: 300px;
+  max-height: 250px;
+  overflow: auto;
+}
+.simulation-map [data-panel='right'] .map-legend {
+  display: none;
+}
+.simulation-map [data-panel='left'] .map-point-card {
+  display: none;
+}
+.simulation-map .maplibregl-ctrl-top-right {
+  top: var(--work-top);
+  right: 20px;
+}
+.simulation-map .map-reframe {
+  top: 206px;
+  right: 30px;
+  bottom: auto;
+  border-radius: 10px;
+  width: 40px;
+  height: 44px;
+}
+.simulation-map [data-panel='right'] .maplibregl-ctrl-top-right,
+.simulation-map [data-panel='right'] .map-reframe {
+  right: calc(clamp(560px, 54vw, 860px) + 30px);
+}
+.simulation-map .maplibregl-ctrl-bottom-right {
+  right: 16px;
+  bottom: 4px;
+}
+.simulation-map .map-caption {
+  bottom: 28px;
+  right: 20px;
+  left: auto;
+  background: #ffffffed;
+  border-radius: 6px;
+  font-size: 10px;
+  max-width: calc(100% - 230px);
+}
+.simulation-map .map-journey {
+  position: absolute;
+  z-index: 16;
+  bottom: 60px;
+  left: var(--work-left);
+  right: 20px;
+  padding: 14px 20px;
+  display: block;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px #2e2b2f12;
+}
+.journey-options {
+  position: absolute;
+  right: 18px;
+  top: 8px;
+}
+.journey-options > summary {
+  color: var(--primary);
+  font-size: 11px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.simulation-map .journey-options .journey-toolbar {
+  position: absolute;
+  bottom: 45px;
+  right: -18px;
+  width: min(860px, calc(100vw - 216px));
+  padding: 20px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px #2e2b2f1a;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.simulation-map .journey-options .journey-control-label {
+  font-size: 12px;
+}
+.simulation-map .map-scrub {
+  padding-top: 32px;
+}
+.simulation-map .map-scrub label {
+  font-size: 12px;
+}
+.simulation-map .journey-progress-heading {
+  margin-bottom: 0;
+}
+.simulation-map .journey-progress-heading span {
+  font-size: 11px;
+}
+.simulation-map .journey-range {
+  margin-top: 0;
+}
+.simulation-map .journey-slider input {
+  height: 36px;
+  min-height: 36px;
+}
+.simulation-map .journey-segments {
+  font-size: 10px;
+}
+.map-notes {
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  z-index: 17;
+  font-size: 11px;
+  width: var(--dock-width);
+}
+.map-notes > summary {
+  min-height: 44px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+}
+.map-notes[open] {
+  width: min(520px, calc(100vw - 40px));
+  background: white;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  max-height: 65vh;
+  overflow: auto;
+  box-shadow: 0 4px 20px #2e2b2f1a;
+}
+.simulation-map .map-method {
+  padding: 10px 0;
+  font-size: 12px;
+}
+.scenario-health {
+  position: absolute;
+  z-index: 7;
+  top: 478px;
+  left: 20px;
+  width: var(--dock-width);
+  display: grid;
+  gap: 8px;
+  background: white;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 11px;
+}
+.scenario-health span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.5;
+}
+.scenario-health b {
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.scenario-health > svg {
+  display: none;
+}
+.scenario-health.has-issues b {
+  color: var(--warning);
+}
+.workspace-status {
+  position: absolute;
+  z-index: 8;
+  top: 90px;
+  right: 24px;
+  font-size: 10px;
+  color: var(--muted);
+  background: #ffffffee;
+  border-radius: 4px;
+}
+.workspace-panel {
+  position: absolute;
+  z-index: 20;
+  top: 116px;
+  bottom: var(--work-bottom);
+  right: 20px;
+  width: clamp(560px, 54vw, 860px);
+  max-width: calc(100% - 216px);
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 10px 40px #2e2b2f21;
+  overflow: hidden;
+  animation: panel-arrive 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.workspace-panel.is-editor {
+  left: var(--work-left);
+  right: auto;
+  width: 400px;
+}
+.workspace-panel.is-expanded {
+  left: 20px;
+  right: 20px;
+  top: 104px;
+  bottom: 20px;
+  width: auto;
+  max-width: none;
+}
+.workspace-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+  flex-shrink: 0;
+}
+.workspace-panel-header h2 {
+  font-size: 22px;
+  margin-top: 4px;
+}
+.workspace-panel-header h2:focus {
+  outline: none;
+}
+.workspace-panel-actions {
+  display: flex;
+  gap: 4px;
+}
+.icon-action {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #fbf7f9;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.icon-action:hover {
+  background: #f8e8ed;
+  color: var(--primary);
+}
+.workspace-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.workspace-tabs a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.workspace-tabs a[aria-current='page'] {
+  background: #f8e8ed;
+  color: var(--primary);
+}
+.workspace-view {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  padding: 24px;
+  scrollbar-width: thin;
+}
+.workspace-view > .panel,
+.workspace-view .controls-panel,
+.workspace-view .diagnostic-panel {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  background: white;
+}
+.workspace-view .controls-title {
+  display: none;
+}
+.workspace-view .controls-scroll {
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+}
+.workspace-view .controls-panel .field label {
+  font-size: 12px;
+}
+.workspace-view .controls-panel .field small {
+  font-size: 11px;
+}
+.workspace-view .diagnostic-panel {
+  width: auto;
+  height: auto;
+}
+.workspace-view .diagnostic-scroll {
+  max-height: none;
+  overflow: visible;
+}
+.workspace-view .metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 0 24px;
+  gap: 12px;
+}
+.workspace-view .metric {
+  padding: 16px;
+}
+.workspace-view .metric strong {
+  font-size: 24px;
+}
+.workspace-view .environmental-charts,
+.workspace-view .chart-grid {
+  grid-template-columns: 1fr;
+}
+.workspace-view .sharing-groups,
+.workspace-view .alternatives {
+  grid-template-columns: 1fr;
+}
+.workspace-view .save-row {
+  flex-wrap: wrap;
+}
+.workspace-view .section-heading h2 {
+  font-size: 22px;
+}
+.workspace-view .diagnostic-panel > .eyebrow {
+  font-size: 11px;
+}
+.workspace-view .panel-title {
+  flex-wrap: wrap;
+}
+.workspace-view .comparison-table {
+  min-width: 480px;
+}
+.workspace-view .table-scroll {
+  max-width: 100%;
+}
+.workspace-view .environment-human {
+  grid-template-columns: 1fr;
+}
+.workspace-view .environment-controls {
+  flex-wrap: wrap;
+}
+.workspace-view .source-view footer {
+  margin-top: 24px;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--border);
+}
+.panel-return {
+  border-top: 1px solid var(--border);
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+.panel-return a {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  font-size: 11px;
+  color: var(--primary);
+}
+.panel-stale {
+  padding: 12px 24px;
+  background: #fff7e8;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.workspace-alert,
+.workspace-notice {
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(620px, calc(100% - 32px));
+  padding: 12px 16px;
+  background: white;
+  box-shadow: 0 6px 28px #2e2b2f33;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.workspace-notice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.workspace-alert {
+  bottom: 76px;
+  color: var(--danger);
+}
+@keyframes panel-arrive {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .simulation-map [data-panel='right'] .map-point-card {
+    display: none;
+  }
+  .simulation-header {
+    gap: 16px;
+  }
+  .team-link span:last-child {
+    display: none;
+  }
+  .workspace-view {
+    padding: 20px;
+  }
+}
+@media (max-height: 800px) and (min-width: 1024px) {
+  .scenario-health {
+    top: 478px;
+    padding: 10px;
+  }
+  .simulation-map .map-day-card {
+    display: none;
+  }
+}
+@media (max-width: 1023px) {
+  .simulation-app {
+    --work-left: 16px;
+    --work-top: 150px;
+    --work-bottom: 180px;
+    min-height: 560px;
+  }
+  .simulation-header {
+    inset: 8px 12px auto;
+    padding: 12px;
+    gap: 12px;
+    min-height: 66px;
+  }
+  .simulation-brand {
+    font-size: 13px;
+  }
+  .simulation-brand small {
+    font-size: 9px;
+  }
+  .simulation-badge {
+    display: none;
+  }
+  .team-link {
+    display: none;
+  }
+  .scenario-context {
+    padding-left: 12px;
+  }
+  .scenario-context h1 {
+    font-size: 12px;
+  }
+  .route-switch {
+    font-size: 10px;
+  }
+  .workspace-navigation {
+    top: 88px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    display: flex;
+    gap: 6px;
+  }
+  .workspace-navigation > a {
+    flex: 1;
+    justify-content: center;
+    min-height: 48px;
+    padding: 8px;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .nav-chevron {
+    display: none;
+  }
+  .workspace-utilities {
+    position: fixed;
+    z-index: 15;
+    bottom: 16px;
+    left: 12px;
+    display: flex;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+  .workspace-utilities a {
+    font-size: 11px;
+    padding: 8px;
+  }
+  .workspace-status {
+    top: 138px;
+    left: 16px;
+    right: 16px;
+    text-align: left;
+    font-size: 9px;
+  }
+  .simulation-map .map-tools {
+    top: 158px;
+    left: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+  .simulation-map .map-tools .check-field {
+    font-size: 10px;
+  }
+  .simulation-map .map-modes button {
+    font-size: 10px;
+    padding: 8px;
+  }
+  .simulation-map .map-point-card {
+    top: 220px;
+    left: 12px;
+    width: 210px;
+    max-height: calc(100% - 400px);
+    padding: 12px;
+  }
+  .simulation-map .map-day-card {
+    display: none;
+  }
+  .simulation-map .map-hud .map-legend {
+    top: 220px;
+    right: 12px;
+    width: 145px;
+    font-size: 10px;
+  }
+  .simulation-map .maplibregl-ctrl-top-right {
+    top: 205px;
+    right: 4px;
+  }
+  .simulation-map .map-reframe {
+    top: 304px;
+    right: 14px;
+  }
+  .simulation-map .map-hud .map-legend {
+    display: none;
+  }
+  .simulation-map .map-caption {
+    left: 12px;
+    bottom: 74px;
+    right: 12px;
+    max-width: none;
+    font-size: 8px;
+  }
+  .simulation-map .map-journey {
+    left: 12px;
+    right: 12px;
+    bottom: 102px;
+    padding: 12px;
+  }
+  .simulation-map .journey-options .journey-toolbar {
+    width: calc(100vw - 24px);
+    right: -6px;
+    grid-template-columns: 1fr;
+    max-height: 55vh;
+    overflow: auto;
+  }
+  .simulation-map .journey-progress-heading {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .simulation-map .journey-progress-heading span {
+    font-size: 10px;
+  }
+  .scenario-health {
+    top: auto;
+    bottom: 62px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    font-size: 10px;
+    min-height: 36px;
+  }
+  .scenario-health b {
+    font-size: 10px;
+    margin-left: auto;
+  }
+  .scenario-health span {
+    font-size: 10px;
+  }
+  .map-notes {
+    left: auto;
+    right: 12px;
+    bottom: 16px;
+    width: 130px;
+  }
+  .map-notes[open] {
+    width: calc(100vw - 24px);
+  }
+  .workspace-panel,
+  .workspace-panel.is-editor,
+  .workspace-panel.is-expanded {
+    inset: 88px 12px 12px;
+    width: auto;
+    max-width: none;
+    border-radius: 14px;
+  }
+  .workspace-view {
+    padding: 16px;
+  }
+  .workspace-panel-header {
+    padding: 12px 16px;
+  }
+  .workspace-panel-header h2 {
+    font-size: 20px;
+  }
+  .panel-expand {
+    display: none;
+  }
+  .workspace-tabs {
+    padding: 6px 12px;
+    gap: 0;
+  }
+  .workspace-tabs a {
+    flex: 1;
+    padding: 8px;
+    font-size: 11px;
+  }
+  .workspace-view .metrics {
+    grid-template-columns: 1fr;
+  }
+  .workspace-view .environment-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .workspace-view .environment-controls p {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-panel {
+    animation: none;
+  }
+  .workspace-navigation a {
+    transition: none;
+  }
+}
+@media print {
+  .simulation-app {
+    display: none !important;
+  }
+}

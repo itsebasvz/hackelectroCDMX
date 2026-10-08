@@ -27,7 +27,9 @@ export default function Chart({ option, label }: { option: EChartsCoreOption; la
       animation: false,
       textStyle: { fontFamily: 'Inter', color: '#55585A' },
     });
-    const observer = new ResizeObserver(() => chart.resize());
+    const observer = new ResizeObserver(() => {
+      if (container.current?.clientWidth && container.current.clientHeight) chart.resize();
+    });
     observer.observe(container.current);
     return () => {
       observer.disconnect();
