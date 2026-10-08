@@ -17,12 +17,14 @@ export default function WorkspacePanel({
   expanded,
   onExpand,
   modal,
+  calculationStatus,
   children,
 }: {
   path: WorkspacePath;
   expanded: boolean;
   onExpand: () => void;
   modal: boolean;
+  calculationStatus: string;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLElement>(null);
@@ -33,13 +35,17 @@ export default function WorkspacePanel({
   useLayoutEffect(() => {
     if (!open) {
       if (trigger.current?.isConnected) trigger.current.focus();
+      else document.querySelector<HTMLElement>('.simulation-brand')?.focus();
       return;
     }
     if (
       document.activeElement instanceof HTMLElement &&
       !ref.current?.contains(document.activeElement)
     )
-      trigger.current = document.activeElement;
+      trigger.current =
+        document.activeElement === document.body
+          ? document.querySelector<HTMLElement>(`[data-area='${area}']`)
+          : document.activeElement;
     title.current?.focus({ preventScroll: true });
   }, [open, area]);
   useEffect(() => {
@@ -94,6 +100,9 @@ export default function WorkspacePanel({
           </h2>
         </div>
         <div className="workspace-panel-actions">
+          <span className="panel-engine-status" role="status">
+            {calculationStatus}
+          </span>
           <button
             className="icon-action panel-expand"
             onClick={onExpand}

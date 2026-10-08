@@ -9,8 +9,15 @@ test('navega por tema y conserva una sola cartografía, selecciones y foco', asy
     page.getByText('Escenario actualizado · los resultados cambian al editar los parámetros.'),
   ).toBeVisible();
   await expect(page.locator('.workspace-panel')).toBeHidden();
+  await page.getByRole('link', { name: 'Saltar al contenido' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#map-distance')).toBeFocused();
   const canvas = await page.locator('.map-canvas').elementHandle();
   await page.getByRole('link', { name: 'Economía', exact: true }).click();
+  await expect(page).toHaveURL(/#\/economia\/caja$/);
+  await page.getByRole('link', { name: 'Saltar al contenido' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#workspace-panel-title')).toBeFocused();
   await expect(page).toHaveURL(/#\/economia\/caja$/);
   await page.getByRole('link', { name: 'Costos', exact: true }).click();
   await page.getByText('Consultar el desglose económico', { exact: true }).click();
@@ -67,4 +74,54 @@ test('reproduce, pausa en reserva y conserva escenario y archivos', async ({ pag
   expect(await page.locator('#map-distance').inputValue()).toBe(paused);
   expect(await page.evaluate(() => localStorage.getItem('hackelectro:scenario:v1'))).toBe(before);
   expect(await page.locator('.print-report').textContent()).toBe(report);
+});
+
+test('todas las áreas admiten teclado, panel ampliado y pantalla equivalente a zoom 200%', async ({
+  page,
+}) => {
+  const { default: AxeBuilder } = await import('@axe-core/playwright');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Reproducir recorrido' })).toBeEnabled();
+  for (const path of [
+    '/configurar',
+    '/economia/caja',
+    '/economia/costos',
+    '/economia/pruebas',
+    '/economia/alternativas',
+    '/ambiente',
+    '/operacion/energia',
+    '/operacion/condiciones',
+    '/operacion/pruebas',
+    '/archivos',
+    '/fuentes',
+  ]) {
+    await page.evaluate((v) => (location.hash = v), path);
+    await expect(page.locator('.workspace-view:not([hidden])')).toBeVisible();
+    const violations = (await new AxeBuilder({ page }).analyze()).violations;
+    expect(violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual([]);
+  }
+  await page.getByRole('button', { name: 'Ampliar panel' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Fuentes' });
+  await expect(dialog).toBeVisible();
+  await page.getByRole('button', { name: 'Cerrar panel' }).focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'Restaurar panel' })).toBeFocused();
+  const links = dialog.locator('a[href]');
+  await links.last().focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Restaurar panel' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await page.setViewportSize({ width: 720, height: 450 });
+  await page.getByRole('link', { name: 'Configurar', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Configurar' })).toBeVisible();
+  const bounds = (await page.locator('.workspace-panel').boundingBox())!;
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(450);
+  await page.getByLabel('Longitud del ciclo de prueba').fill('21');
+  await expect(page.getByLabel('Longitud del ciclo de prueba')).toHaveValue('21');
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByRole('button', { name: 'Cerrar panel' }).click();
+  await expect(page.getByRole('link', { name: 'Configurar', exact: true })).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

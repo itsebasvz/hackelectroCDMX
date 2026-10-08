@@ -35,6 +35,7 @@ it('avanza a ritmo visual y se detiene exactamente en la reserva o el fin', () =
     progress: 8000,
     stop: 'end',
   });
+  expect(advancePlayback(0, 1000, 60000, 1, 1000, false)).toEqual({ progress: 1000, stop: 'end' });
 });
 it('la reserva exige continuar explícitamente y no repite el recorrido', () => {
   const onProgress = vi.fn();

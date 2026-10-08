@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { init, use, type EChartsCoreOption } from 'echarts/core';
+import { init, use, type EChartsCoreOption, type EChartsType } from 'echarts/core';
 import { LineChart, BarChart } from 'echarts/charts';
 import {
   GridComponent,
@@ -20,20 +20,29 @@ use([
 export default function Chart({ option, label }: { option: EChartsCoreOption; label: string }) {
   const container = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!container.current) return;
-    const chart = init(container.current, undefined, { renderer: 'svg' });
-    chart.setOption({
-      ...option,
-      animation: false,
-      textStyle: { fontFamily: 'Inter', color: '#55585A' },
-    });
-    const observer = new ResizeObserver(() => {
-      if (container.current?.clientWidth && container.current.clientHeight) chart.resize();
-    });
-    observer.observe(container.current);
+    const element = container.current;
+    if (!element) return;
+    let chart: EChartsType | null = null;
+    const render = () => {
+      if (!element.clientWidth || !element.clientHeight) {
+        chart?.dispatchAction({ type: 'hideTip' });
+        return;
+      }
+      if (!chart) {
+        chart = init(element, undefined, { renderer: 'svg' });
+        chart.setOption({
+          ...option,
+          animation: false,
+          textStyle: { fontFamily: 'Inter', color: '#55585A' },
+        });
+      } else chart.resize();
+    };
+    const observer = new ResizeObserver(render);
+    observer.observe(element);
+    render();
     return () => {
       observer.disconnect();
-      chart.dispose();
+      chart?.dispose();
     };
   }, [option]);
   return <div ref={container} className="chart" role="img" aria-label={label} />;

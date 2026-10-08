@@ -340,7 +340,7 @@ export default function RouteMap({
     (m.getSource('selected') as maplibregl.GeoJSONSource).setData(traced);
     const wide = (container.current?.clientWidth ?? 0) >= 1024;
     const hospitalContext = v.context && v.routeId === 'M09-514' ? v.hospitals : null;
-    const fitKey = `${v.routeId}:${wide}:${hospitalContext?.features.length ?? 0}`;
+    const fitKey = `${v.routeId}:${container.current?.clientWidth}:${container.current?.clientHeight}:${hospitalContext?.features.length ?? 0}`;
     if (selected.features.length && fitted.current !== fitKey) {
       fitRoute(m, selected, hospitalContext, wide);
       fitted.current = fitKey;
@@ -942,6 +942,17 @@ export default function RouteMap({
         >
           <summary>Opciones del recorrido</summary>
           <div className="journey-toolbar">
+            {limit?.withinDay && (
+              <button
+                className="secondary journey-limit"
+                disabled={!result || stale}
+                onClick={jumpLimit}
+              >
+                <Flag size={14} />
+                Ir a la reserva
+              </button>
+            )}
+
             <div className="journey-control journey-navigation-control">
               <span className="journey-control-label">Navegación del día</span>
               <div className="map-navigation" role="group" aria-label="Navegación del día simulado">

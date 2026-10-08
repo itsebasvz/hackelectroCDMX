@@ -6,12 +6,12 @@
   --dock-width: 156px;
   --work-left: 196px;
   --work-top: 104px;
-  --work-bottom: 188px;
   position: relative;
   height: 100dvh;
   min-height: 620px;
   overflow: hidden;
   background: #f8f5f6;
+  --work-bottom: 228px;
 }
 .workspace-surround {
   height: 100%;
@@ -312,10 +312,12 @@
 .journey-options > summary {
   color: var(--primary);
   font-size: 11px;
-  min-height: 36px;
   display: flex;
   align-items: center;
   cursor: pointer;
+  padding: 0;
+  margin: 0;
+  min-height: 44px;
 }
 .simulation-map .journey-options .journey-toolbar {
   position: absolute;
@@ -334,7 +336,7 @@
   font-size: 12px;
 }
 .simulation-map .map-scrub {
-  padding-top: 32px;
+  padding-top: 8px;
 }
 .simulation-map .map-scrub label {
   font-size: 12px;
@@ -536,6 +538,7 @@
   padding: 0;
   max-height: none;
   overflow: visible;
+  height: auto;
 }
 .workspace-view .controls-panel .field label {
   font-size: 12px;
@@ -779,6 +782,7 @@
     right: 12px;
     width: 145px;
     font-size: 10px;
+    display: none;
   }
   .simulation-map .maplibregl-ctrl-top-right {
     top: 205px;
@@ -787,9 +791,6 @@
   .simulation-map .map-reframe {
     top: 304px;
     right: 14px;
-  }
-  .simulation-map .map-hud .map-legend {
-    display: none;
   }
   .simulation-map .map-caption {
     left: 12px;
@@ -945,9 +946,6 @@
   margin-left: auto;
   font-size: 11px;
 }
-.simulation-map .map-scrub {
-  padding-top: 8px;
-}
 .simulation-map .journey-options {
   top: 18px;
 }
@@ -967,5 +965,107 @@
   }
   .simulation-map .journey-options {
     top: 68px;
+  }
+}
+.workspace-view .diagnostic-checks {
+  display: block;
+}
+@media (max-width: 520px) {
+  .workspace-navigation > a {
+    min-width: 0;
+    flex-direction: column;
+    height: 58px;
+    gap: 4px;
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+  .simulation-map .map-tools .check-field {
+    flex: 1;
+  }
+}
+.simulation-map [data-panel='right'] .map-tools .check-field {
+  display: none;
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .simulation-map [data-panel='right'] .map-tools {
+    display: none;
+  }
+}
+@media (max-width: 1023px) {
+  .simulation-map [data-panel='right'] .map-tools .check-field {
+    display: flex;
+  }
+}
+.journey-limit {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+@media (max-height: 800px) and (min-width: 1024px) {
+  .simulation-map .map-day-card {
+    display: block;
+  }
+  .simulation-map .map-day-card p,
+  .simulation-map .map-day-card small,
+  .simulation-map .map-day-card .map-card-heading {
+    display: none;
+  }
+  .simulation-map .map-day-card .map-day-verdict {
+    font-size: 12px;
+  }
+  .simulation-map .map-day-card .text-button {
+    font-size: 11px;
+  }
+}
+@media (max-width: 1023px) {
+  .workspace-status {
+    top: 148px;
+  }
+  .simulation-map .map-tools {
+    top: 164px;
+  }
+  .simulation-map .map-point-card {
+    top: 224px;
+  }
+  .simulation-map .journey-options {
+    position: static;
+    margin-top: 4px;
+  }
+  .journey-options > summary {
+    min-height: 28px;
+    justify-content: flex-end;
+  }
+  .simulation-map .journey-options .journey-toolbar {
+    bottom: calc(100% + 8px);
+    right: 0;
+  }
+}
+@media (max-width: 1023px) {
+  .simulation-app {
+    min-height: min(560px, 100dvh);
+  }
+}
+@media (max-width: 1023px) and (max-height: 620px) {
+  .simulation-map .map-point-card {
+    display: none;
+  }
+  .simulation-map .journey-segments,
+  .playback-note {
+    display: none;
+  }
+  .simulation-map .map-journey {
+    bottom: 102px;
+    padding: 10px;
+  }
+}
+.panel-engine-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  color: var(--muted);
+}
+@media (max-width: 520px) {
+  .panel-engine-status {
+    max-width: 80px;
   }
 }

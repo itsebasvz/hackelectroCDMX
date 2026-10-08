@@ -1,12 +1,6 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {
-  ArrowUpRight,
-  Download,
-  Upload,
-  Printer,
-  Save,
-  RotateCcw,
   Search,
   MapPin,
   BookOpen,
@@ -37,11 +31,11 @@ import { useWorkspaceRoute, navigate, type WorkspacePath } from './features/navi
 import { presentedConditions } from './features/conditions';
 import Optimizer from './features/Optimizer';
 import Report from './features/Report';
-import { download, serializeScenario, parseScenario, resultsCsv } from './features/files';
-import { num } from './ui/format';
 import { sensitivityVariables } from './domain/explore';
+import { num } from './ui/format';
 import './workspace.css';
-import environmentalSources from '../docs/desarrollo/fuentes-ambientales.json';
+import FilesPanel from './features/FilesPanel';
+import SourcesPanel from './features/SourcesPanel';
 const RouteMap = lazy(() => import('./features/RouteMap'));
 const SAVED_KEY = 'hackelectro:saved:v1';
 const normalize = (text: string) =>
@@ -86,7 +80,6 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [saved, setSaved] = useState<Scenario[]>(readSaved);
   const [name, setName] = useState(scenario.name);
-  const file = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const controller = new AbortController();
     fetch('/data/routes.json', { signal: controller.signal })
@@ -112,13 +105,6 @@ export default function App() {
         a.name.localeCompare(b.name, 'es'),
     );
   const valid = engine.status === 'ready' && engine.result !== null;
-  const guarded = async (action: () => Promise<void> | void) => {
-    try {
-      await action();
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'No se pudo completar la acción.');
-    }
-  };
   const save = () => {
     const parsed = ScenarioSchema.safeParse({ ...scenario, name: name.trim() || scenario.name });
     if (!parsed.success) {
@@ -238,233 +224,21 @@ export default function App() {
       />
     ),
     '/archivos': (
-      <section className="panel scenario-tools">
-        <div className="section-heading">
-          <span className="eyebrow">COPIAS Y ARCHIVOS REPRODUCIBLES</span>
-          <h2>Guardar y compartir la evaluación</h2>
-          <p>
-            Guardar conserva una copia local. Exportar incluye parámetros, catálogo, fuentes y
-            versiones para recalcular el escenario.
-          </p>
-        </div>
-        <div className="sharing-groups">
-          <section className="sharing-local" aria-labelledby="sharing-local-title">
-            <h3 id="sharing-local-title">Copias en este navegador</h3>
-            <p>Guarda o abre una copia local. Importa un JSON para recalcular sus parámetros.</p>
-            <div className="save-row">
-              <div className="field">
-                <label htmlFor="scenario-name">Nombre del escenario</label>
-                <input
-                  id="scenario-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={200}
-                />
-              </div>
-              <button className="secondary" onClick={save} disabled={!valid}>
-                <Save size={16} />
-                Guardar escenario
-              </button>
-              {saved.length > 0 && (
-                <div className="field">
-                  <label htmlFor="saved-choice">Abrir un escenario guardado</label>
-                  <select
-                    id="saved-choice"
-                    value=""
-                    onChange={(e) => {
-                      const item = saved[Number(e.target.value)];
-                      if (item) setScenario(structuredClone(item));
-                    }}
-                  >
-                    <option value="" disabled>
-                      Seleccionar copia local…
-                    </option>
-                    {saved.map((item, i) => (
-                      <option key={`${item.name}-${i}`} value={i}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-            <button className="secondary" onClick={() => file.current?.click()}>
-              <Upload size={16} />
-              Importar escenario JSON
-            </button>
-            <input
-              ref={file}
-              type="file"
-              accept=".json,application/json"
-              hidden
-              onChange={(e) => {
-                const selected = e.target.files?.[0];
-                if (selected)
-                  void guarded(async () => {
-                    if (selected.size > 5_000_000) throw new Error('El archivo supera 5 MB.');
-                    setScenario(await parseScenario(await selected.text()));
-                    setNotice('Escenario importado y enviado al motor para recalcular.');
-                  });
-                e.target.value = '';
-              }}
-            />
-          </section>
-          <section className="sharing-downloads" aria-labelledby="sharing-downloads-title">
-            <h3 id="sharing-downloads-title">Archivos para compartir</h3>
-            <div className="download-choice">
-              <button className="primary" disabled={!valid} onClick={() => window.print()}>
-                <Printer size={16} />
-                Descargar informe / PDF
-              </button>
-              <p>
-                Versión imprimible con diagnóstico, detalle económico, flujo, entradas y fuentes.
-                Guarda como PDF desde el diálogo de impresión.
-              </p>
-            </div>
-            <div className="download-choice">
-              <button
-                className="secondary"
-                disabled={!valid}
-                onClick={() =>
-                  void guarded(async () =>
-                    download(
-                      await serializeScenario({
-                        ...scenario,
-                        name: name.trim() || scenario.name,
-                      }),
-                      'hackelectro-escenario.json',
-                      'application/json',
-                    ),
-                  )
-                }
-              >
-                <Download size={16} />
-                Descargar escenario JSON
-              </button>
-              <p>Parámetros, catálogo y fuentes para reproducir y recalcular la evaluación.</p>
-            </div>
-            <div className="download-choice">
-              <button
-                className="secondary"
-                disabled={!valid}
-                onClick={() => {
-                  if (engine.result)
-                    download(
-                      resultsCsv(engine.result),
-                      'hackelectro-resultados.csv',
-                      'text/csv;charset=utf-8',
-                    );
-                }}
-              >
-                <Download size={16} />
-                Descargar resultados CSV
-              </button>
-              <p>Entradas y resultados tabulares para revisar en una hoja de cálculo.</p>
-            </div>
-          </section>
-        </div>
-        <div className="restore-action">
-          <button
-            className="text-button"
-            onClick={() => {
-              reset();
-              setNotice('Se restauró el ejemplo inicial; tus escenarios guardados permanecen.');
-            }}
-          >
-            <RotateCcw size={15} />
-            Restaurar ejemplo
-          </button>
-        </div>
-        {storageError && (
-          <p className="notice" role="status">
-            {storageError}
-          </p>
-        )}
-      </section>
+      <FilesPanel
+        scenario={scenario}
+        result={engine.result}
+        name={name}
+        onName={setName}
+        saved={saved}
+        onSave={save}
+        onChange={setScenario}
+        onReset={reset}
+        onNotice={setNotice}
+        storageError={storageError}
+        valid={valid}
+      />
     ),
-    '/fuentes': (
-      <section className="panel source-view">
-        <h3>Evidencia y condiciones de uso</h3>
-        <p>
-          La fuente orienta el parámetro; los supuestos permiten explorar, sin sustituir la
-          comprobación del ramal.
-        </p>{' '}
-        <div className="evidence-scale">
-          <strong>A</strong> Ruta 1 oficial <strong>B</strong> Zona oficial <strong>C</strong> CDMX
-          comparable <strong>D</strong> México <strong>E</strong> Externo <strong>F</strong>{' '}
-          Supuesto
-        </div>
-        <p>
-          La naturaleza se registra por separado. Un hecho comercial mexicano es D, no una medición
-          de Ruta 1. Los parámetros modificados se identifican como F.
-        </p>
-        <h2>Datos y factores utilizados en los cálculos</h2>
-        <p>
-          Los factores ambientales M15 y S20 tienen alcances diferentes. Las ediciones usan los
-          parámetros del escenario.
-        </p>
-        {scenario.catalog.sources.map((source) => (
-          <article className="source" key={source.id}>
-            <span className="source-id">{source.id}</span>
-            <div>
-              <h3>
-                <a href={source.url} target="_blank" rel="noreferrer">
-                  {source.title}
-                  <ArrowUpRight size={14} />
-                </a>
-              </h3>
-              <small>
-                {source.date} · {source.scope}
-              </small>
-              <p>{source.limitation}</p>
-              <small>{source.license}</small>
-            </div>
-          </article>
-        ))}
-        <h2>Contexto científico ambiental</h2>
-        <p>Estas referencias explican el alcance humano; no añaden factores a los cálculos.</p>
-        {environmentalSources.references
-          .filter((source) => source.role === 'context')
-          .map((source) => (
-            <article className="source" key={source.id}>
-              <span className="source-id">{source.id}</span>
-              <div>
-                <h3>
-                  <a href={source.url} target="_blank" rel="noreferrer">
-                    {source.institution} · {source.title}
-                    <ArrowUpRight size={14} />
-                  </a>
-                </h3>
-                <small>
-                  Publicación: {source.publication} · consulta: {source.consulted}
-                </small>
-                <p>{source.claim}</p>
-                <small>
-                  {source.locator} · {source.scope}. {source.license}. {source.recovery}.
-                </small>
-              </div>
-            </article>
-          ))}
-        <a
-          href="https://github.com/itsebasvz/hackelectroCDMX/blob/main/docs/documento-maestro-ruta1.md"
-          target="_blank"
-          rel="noreferrer"
-          className="secondary"
-        >
-          Abrir documento maestro <ArrowUpRight size={16} />
-        </a>
-        <footer>
-          <strong>Equipo Aragonenes</strong>
-          <p>
-            Proyecto estudiantil independiente; sin aval institucional. Código MIT · documentación
-            propia CC BY 4.0 · fuentes con sus derechos.
-          </p>
-          <a href="/third-party/licenses.json" target="_blank" rel="noreferrer">
-            Licencias de dependencias
-          </a>
-        </footer>
-      </section>
-    ),
+    '/fuentes': <SourcesPanel scenario={scenario} />,
   };
   const tabs =
     route.area === 'economia'
@@ -487,7 +261,13 @@ export default function App() {
         <div className="workspace-surround" inert={modal || undefined}>
           <a
             className="skip-link"
-            href={route.path === '/mapa' ? '#map-distance' : '#workspace-panel-title'}
+            href={route.path === '/mapa' ? '#contenido' : '#workspace-panel-title'}
+            onClick={(event) => {
+              event.preventDefault();
+              document
+                .getElementById(route.path === '/mapa' ? 'map-distance' : 'workspace-panel-title')
+                ?.focus({ preventScroll: true });
+            }}
           >
             Saltar al contenido
           </a>
@@ -578,23 +358,26 @@ export default function App() {
               />
             </Suspense>
           </main>
-          <a
-            className={`scenario-health ${failures ? 'has-issues' : ''}`}
-            href="#/operacion/condiciones"
-          >
-            <span>
-              {failures ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />} Estado del
-              escenario
-            </span>
-            <b>
-              {engine.result
-                ? failures
-                  ? `${failures} condiciones por resolver`
-                  : 'Cálculos favorables · pendientes externos'
-                : 'Preparando evaluación…'}
-            </b>
-            <ChevronRight size={16} />
-          </a>
+          <aside aria-label="Resumen de condiciones">
+            {' '}
+            <a
+              className={`scenario-health ${failures ? 'has-issues' : ''}`}
+              href="#/operacion/condiciones"
+            >
+              <span>
+                {failures ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />} Estado del
+                escenario
+              </span>
+              <b>
+                {engine.result
+                  ? failures
+                    ? `${failures} condiciones por resolver`
+                    : 'Cálculos favorables · pendientes externos'
+                  : 'Preparando evaluación…'}
+              </b>
+              <ChevronRight size={16} />
+            </a>
+          </aside>
         </div>
         <div className="workspace-status" role="status" inert={modal || undefined}>
           {engine.status === 'calculating'
@@ -610,6 +393,13 @@ export default function App() {
           expanded={expanded}
           onExpand={() => setExpanded((v) => !v)}
           modal={modal}
+          calculationStatus={
+            engine.status === 'ready'
+              ? 'Actualizado'
+              : engine.status === 'calculating'
+                ? 'Calculando…'
+                : 'Revisar entradas'
+          }
         >
           {tabs.length > 0 && (
             <nav className="workspace-tabs" aria-label={`Vistas de ${route.title}`}>
@@ -635,6 +425,9 @@ export default function App() {
               <div
                 key={path}
                 className="workspace-view"
+                tabIndex={0}
+                role="region"
+                aria-label={`Contenido de ${route.title}`}
                 hidden={route.path !== path}
                 aria-busy={engine.status === 'calculating' && path !== '/configurar'}
               >

@@ -11,7 +11,7 @@ export function advancePlayback(
   accepted: boolean,
 ) {
   const next = Math.min(max, progress + ((Math.max(0, elapsedMs) * max) / 60_000) * speed);
-  if (!accepted && limit !== null && progress <= limit && next >= limit)
+  if (!accepted && limit !== null && limit < max - 1e-9 && progress <= limit && next >= limit)
     return { progress: limit, stop: 'reserve' as Stop };
   return { progress: next, stop: (next >= max ? 'end' : '') as Stop };
 }
@@ -50,7 +50,7 @@ export function usePlayback({
   };
   const play = () => {
     if (!enabled || progress >= max) return;
-    if (limit !== null && progress >= limit && !accepted.current) {
+    if (limit !== null && limit < max - 1e-9 && progress >= limit && !accepted.current) {
       setStop('reserve');
       return;
     }
