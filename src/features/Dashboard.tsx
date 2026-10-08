@@ -14,7 +14,8 @@ import {
   groupBudgetPhases,
   monthlyBudget,
   type BudgetPhase,
-  type SensitivityPoint,
+  type SensitivitySeries,
+  type SensitivityVariable,
 } from '../domain/explore';
 import Sensitivity from './Sensitivity';
 const Chart = lazy(() => import('../ui/Chart'));
@@ -188,13 +189,13 @@ export default function Dashboard({
   points,
   sensitivityError,
   stale,
-  onCycles,
+  onExplore,
 }: {
   result: Result;
-  points: SensitivityPoint[] | null;
+  points: SensitivitySeries[] | null;
   sensitivityError: string;
   stale: boolean;
-  onCycles: (cycles: number) => void;
+  onExplore: (variable: SensitivityVariable, value: number) => void;
 }) {
   const s = r.scenario;
   const [month, setMonth] = useState(1);
@@ -689,7 +690,7 @@ export default function Dashboard({
         points={points}
         error={sensitivityError}
         disabled={stale}
-        onApply={onCycles}
+        onApply={onExplore}
       />
     </div>
   );

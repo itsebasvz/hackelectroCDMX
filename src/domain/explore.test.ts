@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { defaultScenario } from '../data/defaults';
 import { evaluateScenario } from './evaluate';
-import { sensitivity, monthlyBudget, energyBudget, groupBudgetPhases } from './explore';
+import {
+  sensitivity,
+  explorationScenario,
+  explorationRange,
+  monthlyBudget,
+  energyBudget,
+  groupBudgetPhases,
+} from './explore';
 import {
   batteryLimit,
   consumptionAt,
@@ -75,14 +82,78 @@ describe('exploración explicable', () => {
   });
   it('sensibilidad usa el evaluador, conserva recaudo y alcanza umbrales', async () => {
     const s = defaultScenario();
-    const points = (await sensitivity(s))!;
+    const points = (await sensitivity(s))!.find((series) => series.variable === 'cycles')!.points;
     expect(points).toHaveLength(16);
-    const base = points.find((p) => p.cycles === s.operation.cycles)!;
+    const base = points.find((p) => p.value === s.operation.cycles)!;
     const r = evaluateScenario(s);
     expect(base.evMargin).toBe(r.ev.minMonthlyCash);
     expect(base.batteryKwh).toBe(r.dailyBatteryKwh);
     expect(points.at(-1)!.failures).toContain('battery');
     expect(await sensitivity(s, () => true)).toBeNull();
+  });
+  it('tres series equivalentes al evaluador cambian una sola entrada y conservan recaudo', async () => {
+    const s = defaultScenario();
+    const baseline = evaluateScenario(s);
+    const series = (await sensitivity(s))!;
+    expect(series.map((x) => x.variable)).toEqual(['cycles', 'consumption', 'electricityPrice']);
+    for (const data of series) {
+      expect(data.points.some((p) => p.value === data.current)).toBe(true);
+      expect(new Set(data.points.map((p) => p.value)).size).toBe(data.points.length);
+      for (const point of data.points) {
+        const input = explorationScenario(s, data.variable, point.value);
+        const restored = explorationScenario(input, data.variable, data.current);
+        expect(restored).toEqual(s);
+        const r = evaluateScenario(input);
+        expect(point).toMatchObject({
+          km: r.dailyKm,
+          batteryKwh: r.dailyBatteryKwh,
+          usableKwh: r.usableKwh,
+          gridKwh: r.dailyGridKwh,
+          chargeHours: r.charge.hours,
+          iceMargin: r.ice.minMonthlyCash,
+          evMargin: r.ev.minMonthlyCash,
+          constraints: r.constraints,
+        });
+        expect(r.ev.months.map((m) => m.revenue)).toEqual(baseline.ev.months.map((m) => m.revenue));
+        if (data.variable === 'electricityPrice') {
+          expect(r.charge).toEqual(baseline.charge);
+          expect(input.energy.demandPrice).toBe(s.energy.demandPrice);
+          expect(input.energy.fixedElectricity).toBe(s.energy.fixedElectricity);
+        }
+      }
+    }
+  });
+  it('respeta límites y precio cero, y conserva consumo actual exacto', async () => {
+    const s = defaultScenario();
+    s.energy.electricityPrice = 0;
+    expect(explorationRange(s, 'electricityPrice')).toHaveLength(11);
+    expect(explorationRange(s, 'electricityPrice').at(-1)).toBe(8);
+    for (const consumption of [0.01, 0.123456789, 100]) {
+      s.ev.consumption = consumption;
+      const range = explorationRange(s, 'consumption');
+      expect(range).toContain(consumption);
+      expect(Math.min(...range)).toBeGreaterThanOrEqual(0.01);
+      expect(Math.max(...range)).toBeLessThanOrEqual(100);
+    }
+    s.operation.cycles = 100;
+    expect(explorationRange(s, 'cycles')).toHaveLength(100);
+    s.energy.electricityPrice = 1000;
+    expect(Math.max(...explorationRange(s, 'electricityPrice'))).toBe(1000);
+  });
+  it('sin potencia y capital, ningún punto favorable; cancelación entre lotes', async () => {
+    const s = defaultScenario();
+    s.energy.siteKw = 0;
+    s.economy.ownCapital = 0;
+    s.operation.fare = 0;
+    const series = (await sensitivity(s))!;
+    for (const data of series)
+      for (const p of data.points) {
+        expect(p.chargeHours).toBe(Infinity);
+        expect(p.failures).toEqual(expect.arrayContaining(['charging', 'initial', 'monthly']));
+        expect(p.evMargin).toBeLessThan(0);
+      }
+    let checks = 0;
+    expect(await sensitivity(s, () => ++checks > 5)).toBeNull();
   });
   it('no cuenta ni dibuja saltos entre trazos; posición y selección son reversibles', () => {
     const fc: FeatureCollection<LineString> = {

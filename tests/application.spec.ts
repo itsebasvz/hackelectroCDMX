@@ -220,8 +220,15 @@ test('explora consumo, hospitales y sensibilidad sin alterar el recaudo', async 
     .click();
   await expect(page.locator('.hospital-callout')).toContainText('San Fernando 22');
   await page.getByRole('button', { name: 'Cerrar referencia hospitalaria' }).click();
-  await page.getByLabel('Explorar vueltas diarias').selectOption('4');
-  await page.getByRole('button', { name: 'Aplicar estas vueltas' }).click();
+  await expect(page.getByLabel('Valor explorado · Vueltas diarias')).toBeVisible();
+  const explorer = page.getByLabel('Valor explorado · Vueltas diarias');
+  await explorer.focus();
+  await explorer.press('Home');
+  await explorer.press('ArrowRight');
+  await explorer.press('ArrowRight');
+  await explorer.press('ArrowRight');
+  await expect(page.getByLabel('Ciclos diarios por unidad')).toHaveValue('8');
+  await page.getByRole('button', { name: 'Aplicar al escenario' }).click();
   await ready(page);
   await expect(page.getByLabel('Ciclos diarios por unidad')).toHaveValue('4');
   await expect(page.getByLabel('Ascensos diarios por unidad')).toHaveValue('320');

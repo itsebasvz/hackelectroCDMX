@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { ScenarioSchema, type Scenario, type Result, type SearchResult } from '../domain/schema';
 import { sections } from './fields';
 import { RequestGate, type Response, type Request } from '../worker/protocol';
-import type { SensitivityPoint } from '../domain/explore';
+import type { SensitivitySeries } from '../domain/explore';
 export function useEngine(scenario: Scenario) {
   const worker = useRef<Worker | null>(null);
   const evaluationGate = useRef(new RequestGate());
   const searchGate = useRef(new RequestGate());
   const [result, setResult] = useState<Result | null>(null);
   const [search, setSearch] = useState<SearchResult | null>(null);
-  const [points, setPoints] = useState<SensitivityPoint[] | null>(null);
+  const [points, setPoints] = useState<SensitivitySeries[] | null>(null);
   const [sensitivityError, setSensitivityError] = useState('');
   const [status, setStatus] = useState('calculating');
   const [error, setError] = useState('');

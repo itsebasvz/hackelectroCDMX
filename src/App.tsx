@@ -28,6 +28,7 @@ import Optimizer from './features/Optimizer';
 import Report from './features/Report';
 import { download, serializeScenario, parseScenario, resultsCsv } from './features/files';
 import { num } from './ui/format';
+import { sensitivityVariables } from './domain/explore';
 const RouteMap = lazy(() => import('./features/RouteMap'));
 const SAVED_KEY = 'hackelectro:saved:v1';
 const normalize = (text: string) =>
@@ -281,9 +282,10 @@ export default function App() {
               points={engine.points}
               sensitivityError={engine.sensitivityError}
               stale={!valid}
-              onCycles={(cycles) => {
-                setScenario(withValue(scenario, 'operation.cycles', cycles));
-                focusParameter('operation.cycles');
+              onExplore={(variable, value) => {
+                const path = sensitivityVariables[variable].path;
+                setScenario(withValue(scenario, path, value));
+                focusParameter(path);
               }}
             />
           ) : (

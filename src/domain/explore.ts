@@ -1,34 +1,94 @@
 import { evaluateScenario } from './evaluate';
 import type { Scenario, Result, Month } from './schema';
 
+export type SensitivityVariable = 'cycles' | 'consumption' | 'electricityPrice';
+export const sensitivityVariables = {
+  cycles: { label: 'Vueltas diarias', unit: 'vueltas/unidad/día', path: 'operation.cycles' },
+  consumption: { label: 'Consumo eléctrico', unit: 'kWh/km en batería', path: 'ev.consumption' },
+  electricityPrice: {
+    label: 'Precio de electricidad',
+    unit: 'MXN/kWh comprado',
+    path: 'energy.electricityPrice',
+  },
+} as const;
 export interface SensitivityPoint {
-  cycles: number;
+  value: number;
   km: number;
   batteryKwh: number;
   usableKwh: number;
+  gridKwh: number;
+  chargeHours: number;
+  chargeWindow: number;
   iceMargin: number;
   evMargin: number;
+  constraints: Result['constraints'];
   failures: string[];
 }
-/** Cada punto es un escenario completo; el recaudo no crece con las vueltas. */
-export async function sensitivity(s: Scenario, cancelled: () => boolean = () => false) {
-  const points: SensitivityPoint[] = [];
-  const max = Math.min(100, Math.max(12, 2 * s.operation.cycles));
-  for (let cycles = 1; cycles <= max; cycles++) {
-    if (cancelled()) return null;
-    const r = evaluateScenario({ ...s, operation: { ...s.operation, cycles } });
-    points.push({
-      cycles,
-      km: r.dailyKm,
-      batteryKwh: r.dailyBatteryKwh,
-      usableKwh: r.usableKwh,
-      iceMargin: r.ice.minMonthlyCash,
-      evMargin: r.ev.minMonthlyCash,
-      failures: r.constraints.filter((c) => c.status === 'fail').map((c) => c.id),
-    });
-    if (cycles % 4 === 0) await new Promise<void>((resolve) => setTimeout(resolve, 0));
+export interface SensitivitySeries {
+  variable: SensitivityVariable;
+  current: number;
+  points: SensitivityPoint[];
+}
+export function exploredValue(s: Scenario, variable: SensitivityVariable) {
+  return variable === 'cycles'
+    ? s.operation.cycles
+    : variable === 'consumption'
+      ? s.ev.consumption
+      : s.energy.electricityPrice;
+}
+/** Cambia exactamente una entrada; no modifica ingresos ni cargos fijos o de potencia. */
+export function explorationScenario(
+  s: Scenario,
+  variable: SensitivityVariable,
+  value: number,
+): Scenario {
+  if (variable === 'cycles') return { ...s, operation: { ...s.operation, cycles: value } };
+  if (variable === 'consumption') return { ...s, ev: { ...s.ev, consumption: value } };
+  return { ...s, energy: { ...s.energy, electricityPrice: value } };
+}
+export function explorationRange(s: Scenario, variable: SensitivityVariable): number[] {
+  const current = exploredValue(s, variable);
+  if (variable === 'cycles')
+    return Array.from({ length: Math.min(100, Math.max(12, 2 * current)) }, (_, i) => i + 1);
+  const min = variable === 'consumption' ? 0.01 : 0;
+  const max = variable === 'consumption' ? 100 : 1000;
+  const low = Math.max(min, current * 0.5);
+  const high = Math.min(max, variable === 'electricityPrice' && current === 0 ? 8 : current * 1.5);
+  const values = Array.from({ length: 11 }, (_, i) => low + ((high - low) * i) / 10);
+  // El punto central es exactamente la entrada, sin un duplicado por redondeo binario.
+  if (low === current * 0.5 && high === current * 1.5) values[5] = current;
+  return [...new Set([...values, current])].sort((a, b) => a - b);
+}
+/** Todos los puntos usan el evaluador. Cede el worker para recibir cancelaciones. */
+export async function sensitivity(
+  s: Scenario,
+  cancelled: () => boolean = () => false,
+): Promise<SensitivitySeries[] | null> {
+  const series: SensitivitySeries[] = [];
+  let count = 0;
+  for (const variable of Object.keys(sensitivityVariables) as SensitivityVariable[]) {
+    const points: SensitivityPoint[] = [];
+    for (const value of explorationRange(s, variable)) {
+      if (cancelled()) return null;
+      const r = evaluateScenario(explorationScenario(s, variable, value));
+      points.push({
+        value,
+        km: r.dailyKm,
+        batteryKwh: r.dailyBatteryKwh,
+        usableKwh: r.usableKwh,
+        gridKwh: r.dailyGridKwh,
+        chargeHours: r.charge.hours,
+        chargeWindow: s.energy.chargeHours,
+        iceMargin: r.ice.minMonthlyCash,
+        evMargin: r.ev.minMonthlyCash,
+        constraints: r.constraints,
+        failures: r.constraints.filter((c) => c.status === 'fail').map((c) => c.id),
+      });
+      if (++count % 4 === 0) await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    }
+    series.push({ variable, current: exploredValue(s, variable), points });
   }
-  return cancelled() ? null : points;
+  return cancelled() ? null : series;
 }
 export function energyBudget(r: Result) {
   return {

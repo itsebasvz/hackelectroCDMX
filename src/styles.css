@@ -3287,3 +3287,93 @@ footer > small {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.exploration-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 2fr;
+  gap: 24px;
+  align-items: end;
+  margin: 20px 0;
+}
+.exploration-values {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+}
+#exploration-value {
+  width: 100%;
+  accent-color: var(--primary);
+  min-height: 44px;
+}
+.exploration-band {
+  display: flex;
+  gap: 3px;
+  height: 26px;
+  margin: 8px 0;
+}
+.exploration-band span {
+  flex: 1;
+  background: #027a35;
+  border-radius: 3px;
+}
+.exploration-band .fail {
+  background: repeating-linear-gradient(135deg, #9d2148, #9d2148 4px, #f8e8ed 4px, #f8e8ed 7px);
+}
+.exploration-band .selected {
+  outline: 3px solid #55585a;
+  outline-offset: 2px;
+}
+.band-legend {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+}
+.band-legend span:first-child {
+  color: #027a35;
+}
+.band-legend span:last-child {
+  color: #9d2148;
+}
+.exploration-readings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+.exploration-readings article {
+  padding: 16px 0;
+  border-block: 1px solid var(--border);
+}
+.exploration-readings strong {
+  font-size: 22px;
+}
+.exploration-readings h3,
+.exploration-failures h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.exploration-readings progress {
+  width: 100%;
+  accent-color: var(--primary);
+}
+.exploration-cash .chart {
+  height: 210px;
+}
+.exploration-curves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+}
+.exploration-failures {
+  margin: 20px 0;
+}
+.sensitivity-panel p,
+.sensitivity-panel li,
+.sensitivity-insight p {
+  font-size: 14px;
+}
+@media (max-width: 899px) {
+  .exploration-controls,
+  .exploration-readings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
