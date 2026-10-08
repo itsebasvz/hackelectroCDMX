@@ -3771,3 +3771,10 @@ footer > small {
 .finance-panel-title > svg {
   color: var(--primary);
 }
+.budget-timeline-heading {
+  flex-wrap: wrap;
+}
+.budget-timeline-heading > div {
+  flex: 1;
+  min-width: min(260px, 100%);
+}
