@@ -3275,7 +3275,7 @@ footer > small {
 }
 @media (min-width: 1280px) {
   .diagnostic-scroll {
-    flex: 1;
+    flex: 1 1 0px;
     min-height: 0;
     height: 0;
     overflow-y: auto;
@@ -3497,4 +3497,42 @@ footer > small {
     border-top: 1px solid var(--border);
     padding: 24px 0 0;
   }
+}
+.dashboard .metric > span,
+.dashboard .metric small,
+.dashboard .chart-summary,
+.dashboard .chart-summary b,
+.dashboard .panel > small {
+  font-size: 13px;
+}
+.dashboard table {
+  font-size: 13px;
+}
+.dashboard thead th,
+.dashboard caption {
+  font-size: 12px;
+}
+.dashboard .comparison p {
+  font-size: 14px;
+}
+.dashboard .comparison .result-conclusion {
+  font-size: 16px;
+}
+.results-left .comparison {
+  margin-bottom: 0;
+}
+.dashboard details,
+.dashboard details li {
+  font-size: 14px;
+}
+.comparison-summary th,
+.comparison-summary td {
+  white-space: normal;
+  padding-inline: 8px;
+}
+.comparison-summary td {
+  white-space: nowrap;
+}
+.comparison-summary caption {
+  white-space: normal;
 }

@@ -78,9 +78,9 @@ export default function Diagnostic({
         aria-label="Condiciones del diagnóstico"
       >
         <h3>Condiciones calculadas</h3>
-        {render(conditions.filter((c) => conditionParameters[c.id]))}
+        {render(conditions.filter((c) => c.status !== 'pending'))}
         <h3>Comprobaciones externas</h3>
-        {render(conditions.filter((c) => !conditionParameters[c.id]))}
+        {render(conditions.filter((c) => c.status === 'pending'))}
       </div>
       <div className="protected-note">
         <Users size={18} />

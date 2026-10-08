@@ -22,7 +22,17 @@ export default function Environment({ result: r }: { result: Result }) {
     const base = {
       tooltip: { trigger: 'axis', appendTo: 'body', confine: true },
       grid: { left: 110, right: 35, top: 55, bottom: 55 },
-      xAxis: { type: 'value', nameLocation: 'middle', nameGap: 32 },
+      xAxis: {
+        type: 'value',
+        nameLocation: 'middle',
+        nameGap: 32,
+        splitNumber: 3,
+        axisLabel: {
+          hideOverlap: true,
+          formatter: (value: number) =>
+            Math.abs(value) >= 1000 ? `${num(value / 1000, 0)} mil` : num(value, 1),
+        },
+      },
       yAxis: { type: 'category', data: ['Combustión', 'Eléctrico'] },
     };
     return [

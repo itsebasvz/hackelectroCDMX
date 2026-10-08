@@ -99,7 +99,7 @@ export function ComparisonTable({ r, concise = false }: { r: Result; concise?: b
     ['Aportación aplicada a adquisición', mxn(r.ice.supportCapital), mxn(r.ev.supportCapital)],
     ['Principal financiado inicial', mxn(r.ice.principal), mxn(r.ev.principal)],
     ['Pago mensual inicial', mxn(r.ice.payment), mxn(r.ev.payment)],
-    ['Menor margen mensual', mxn(r.ice.minMonthlyCash), mxn(r.ev.minMonthlyCash)],
+    ['Resultado de caja mensual más bajo', mxn(r.ice.minMonthlyCash), mxn(r.ev.minMonthlyCash)],
     ['Deuda pendiente · mes 60', mxn(r.ice.debtRemaining), mxn(r.ev.debtRemaining)],
     ['Reserva restante · mes 60', mxn(r.ice.reserveEnd), mxn(r.ev.reserveEnd)],
     ['Valor residual supuesto', mxn(r.ice.residual), mxn(r.ev.residual)],
@@ -117,7 +117,7 @@ export function ComparisonTable({ r, concise = false }: { r: Result; concise?: b
       role="region"
       aria-label="Comparación detallada desplazable"
     >
-      <table className="comparison-table">
+      <table className={`comparison-table${concise ? ' comparison-summary' : ''}`}>
         <caption>Comparación de la flota · MXN constantes · horizonte de 60 meses</caption>
         <thead>
           <tr>
