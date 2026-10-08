@@ -113,3 +113,21 @@ Las pruebas cubren casos analíticos, energía y carga, saldo financiero, asigna
 ## Exploración explicativa de la interfaz
 
 El rediseño no modifica las ecuaciones del modelo 1.0.0. [Interfaz de evaluación](interfaz-evaluacion.md) documenta las transformaciones para presupuesto mensual, energía, consumo acumulado por distancia y sensibilidad. El [dashboard explicativo](redisenio-dashboard.md) amplía las series a consumo y precio eléctrico y documenta las conversiones ambientales. La sensibilidad invoca el evaluador completo y conserva recaudo y condiciones financieras; el mapa distribuye consumo de manera uniforme y no conecta artificialmente trazos. Las referencias hospitalarias son contexto ajeno al cálculo. La brecha de capital inicial no sustituye la aportación mínima encontrada por el optimizador.
+
+## Análisis de capacidad de pago y prueba de recaudo
+
+Actualización 2026-10-07. `financialAnalysis` transforma los flujos existentes en el dominio, sin alterar las ecuaciones anteriores, las entradas, el optimizador ni el JSON v1. Se analizan los 60 meses por tecnología:
+
+```text
+recursos antes de pagar el activo = resultado de caja + pago del activo
+holgura/brecha = recursos antes del activo − pago previsto = resultado de caja
+holgura equivalente en recaudo (%) = caja positiva / recaudo positivo × 100
+```
+
+Los recursos disponibles ya descuentan operación, personal presupuestado, ingreso objetivo del concesionario, provisión mensual y reposición no cubierta. Pueden ser negativos: en ese caso una cuota cero tampoco resuelve el presupuesto. El porcentaje se omite con déficit, caja cero o recaudo cero; es equivalencia monetaria, no probabilidad, recomendación bancaria ni umbral general de viabilidad. La conclusión describe suficiencia del presupuesto simulado; una caja no negativa no acredita salario neto, prestaciones ni viabilidad integral. El incumplimiento del presupuesto laboral frente al objetivo sigue siendo una condición independiente.
+
+El puente parte de la caja de combustión y suma diferencias de operación, pagos del activo y reserva/reposición hasta la caja eléctrica. Si difieren recaudo, personal o ingreso del concesionario, agrega esas contribuciones. Los cálculos suman/restan centavos enteros para conciliar ambos resultados exactamente. La provisión mensual se mantiene separada del saldo de reserva; sólo para reposiciones programadas se presenta costo, cobertura con reserva y faltante que el evaluador ya descuenta de caja. No se usa reserva para financiar déficits recurrentes ni se modela cobertura de averías.
+
+`revenueStress` ejecuta `evaluateScenario` para 31 caídas del recaudo (0–30%, pasos de un punto), reduciendo únicamente `operation.boardings`. Conserva tarifa, servicio, flota, costos, financiamiento e ingresos objetivo. No redondea ascensos a enteros: son promedios supuestos y el evaluador redondea el recaudo mensual a centavos. Cada punto devuelve caja mensual, primer mes con mínimo de caja y conteo de meses negativos para ambas tecnologías. La selección inicial de 10% y el rango son elecciones de la herramienta, sin sustento probabilístico. Cede ejecución entre lotes, permite cancelación y sus respuestas se descartan por identificador al editar, incluso ante invalidez. Estos resultados temporales no se incluyen en guardado, JSON, CSV ni informe.
+
+La curva de deuda permanece como detalle de amortización bajo los pagos previstos; continúa descendiendo aun cuando la caja del mes sea negativa. No acredita capacidad de pago. Una renta conserva su pago mensual y no genera deuda del operador. Los plazos posteriores al mes 60 conservan su deuda pendiente.

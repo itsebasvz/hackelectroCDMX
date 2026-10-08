@@ -2,6 +2,8 @@ import { evaluateScenario } from '../domain/evaluate';
 import { findConditions, SearchCancelled } from '../domain/optimize';
 import type { Request, Response } from './protocol';
 import { sensitivity } from '../domain/explore';
+import { revenueStress } from '../domain/financialAnalysis';
+let revenueStressId = 0;
 let searchId = 0;
 let sensitivityId = 0;
 const send = (response: Response) => self.postMessage(response);
@@ -15,10 +17,19 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     sensitivityId = request.id;
     return;
   }
+  if (request.type === 'cancel-revenue-stress') {
+    revenueStressId = request.id;
+    return;
+  }
   try {
     if (request.type === 'evaluate')
       send({ type: 'evaluated', id: request.id, result: evaluateScenario(request.scenario) });
-    else if (request.type === 'sensitivity') {
+    else if (request.type === 'revenue-stress') {
+      revenueStressId = request.id;
+      const points = await revenueStress(request.scenario, () => revenueStressId !== request.id);
+      if (points && revenueStressId === request.id)
+        send({ type: 'revenue-stress', id: request.id, points });
+    } else if (request.type === 'sensitivity') {
       sensitivityId = request.id;
       const points = await sensitivity(request.scenario, () => sensitivityId !== request.id);
       if (points && sensitivityId === request.id)
