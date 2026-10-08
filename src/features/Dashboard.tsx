@@ -4,10 +4,8 @@ import {
   Coins,
   Users,
   ArrowUpRight,
-  Clock3,
   CheckCircle2,
   AlertCircle,
-  HelpCircle,
 } from 'lucide-react';
 import type { Result, FinancialResult } from '../domain/schema';
 import { mxn, num } from '../ui/format';
@@ -20,14 +18,6 @@ import {
 } from '../domain/explore';
 import Sensitivity from './Sensitivity';
 const Chart = lazy(() => import('../ui/Chart'));
-const StatusIcon = ({ status }: { status: string }) =>
-  status === 'pass' ? (
-    <CheckCircle2 size={17} />
-  ) : status === 'fail' ? (
-    <AlertCircle size={17} />
-  ) : (
-    <HelpCircle size={17} />
-  );
 
 function describeBudgetPhase(phase: BudgetPhase, r: Result) {
   const replacement = r.ev.months.find(
@@ -83,7 +73,7 @@ function financeEvents(r: Result) {
   return events;
 }
 
-export function ComparisonTable({ r }: { r: Result }) {
+export function ComparisonTable({ r, concise = false }: { r: Result; concise?: boolean }) {
   const rows: [string, string, string][] = [
     ['Costo económico · 5 años', mxn(r.ice.economicCost), mxn(r.ev.economicCost)],
     [
@@ -117,6 +107,7 @@ export function ComparisonTable({ r }: { r: Result }) {
       `${num(r.dailyGridKwh, 2)} kWh comprados`,
     ],
   ];
+  const visibleRows = concise ? [rows[0]!, rows[1]!, rows[5]!, rows[10]!] : rows;
   return (
     <div
       className="table-scroll"
@@ -129,12 +120,14 @@ export function ComparisonTable({ r }: { r: Result }) {
         <thead>
           <tr>
             <th scope="col">Indicador</th>
-            <th scope="col">{r.scenario.ice.fuel === 'diesel' ? 'Diésel' : 'Gasolina'}</th>
+            <th scope="col">
+              Combustión · {r.scenario.ice.fuel === 'diesel' ? 'diésel' : 'gasolina'}
+            </th>
             <th scope="col">Eléctrico</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map(([label, ice, ev]) => (
+          {visibleRows.map(([label, ice, ev]) => (
             <tr key={label}>
               <th scope="row">{label}</th>
               <td>{ice}</td>
@@ -386,7 +379,7 @@ export default function Dashboard({
           <h2>¿Qué cambia al electrificar?</h2>
         </div>
         <span className={`pill ${r.passes ? 'positive' : 'warning'}`}>
-          <StatusIcon status={r.passes ? 'pass' : 'fail'} />
+          {r.passes ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
           {r.passes
             ? 'Cumple cálculos · verificaciones pendientes'
             : `${failed.length} ${failed.length === 1 ? 'condición' : 'condiciones'} por resolver`}
@@ -432,46 +425,92 @@ export default function Dashboard({
           <small>Después de pagos, trabajo, ingreso del concesionario y reserva.</small>
         </article>
       </div>
-      <div className="chart-grid">
-        <section className="panel">
-          <div className="panel-title">
-            <h3>¿Alcanza la energía para el día?</h3>
-            <BatteryCharging size={19} />
-          </div>
-          <Suspense fallback={<div className="chart" />}>
-            <Chart
-              option={socOption}
-              label={`Disponible ${num(energy.available, 2)} kWh, requerida ${num(r.dailyBatteryKwh, 2)} kWh; margen ${num(energy.margin, 2)} kWh.`}
-            />
-          </Suspense>
-          <div className="chart-summary">
-            <span>
-              <b>{num(r.dailyKm, 1)} km</b> diarios por unidad
-            </span>
-            <span>
-              <b className={energy.margin < 0 ? 'negative' : ''}>{num(energy.margin, 2)} kWh</b>{' '}
-              {energy.margin < 0 ? 'déficit energético' : 'margen sin usar reserva'}
-            </span>
-            <span>
-              <b>
-                {Number.isFinite(r.charge.hours) ? `${num(r.charge.hours, 2)} h` : 'Sin potencia'}
-              </b>{' '}
-              para recargar la flota
-            </span>
-          </div>
-          <div className="charge-comparison">
-            <span>Recarga nocturna de la flota</span>
-            <b className={r.charge.hours > s.energy.chargeHours ? 'negative' : ''}>
-              {Number.isFinite(r.charge.hours) ? `${num(r.charge.hours, 2)} h` : 'Sin potencia'} /{' '}
-              {num(s.energy.chargeHours)} h disponibles
-            </b>
-          </div>
-          <small>
-            Por unidad. Reserva apartada: {num(energy.reserve, 2)} kWh. Compras{' '}
-            {num(r.dailyGridKwh, 2)} kWh para recuperar {num(r.dailyBatteryKwh, 2)} kWh en batería;
-            la diferencia son pérdidas.
-          </small>
-        </section>
+      <div className="results-columns">
+        <div className="results-left">
+          <section className="panel">
+            <div className="panel-title">
+              <h3>Energía para completar el servicio</h3>
+              <BatteryCharging size={19} />
+            </div>
+            <p className="result-conclusion">
+              {energy.margin >= -1e-9
+                ? 'La energía disponible alcanza'
+                : `Faltan ${num(-energy.margin, 2)} kWh para completar el día`}
+            </p>
+            <Suspense fallback={<div className="chart" />}>
+              <Chart
+                option={socOption}
+                label={`Disponible ${num(energy.available, 2)} kWh, requerida ${num(r.dailyBatteryKwh, 2)} kWh; margen ${num(energy.margin, 2)} kWh.`}
+              />
+            </Suspense>
+            <div className="chart-summary">
+              <span>
+                <b>{num(r.dailyKm, 1)} km</b> diarios por unidad
+              </span>
+              <span>
+                <b className={energy.margin < 0 ? 'negative' : ''}>{num(energy.margin, 2)} kWh</b>{' '}
+                {energy.margin < 0 ? 'déficit energético' : 'margen sin usar reserva'}
+              </span>
+              <span>
+                <b>
+                  {Number.isFinite(r.charge.hours) ? `${num(r.charge.hours, 2)} h` : 'Sin potencia'}
+                </b>{' '}
+                para recargar la flota
+              </span>
+            </div>
+            <p className="result-conclusion">
+              {r.charge.hours <= s.energy.chargeHours + 1e-9
+                ? 'La recarga cabe en la ventana nocturna.'
+                : 'La recarga no cabe en la ventana nocturna.'}{' '}
+              Batería suficiente y recuperación nocturna son condiciones separadas.
+            </p>
+            <div className="charge-comparison">
+              <span>Recarga nocturna de la flota</span>
+              <b className={r.charge.hours > s.energy.chargeHours ? 'negative' : ''}>
+                {Number.isFinite(r.charge.hours) ? `${num(r.charge.hours, 2)} h` : 'Sin potencia'} /{' '}
+                {num(s.energy.chargeHours)} h disponibles
+              </b>
+            </div>
+            <small>
+              Por unidad. Reserva apartada: {num(energy.reserve, 2)} kWh. Compras{' '}
+              {num(r.dailyGridKwh, 2)} kWh para recuperar {num(r.dailyBatteryKwh, 2)} kWh en
+              batería; la diferencia son pérdidas.
+            </small>
+          </section>
+          <section className="panel comparison">
+            <div className="panel-title">
+              <h3>Comparación económica</h3>
+              <span className="pill neutral">Unidad + flota de {s.operation.fleet}</span>
+            </div>
+            <p className="result-conclusion">
+              El eléctrico tiene{' '}
+              {r.ev.economicCost === r.ice.economicCost
+                ? 'el mismo costo económico'
+                : `${r.ev.economicCost < r.ice.economicCost ? 'menor' : 'mayor'} costo económico por ${mxn(Math.abs(r.ev.economicCost - r.ice.economicCost))}`}{' '}
+              durante cinco años.{' '}
+              {s.finance.kind === 'lease'
+                ? 'Perspectiva del operador: renta eléctrica frente a compra de combustión.'
+                : 'Perspectiva de adquisición y operación de la flota.'}
+            </p>
+            <ComparisonTable r={r} concise />
+            <details>
+              <summary>Consultar el desglose económico</summary>
+              <ComparisonTable r={r} />
+            </details>
+            <p className="muted">
+              Costo económico incluye adquisición, operación, trabajo e intereses; no suma principal
+              dos veces. El ingreso del concesionario es una condición de caja. El capital
+              disponible se utiliza para reducir deuda respetando reserva y enganche mínimo.{' '}
+              {s.finance.kind === 'lease'
+                ? 'En proveedor, la referencia de combustión se adquiere de contado.'
+                : 'El financiamiento elegido se aplica a ambas referencias.'}
+            </p>
+            <details>
+              <summary>Consultar el flujo de caja</summary>
+              <CashTable f={r.ev} />
+            </details>
+          </section>
+        </div>
         <section className="panel finance-chart-panel">
           <div className="panel-title finance-panel-title">
             <div>
@@ -652,86 +691,6 @@ export default function Dashboard({
         disabled={stale}
         onApply={onCycles}
       />
-      <section className="panel comparison">
-        <div className="panel-title">
-          <h3>El costo completo importa</h3>
-          <span className="pill neutral">Unidad + flota de {s.operation.fleet}</span>
-        </div>
-        <ComparisonTable r={r} />
-        <p className="muted">
-          Costo económico incluye adquisición, operación, trabajo e intereses; no suma principal dos
-          veces. El ingreso del concesionario es una condición de caja. El capital disponible se
-          utiliza para reducir deuda respetando reserva y enganche mínimo.{' '}
-          {s.finance.kind === 'lease'
-            ? 'En proveedor, la referencia de combustión se adquiere de contado.'
-            : 'El financiamiento elegido se aplica a ambas referencias.'}
-        </p>
-        <details>
-          <summary>Ver los 60 meses de flujo eléctrico</summary>
-          <CashTable f={r.ev} />
-        </details>
-      </section>
-      <div className="chart-grid">
-        <section className="panel">
-          <div className="panel-title">
-            <h3>¿Qué necesita comprobarse?</h3>
-            <Clock3 size={19} />
-          </div>
-          <ul className="conditions">
-            {r.constraints.map((c) => (
-              <li key={c.id} className={c.status}>
-                <StatusIcon status={c.status} />
-                <div>
-                  <strong>{c.label}</strong>
-                  <p>{c.detail}</p>
-                </div>
-                <span>
-                  {c.status === 'pass' ? 'Cumple' : c.status === 'fail' ? 'Resolver' : 'Pendiente'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className="panel environmental">
-          <span className="eyebrow">ALCANCE AMBIENTAL</span>
-          <h3>Menos escape, con límites claros.</h3>
-          <div className="emission-row">
-            <span>Combustión · escape</span>
-            <strong>
-              {num(r.emissions.iceCO2KgDay, 1)} <small>kg CO₂/día</small>
-            </strong>
-          </div>
-          <div className="emission-row">
-            <span>Electricidad · indirectas</span>
-            <strong>
-              {num(r.emissions.evCO2eKgDay, 1)} <small>kg CO₂e/día</small>
-            </strong>
-          </div>
-          <p>
-            Por unidad. Los factores tienen alcances diferentes: no se calcula una reducción neta ni
-            ciclo de vida.
-          </p>
-          <p>
-            El BEV no tiene emisiones de escape. Las mejoras sanitarias, el tiempo de viaje y una
-            eventual reducción de tarifa requieren evidencia adicional.
-          </p>
-          <div className="human-note">
-            <Users size={23} />
-            <p>
-              El objetivo es sostener viajes y trabajo. Ahorrar energía sólo ayuda si el acuerdo
-              financiero permite conservar el ingreso y la calidad del servicio.
-            </p>
-          </div>
-          <details>
-            <summary>Supuestos y límites del cálculo</summary>
-            <ul>
-              {r.warnings.map((w) => (
-                <li key={w}>{w}</li>
-              ))}
-            </ul>
-          </details>
-        </section>
-      </div>
     </div>
   );
 }

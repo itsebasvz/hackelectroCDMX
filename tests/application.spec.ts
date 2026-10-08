@@ -26,7 +26,7 @@ test('evalúa, edita, conserva resultado inválido y encuentra condiciones', asy
   await expect(page.getByRole('heading', { name: '¿Qué cambia al electrificar?' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Cambiar ruta' })).toBeVisible();
   await page
-    .locator('.diagnostic-panel')
+    .locator('[data-condition=initial]')
     .getByRole('button', { name: 'Revisar parámetro' })
     .first()
     .click();

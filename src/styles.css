@@ -3216,3 +3216,74 @@ footer > small {
     gap: 2px;
   }
 }
+
+/* Resultados explicables: columnas independientes, alturas naturales. */
+.results-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.results-left {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.results-columns > * {
+  min-width: 0;
+}
+.result-conclusion {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 14px 0;
+}
+.diagnostic-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.diagnostic-scroll h3 {
+  font-size: 15px;
+  margin-top: 16px;
+}
+.diagnostic-checks {
+  display: block;
+}
+.diagnostic-checks li > div {
+  font-size: 14px;
+  align-items: flex-start;
+}
+.diagnostic-checks svg {
+  flex-shrink: 0;
+}
+.diagnostic-checks p,
+.diagnostic-checks button,
+.diagnostic-panel > p,
+.protected-note {
+  font-size: 13px;
+}
+.condition-state {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.condition-state,
+.diagnostic-checks .pending svg {
+  color: var(--primary);
+}
+@media (min-width: 1280px) {
+  .diagnostic-scroll {
+    flex: 1;
+    min-height: 0;
+    height: 0;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+}
+@media (max-width: 899px) {
+  .results-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

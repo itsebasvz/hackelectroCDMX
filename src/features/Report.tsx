@@ -3,6 +3,7 @@ import { ComparisonTable, CashTable } from './Dashboard';
 import { sections } from './fields';
 import { getValue, evidenceOf } from './values';
 import { num } from '../ui/format';
+import { presentedConditions, conditionStates } from './conditions';
 export default function Report({ result: r }: { result: Result }) {
   return (
     <article className="print-report">
@@ -23,11 +24,10 @@ export default function Report({ result: r }: { result: Result }) {
       <ComparisonTable r={r} />
       <h2>Restricciones</h2>
       <ul>
-        {r.constraints.map((c) => (
+        {presentedConditions(r).map((c) => (
           <li key={c.id}>
             <strong>
-              {c.label} —{' '}
-              {c.status === 'pass' ? 'Cumple' : c.status === 'fail' ? 'Incumple' : 'Pendiente'}:
+              {c.label} — {conditionStates[c.status]}:
             </strong>{' '}
             {c.detail}
           </li>
