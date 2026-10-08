@@ -1,4 +1,4 @@
-import { Sparkles, ArrowRight, CheckCircle2, X } from 'lucide-react';
+import { Sparkles, ArrowRight, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import type { Scenario, SearchResult } from '../domain/schema';
 import { num, mxn } from '../ui/format';
 const reasons: Record<string, string> = {
@@ -36,8 +36,8 @@ export default function Optimizer({
           <Sparkles size={24} />
         </div>
         <div>
-          <span className="eyebrow">BUSCAR CONDICIONES</span>
-          <h2>¿Qué tendría que cambiar para que funcione?</h2>
+          <span className="eyebrow">COMPARAR OPCIONES DEL CATÁLOGO</span>
+          <h2>Alternativas de electrificación</h2>
           <p>
             Evaluamos vehículos, cargadores y financiamiento para minimizar la aportación inicial.
             Conservamos servicio, flota, personal, tarifa e ingresos objetivo.
@@ -52,7 +52,7 @@ export default function Optimizer({
           ) : (
             <>
               <Sparkles size={17} />
-              Buscar combinación
+              Evaluar combinaciones
             </>
           )}
         </button>
@@ -72,8 +72,12 @@ export default function Optimizer({
             </p>
           ) : (
             <>
-              <div className="search-summary">
-                <CheckCircle2 size={18} />
+              <div className={`search-summary ${search.alternatives.length ? 'found' : 'empty'}`}>
+                {search.alternatives.length ? (
+                  <CheckCircle2 size={18} />
+                ) : (
+                  <AlertCircle size={18} />
+                )}
                 <span>
                   {search.tested} combinaciones evaluadas ·{' '}
                   {search.alternatives.length
@@ -94,7 +98,9 @@ export default function Optimizer({
                       <br />
                       {a.scenario.finance.name}
                     </p>
-                    <span className="small-label">Aportación inicial mínima · flota</span>
+                    <span className="small-label">
+                      Aportación inicial mínima hipotética · flota
+                    </span>
                     <strong className="support-value">{mxn(a.support)}</strong>
                     <dl>
                       <div>
