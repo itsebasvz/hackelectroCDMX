@@ -33,7 +33,7 @@ CI ejecuta tipos, pruebas, compilación y Playwright en Chromium sobre Ubuntu 24
 
 ## Recorrido de demostración
 
-El [dashboard explicativo](redisenio-dashboard.md) y su [registro ambiental](fuentes-ambientales.json) documentan resultados, exploración y límites. La [interfaz de evaluación rediseñada](interfaz-evaluacion.md) explica controles, mapa, presupuesto y sensibilidad. En escritorio usa el ancho completo: parámetros a la izquierda, mapa al centro y diagnóstico a la derecha. «Cambiar ruta» abre el catálogo histórico; el resto de parámetros está en los cuatro grupos avanzados del panel.
+El [dashboard explicativo](redisenio-dashboard.md) y su [registro ambiental](fuentes-ambientales.json) documentan resultados, exploración y límites. La [interfaz de evaluación rediseñada](interfaz-evaluacion.md) explica controles, mapa, presupuesto y sensibilidad. En escritorio usa el ancho completo: parámetros a la izquierda, mapa al centro y diagnóstico a la derecha. El diagnóstico concentra condiciones calculadas y externas; resultados, exploración y ambiente siguen después. «Cambiar ruta» abre el catálogo histórico; el resto de parámetros está en los cuatro grupos avanzados del panel.
 
 1. Abrir Ruta 1 y explicar que 20.340 km es una referencia cartográfica de 2022, no un ciclo actual medido.
 2. Consultar costos y márgenes sin esperar animación. El ejemplo inicial no fuerza un resultado favorable: puede ahorrar operación y aun incumplir capital o flujo.
@@ -56,7 +56,7 @@ El nombre en el campo de guardado identifica copias en este navegador. Se conser
 
 `evaluateScenario(scenario)` valida y devuelve resultados completos, restricciones y trazabilidad. `findConditions(scenario, options)` enumera combinaciones compatibles, informa progreso y permite cancelación. Ambas usan el mismo evaluador. Las interfaces se versionan con `schemaVersion = 1`, `modelVersion = 1.0.0` y catálogo versión 1. No hay API HTTP pública en el MVP.
 
-`sensitivity(scenario, cancelled)` evalúa vueltas enteras con el mismo motor; sus respuestas se identifican por solicitud y se descartan al editar. El consumo sobre el mapa es una distribución uniforme del resultado, no una simulación de tráfico. El formato JSON de escenarios permanece compatible; las selecciones visuales y el contexto hospitalario no alteran los parámetros económicos.
+`sensitivity(scenario, cancelled)` devuelve tres series identificadas (vueltas, consumo y precio eléctrico), con indicadores y restricciones de cada punto del evaluador; sus respuestas se identifican por solicitud y se descartan al editar. El consumo sobre el mapa es una distribución uniforme del resultado, no una simulación de tráfico. El formato JSON de escenarios permanece compatible; las selecciones visuales y el contexto hospitalario no alteran los parámetros económicos.
 
 La búsqueda considera el catálogo incluido en cada escenario, con la configuración editada del vehículo/cargador/financiamiento seleccionado. Para incorporar referencias adicionales, usar los contratos de catálogo y generar un archivo mediante `serializeScenario`; no se aceptan JSON arbitrarios que eludan validación e integridad.
 

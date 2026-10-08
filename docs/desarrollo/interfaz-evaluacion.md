@@ -1,5 +1,7 @@
 # Interfaz de evaluación por ramal
 
+Actualización 2026-10-07: el [dashboard explicativo](redisenio-dashboard.md) sustituye la composición de resultados y la sensibilidad descritas abajo, con diagnóstico único, tres variables, ámbito/período ambiental y cierre de archivos. Las reglas de mapa, controles, presupuesto y deuda se conservan.
+
 Rediseño aprobado el 6 de octubre de 2026. La pregunta guía sigue siendo: **¿bajo qué condiciones puede electrificarse sin perjudicar a pasajeros y trabajadores?** Los resultados describen escenarios editables; no validan una inversión real.
 
 ## Entender la primera pantalla
